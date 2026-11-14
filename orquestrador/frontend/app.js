@@ -116,6 +116,15 @@ function ator(id) { return (estado.campanha?.cenario?.atores || []).find((a) => 
 function avatarDe(a, expressao, tamanho = 52, semStatus = false) {
   return AVATAR.criar({ id: a?.id, nome: a?.nome, tipo: a?.tipo, genero: a?.genero, idade: a?.idade, expressao, tamanho, semStatus });
 }
+// Componente único de pessoa: nome com a função logo abaixo. Em texto corrido, use nomeFuncao(a) = "Nome (função)".
+function funcaoDe(a) { return a?.funcao || (a?.papel ? min1(a.papel.split(",")[0]) : ""); }
+function nomeFuncao(a) { return a ? (funcaoDe(a) ? `${a.nome} (${funcaoDe(a)})` : a.nome) : ""; }
+function Ator(a, { tamanho = 44, expressao = null, status = false, classe = "" } = {}) {
+  if (!a) return "";
+  return el("span", { class: `ator ${classe}` },
+    tamanho ? avatarDe(a, expressao || AVATAR.expressaoDePostura(a.postura_inicial ?? 0), tamanho, !status) : "",
+    el("span", { class: "ator-texto" }, el("strong", { class: "ator-nome" }, a.nome), funcaoDe(a) ? el("span", { class: "ator-funcao" }, funcaoDe(a)) : ""));
+}
 function influencia(n) { return el("span", { "aria-label": `Influência ${n} de 5`, class: "influencia" }, "●".repeat(n), el("span", { class: "suave", "aria-hidden": "true" }, "○".repeat(5 - n))); }
 
 function abrirAtor(a, postura) {
@@ -272,212 +281,6 @@ async function telaPainel() {
     el("p", { class: "pequeno suave", style: "margin-top:1.4rem" }, FRASE));
 }
 
-// ------------------------------------------------------------------ roteiro da demonstração
-function passoRoteiro() {
-  if (localStorage.getItem("lej_roteiro") !== "1" || !estado.cfg.roteiro_demo) return null;
-  return estado.cfg.roteiro_demo.trimestres[estado.campanha?.indice_atual ?? 0] || null;
-}
-function faixaRoteiro(texto, acao, rotulo) {
-  if (!passoRoteiro()) return "";
-  return el("div", { class: "info" }, icone("play", 18), el("span", {}, el("strong", {}, "Roteiro da demonstração: "), texto, " ",
-    acao ? el("button", { type: "button", class: "botao secundario", style: "min-height:36px;padding:.2rem .7rem;margin-left:.3rem", onclick: acao }, rotulo) : ""));
-}
-
-// ------------------------------------------------------------------ trimestre: pauta
-function iniciarTrimestre(alocInicial) {
-  const c = estado.campanha.cenario;
-  estado.base = Object.fromEntries(c.demandas.map((d) => [d.id, d.ano_anterior ?? 0]));
-  estado.aloc = { ...estado.base, ...(alocInicial || {}) };
-  estado.escolhas = {};
-  estado.previa = null;
-  estado.reuniaoFim = null;
-  estado.relatosAbertos = new Set();
-  telaPauta();
-}
-
-function passosTrimestre(i) {
-  return el("div", { class: "passos-trimestre", "aria-label": "Etapas do trimestre" },
-    ["Pauta", "Mesa", "Ata", "Resultado"].map((n, k) => el("span", { class: k < i ? "feito" : k === i ? "atual" : "", "aria-current": k === i ? "step" : null }, n)));
-}
-
-function blocoRelatos(c) {
-  const rel = c.relatos_rede || [];
-  if (!rel.length) return "";
-  return el("div", {},
-    el("p", { class: "rotulo-secao" }, "O que a rede relata"),
-    c.vivencias_base ? el("p", { class: "pequeno suave" }, `Construído a partir de ${c.vivencias_base} vivências da rede.`) : "",
-    el("button", { class: "botao secundario bloco", onclick: () => {
-      rel.forEach((r) => estado.relatosAbertos.add(r.id));
-      estado.escolhas.considerou_vivencias = 1;
-      abrirPainel("O que a rede relata",
-        el("p", { class: "pequeno suave" }, "Trechos de vivências da rede, mascarados (sem nomes, locais exatos ou valores identificáveis) e aprovados por curadoria."),
-        rel.map((r) => el("div", { class: "relato" }, el("div", {}, r.trecho), el("div", { class: "quem" }, `${r.perfil}${r.ficticia ? " · exemplo fictício" : ""}`))));
-    } }, icone("book-open", 18), `Ver ${rel.length} relato(s) da rede`));
-}
-
-function telaPauta() {
-  const camp = estado.campanha;
-  const c = camp.cenario;
-  topo(c.titulo, `${c.periodo.charAt(0).toUpperCase() + c.periodo.slice(1)} ${camp.indice_atual + 1} de ${camp.total}`, telaPainel); abas(null);
-  const anterior = camp.historico.at(-1);
-  const rot = passoRoteiro();
-  tela(
-    passosTrimestre(0),
-    rot ? faixaRoteiro(rot.continuidade ? `escolha "${rot.continuidade[0].toUpperCase() + rot.continuidade.slice(1)}" abaixo.` : "leia a pauta e abra a Mesa do Orçamento.") : "",
-    c.continua_de && anterior ? blocoTrimestreAnterior(c, anterior) : "",
-    c.fala_abertura && ator(c.fala_abertura.ator_id) ? el("div", { class: "fala-abertura" },
-      avatarDe(ator(c.fala_abertura.ator_id), "neutra", 56, true),
-      el("div", {}, el("strong", {}, `${ator(c.fala_abertura.ator_id).nome.split(" ")[0]} (${ator(c.fala_abertura.ator_id).funcao})`),
-        el("p", { class: "balao" }, `“${c.fala_abertura.texto}”`))) : "",
-    c.evento ? el("div", { class: "orcamento-destaque", role: "group", "aria-label": `Orçamento: de ${brl(c.orcamento)} para ${brl(c.disponivel)}` },
-      el("span", { class: "rotulo" }, "Orçamento"), el("span", { class: "antes" }, brl(c.orcamento)), icone("move-right", 22), el("span", { class: "depois" }, brl(c.disponivel)),
-      c.horas_equipe ? el("span", { class: "horas" }, icone("clock", 16), `${c.horas_equipe} h da equipe`) : "") : "",
-    c.frase_abertura ? el("p", { class: "frase-abertura" }, c.frase_abertura) : "",
-    el("div", { class: "cartao" },
-      el("div", { class: "cabecalho-doc" }, el("span", {}, "Pauta"), el("span", {}, c.associacao.nome.match(/\(([^)]+)\)/)?.[1] || ""), el("span", {}, `Teto ${brl(c.disponivel)}`)),
-      el("p", { class: "narrativa" }, c.narrativa || c.texto.split(/\n\n/)[0]),
-      el("div", { class: "linha" }, c.tags.map((t) => el("span", { class: "etiqueta" }, t))),
-      el("button", { class: "botao fantasma", style: "padding-left:0", onclick: () => abrirPainel("Contexto completo",
-        ...c.texto.split(/\n\n+/).map((p) => el("p", {}, p)),
-        el("p", {}, el("strong", {}, "O que está em jogo: "), c.em_jogo),
-        el("p", { class: "pequeno suave" }, `${c.associacao.nome} · ${c.associacao.cidade} · ${c.associacao.associados} associados. ${c.associacao.situacao_financeira}`)) },
-        icone("book-open", 18), "Ler contexto completo")),
-    c.evento ? el("div", { class: "aviso" }, icone(Number(c.evento.delta_orcamento) < 0 ? "trending-down" : "trending-up", 18),
-      el("span", {}, el("strong", {}, c.evento.titulo), ". ", c.evento.texto)) : "",
-    c.fato_noticia ? el("div", { class: "info" }, icone("newspaper", 18), el("span", {}, el("strong", {}, "Fato novo: "), c.fato_noticia.titulo, " ",
-      el("button", { class: "botao fantasma", style: "min-height:0;padding:0", onclick: () => abrirPainel("Fato novo do trimestre", el("p", {}, c.fato_noticia.texto),
-        el("p", { class: "pequeno suave" }, `Recorte: ${c.fato_noticia.recorte}. Inspirado em notícia de ${c.fato_noticia.fonte?.veiculo}, ${(c.fato_noticia.fonte?.data || "").split("-").reverse().join("/")}. Nomes trocados por termos genéricos.`),
-        c.fato_noticia.fonte?.url ? el("a", { href: c.fato_noticia.fonte.url, target: "_blank", rel: "noopener" }, "Fonte") : "") }, "ler"))) : "",
-    blocoRelatos(c),
-    el("p", { class: "rotulo-secao" }, "Envolvidos"),
-    el("ul", { class: "fileira-atores" }, c.atores.map((a) => el("li", {}, el("button", { type: "button", onclick: () => abrirAtor(a) },
-      avatarDe(a, AVATAR.expressaoDePostura(a.postura_inicial), 56), el("span", { class: "nome" }, a.nome.split(" ").slice(0, 2).join(" ")))))),
-    el("p", { class: "rotulo-secao" }, "Restrições"),
-    el("ul", { class: "regras cartao" }, c.regras.map((r) => el("li", {}, icone(ICONE_REGRA[r.icone] || "info", 18), el("span", {}, r.texto)))),
-    el("div", { class: "acoes" }, el("button", { class: "botao bloco", onclick: telaMesa }, "Abrir a Mesa do Orçamento", icone("chevron-right", 18))));
-}
-
-function blocoTrimestreAnterior(c, anterior) {
-  const ir = (escolha, aloc) => { estado.escolhas.continuidade = escolha; estado.aloc = { ...estado.base, ...aloc }; SOM.tocar("confirmar"); telaMesa(); };
-  const meta = anterior.meta;
-  return el("div", { class: "cartao cartao-destaque" },
-    el("h3", {}, "Resultado do trimestre anterior"),
-    meta ? el("div", {}, el("p", { class: "pequeno" }, el("strong", {}, "Meta: "), meta.texto),
-      el("div", { class: "barra", role: "meter", "aria-valuemin": 0, "aria-valuemax": meta.alvo, "aria-valuenow": meta.previsto, "aria-label": `Previsto ${meta.previsto} de ${meta.alvo}` },
-        el("span", { style: `width:${Math.min(100, meta.pct)}%` })),
-      el("p", { class: "pequeno" }, `Previsto: ${meta.previsto} de ${meta.alvo} (${meta.pct}%) · ${meta.situacao}`)) : el("p", { class: "pequeno suave" }, "Sem meta mensurável no trimestre anterior."),
-    el("p", { class: "pequeno" }, "Manter, ajustar ou rever a decisão? A Mesa já parte do que foi executado."),
-    el("div", { class: "acoes" },
-      el("button", { class: "botao", onclick: () => ir("manter", {}) }, "Manter"),
-      el("button", { class: "botao secundario", onclick: () => ir("ajustar", {}) }, "Ajustar"),
-      el("button", { class: "botao secundario", onclick: () => ir("rever", Object.fromEntries(c.demandas.map((d) => [d.id, 0]))) }, "Rever")));
-}
-
-// ------------------------------------------------------------------ Mesa do Orçamento
-function iniciarRelogio(caixa) {
-  const minutos = estado.cfg.decisao.minutos_reuniao || 10;
-  if (!estado.reuniaoFim) estado.reuniaoFim = Date.now() + minutos * 60000;
-  clearInterval(estado.relogio);
-  const tick = () => {
-    const resta = Math.max(0, estado.reuniaoFim - Date.now());
-    const m = Math.floor(resta / 60000), s = Math.floor((resta % 60000) / 1000);
-    caixa.replaceChildren(icone("clock", 16), resta > 0 ? ` Reunião: ${m}:${String(s).padStart(2, "0")}` : " Tempo da reunião esgotado");
-    if (!document.body.contains(caixa)) clearInterval(estado.relogio);
-  };
-  tick(); estado.relogio = setInterval(tick, 1000);
-}
-
-let previaPendente = null;
-function pedirPrevia(aplicar) {
-  clearTimeout(previaPendente);
-  previaPendente = setTimeout(async () => {
-    try { estado.previa = await api(`/api/campanhas/${estado.campanhaId}/previa`, { method: "POST", body: { alocacao: estado.aloc, escolhas: estado.escolhas } }); aplicar(estado.previa); }
-    catch (_) { /* a tela mostra o total; o servidor valida no envio */ }
-  }, 70);
-}
-
-function telaMesa() {
-  const camp = estado.campanha;
-  const c = camp.cenario;
-  const teto = c.disponivel;
-  topo("Mesa do Orçamento", c.titulo, telaPauta); abas(null);
-  const relogio = el("span", { class: "pequeno suave" });
-  const inds = el("div", {});
-  const total = el("div", { class: "total-mesa", "aria-live": "polite" });
-  const linhas = {};
-  let estourado = null;
-  const soma = () => Object.values(estado.aloc).reduce((a, b) => a + Number(b), 0);
-  const btnSeguir = el("button", { class: "botao bloco", onclick: () => { SOM.tocar("confirmar"); telaDecisao(); } }, "Orçamento fechado: registrar a decisão", icone("chevron-right", 18));
-
-  const atualizarTotal = () => {
-    const t = soma(), dif = t - teto;
-    const st = dif > 0 ? el("span", { class: "status-mesa estouro" }, icone("triangle-alert", 16), `Falta cortar ${brl(dif)}`)
-      : dif === 0 ? el("span", { class: "status-mesa ok" }, icone("circle-check", 16), "Orçamento fechado")
-        : el("span", { class: "status-mesa ok" }, icone("circle-check", 16), `Dentro do teto · sobram ${brl(-dif)}`);
-    total.replaceChildren(
-      el("div", { class: "numeros" }, el("span", {}, el("span", { class: "grande" }, brl(t)), el("span", { class: "suave" }, ` de ${brl(teto)}`)), st),
-      el("div", { class: `barra-teto ${dif > 0 ? "estouro" : ""}`, role: "img", "aria-label": `Total ${brl(t)} de ${brl(teto)}` }, el("span", { style: `width:${Math.min(100, (t / teto) * 100)}%` })),
-      c.evento ? el("div", { class: "pequeno suave", style: "margin-top:.35rem" }, `Teto = ${brl(c.orcamento)} ${Number(c.evento.delta_orcamento) < 0 ? "−" : "+"} ${brl(Math.abs(c.evento.delta_orcamento))} (${min1(c.evento.titulo)})`) : "");
-    const agora = dif > 0;
-    if (estourado === false && agora) SOM.tocar("alerta");
-    if (estourado === true && !agora) SOM.tocar("fechado");
-    estourado = agora;
-    btnSeguir.disabled = agora;
-    btnSeguir.replaceChildren(agora ? `Corte ${brl(dif)} para continuar` : "Orçamento fechado: registrar a decisão", icone("chevron-right", 18));
-  };
-  const aplicarPrevia = (p) => {
-    inds.replaceChildren(blocosIndicadores(camp.indicadores, null, p.tendencia));
-    for (const d of p.demandas) { const l = linhas[d.id]; if (l) l.avatar.replaceChildren(avatarDe(ator(d.solicitante), d.expressao, 44)); }
-  };
-  const definir = (d, valor, comSom = true) => {
-    const v = Math.max(0, Math.min(d.custo, Math.round(valor / 500) * 500));
-    const mudou = v !== estado.aloc[d.id];
-    estado.aloc[d.id] = v;
-    const l = linhas[d.id];
-    const df = v - (estado.base[d.id] || 0);
-    l.valor.textContent = brl(v);
-    l.menos.disabled = v <= 0; l.mais.disabled = v >= d.custo;
-    l.status.className = `status-linha ${df < 0 ? "corte" : df > 0 ? "aumento" : "igual"}`;
-    l.status.textContent = df === 0 ? "sem mudança" : df < 0 ? `corte de ${brl(-df)}` : `aumento de ${brl(df)}`;
-    l.barra.style.width = `${(v / d.custo) * 100}%`;
-    if (comSom && mudou) SOM.tocar("passo");
-    atualizarTotal();
-    pedirPrevia(aplicarPrevia);
-  };
-
-  const cartaoLinhas = el("div", { class: "cartao", style: "padding:.2rem 1rem" }, c.demandas.filter((d) => !d.requer_consulta || estado.escolhas.consultou_associados).map((d) => {
-    const a = ator(d.solicitante);
-    const l = { valor: el("output", { "aria-live": "polite" }), status: el("span", {}), barra: el("span", {}), avatar: el("span", {}) };
-    l.menos = el("button", { type: "button", "aria-label": `Diminuir ${d.titulo} em R$ 500`, onclick: () => definir(d, estado.aloc[d.id] - 500) }, icone("minus", 20));
-    l.mais = el("button", { type: "button", "aria-label": `Aumentar ${d.titulo} em R$ 500`, onclick: () => definir(d, estado.aloc[d.id] + 500) }, icone("plus", 20));
-    l.avatar.append(avatarDe(a, AVATAR.expressaoDePostura(a?.postura_inicial ?? 0), 44));
-    linhas[d.id] = l;
-    return el("div", { class: "linha-mesa" },
-      l.avatar,
-      el("div", {}, el("div", { class: "nome" }, d.titulo),
-        el("div", { class: "meta-linha" }, `Pedido: ${brl(d.custo)} · ano anterior: ${brl(estado.base[d.id] || 0)} · ${a?.nome || ""}`),
-        el("div", { class: "meta-linha" }, `Afeta: ${(d.afeta || []).join(", ") || "—"}`),
-        el("button", { class: "botao fantasma", style: "min-height:0;padding:.1rem 0;font-size:.82rem", onclick: () => abrirPainel(d.titulo, el("p", {}, d.beneficio),
-          el("p", { class: "pequeno suave" }, `Quem pede: ${a?.nome || d.solicitante} (${a?.papel || ""}).`)) }, "Detalhes")),
-      el("div", { class: "mini-barra", "aria-hidden": "true" }, l.barra, el("i", { style: `left:${((estado.base[d.id] || 0) / d.custo) * 100}%` })),
-      el("div", { class: "controle" }, el("div", { class: "passo" }, l.menos, l.valor, l.mais), l.status));
-  }));
-
-  const rot = passoRoteiro();
-  tela(passosTrimestre(1),
-    rot ? faixaRoteiro("aplique a divisão do roteiro.", () => { for (const d of c.demandas) definir(d, rot.alocacao[d.id] || 0, false); SOM.tocar("passo"); }, "Aplicar") : "",
-    el("div", { class: "linha entre" }, el("p", { class: "pequeno suave", style: "margin:0" }, "Ajuste de R$ 500 em R$ 500. Os indicadores mostram uma prévia."), relogio),
-    total, inds, cartaoLinhas,
-    el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: () => { for (const d of c.demandas) definir(d, estado.base[d.id] || 0, false); } },
-      icone("refresh-ccw", 18), "Voltar ao ano anterior"), btnSeguir),
-    el("details", { class: "cartao pequeno" }, el("summary", {}, el("strong", {}, "Como calculamos a prévia")),
-      el("p", {}, "Cada pedido tem um efeito por indicador quando financiado e outro quando adiado; financiar em parte rende em proporção. Dinheiro guardado melhora a saúde financeira. Regras públicas em config/indicadores.yaml; nenhuma IA é usada na prévia.")));
-  for (const d of c.demandas) definir(d, estado.aloc[d.id], false);
-  estourado = soma() > teto;
-  atualizarTotal();
-  iniciarRelogio(relogio);
-}
-
 // ------------------------------------------------------------------ voz
 const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
 const VOZ_OK = !!Reconhecimento;
@@ -515,216 +318,6 @@ function chips(opcoes, selecionados, { multiplo = true, max = 2, aoMudar } = {})
   return g;
 }
 
-// ------------------------------------------------------------------ decisão (Ata)
-const CRITERIOS = ["Maior impacto nas vendas", "Mais associados beneficiados", "Urgência", "Menor risco financeiro", "Exigência de parceiro"];
-const CORTES = ["Menor impacto no curto prazo", "Pode esperar o próximo trimestre", "Há outra fonte de recurso", "Respeitar o teto sem usar a reserva", "Pedido da diretoria"];
-const CANAIS = ["Assembleia", "WhatsApp", "Reunião setorial", "Jornal local"];
-const PRAZOS = ["o fim do trimestre", "30 dias", "60 dias", "90 dias"];
-const REVISOES = ["30 dias", "60 dias", "90 dias"];
-const RESPONSAVEIS = ["Presidência", "Diretoria executiva", "Gerência", "Comissão de associados"];
-
-function construtor() {
-  if (!estado.escolhas.construtor) {
-    const k = estado.escolhas.construtor = { motivos: [], motivoLivre: "", envolvidos: [], cortes: [], canais: [], canalLivre: "", qtd: "", oque: [], oqueLivre: "",
-      prazo: [], revisao: [], responsavel: [], indicador: [] };
-    const rot = passoRoteiro();
-    if (rot?.construtor) for (const [ch, v] of Object.entries(rot.construtor)) k[ch] = Array.isArray(v) ? [...v] : v;
-  }
-  return estado.escolhas.construtor;
-}
-function houveCorte() { return estado.campanha.cenario.demandas.some((d) => estado.aloc[d.id] < (estado.base[d.id] || 0)); }
-function textoMeta(k) {
-  const oque = k.oqueLivre.trim() || k.oque[0] || "";
-  if (!k.qtd || !oque || !k.prazo[0]) return "";
-  return `${k.qtd} ${oque} até ${k.prazo[0]}` + (k.revisao[0] ? `; reavaliar em ${k.revisao[0]}` : "");
-}
-
-function telaDecisao() {
-  const c = estado.campanha.cenario;
-  const k = construtor();
-  topo("Ata da decisão", c.titulo, telaMesa); abas(null);
-  const corpo = el("div", {});
-  const render = () => {
-    const ok1 = k.motivos.length || k.motivoLivre.trim();
-    const ok2 = k.envolvidos.length > 0;
-    const ok3 = !houveCorte() || k.cortes.length > 0;
-    const ok4 = k.canais.length || k.canalLivre.trim();
-    const ok5 = !!textoMeta(k) && k.responsavel.length && k.indicador.length;
-    const passo = (n, ok, titulo, ...conteudo) => el("div", { class: "cartao" }, el("div", { class: "passo-num" },
-      el("span", { class: `n ${ok ? "ok" : ""}`, "aria-label": ok ? `Passo ${n} concluído` : `Passo ${n}` }, ok ? icone("circle-check", 16) : String(n)),
-      el("div", { class: "corpo" }, el("h3", { style: "margin-top:.15rem" }, titulo), ...conteudo)));
-    const livre = (chave, rotulo, id) => {
-      const inp = el("input", { type: "text", id, maxlength: 300, value: k[chave] });
-      inp.addEventListener("input", () => { k[chave] = inp.value; });
-      inp.addEventListener("change", render);
-      return el("div", {}, el("label", { for: id }, rotulo), el("div", { class: "linha" }, el("div", { style: "flex:1;min-width:180px" }, inp), botaoVoz(inp)));
-    };
-    const qtd = el("input", { type: "number", id: "meta-qtd", min: 1, max: 100000, inputmode: "numeric", value: k.qtd, style: "max-width:140px" });
-    qtd.addEventListener("input", () => { k.qtd = qtd.value; }); qtd.addEventListener("change", render);
-    const sugestoes = c.demandas.filter((d) => estado.aloc[d.id] > 0).map((d) => d.meta_sugerida).filter(Boolean);
-    const cortadas = c.demandas.filter((d) => estado.aloc[d.id] < (estado.base[d.id] || 0));
-    corpo.replaceChildren(
-      passo(1, ok1, "Por que essa prioridade?", el("p", { class: "pequeno suave" }, "Até 2 critérios."), chips(CRITERIOS, k.motivos, { aoMudar: render }), livre("motivoLivre", "Outro critério (opcional)", "m-livre")),
-      passo(2, ok2, "Quem você envolve antes de decidir?", el("p", { class: "pequeno suave" }, "Toque em quem será ouvido antes da decisão final."),
-        el("div", { class: "envolvidos" }, c.atores.map((a) => el("button", { type: "button", "aria-pressed": String(k.envolvidos.includes(a.id)), onclick: () => {
-          const i = k.envolvidos.indexOf(a.id); i >= 0 ? k.envolvidos.splice(i, 1) : k.envolvidos.push(a.id); render(); } },
-          avatarDe(a, "neutra", 40, true), a.nome.split(" ").slice(0, 2).join(" "))))),
-      passo(3, ok3, houveCorte() ? "Por que cortar?" : "Cortes", houveCorte()
-        ? [el("p", { class: "pequeno suave" }, `Cortes em: ${cortadas.map((d) => `${d.titulo} (−${brl((estado.base[d.id] || 0) - estado.aloc[d.id])})`).join("; ")}.`), chips(CORTES, k.cortes, { aoMudar: render })]
-        : el("p", { class: "pequeno suave" }, "Nenhuma linha foi cortada em relação ao ano anterior.")),
-      passo(4, ok4, "Como vai comunicar aos associados?", chips(CANAIS, k.canais, { aoMudar: render }), livre("canalLivre", "Outro canal (opcional)", "c-livre")),
-      passo(5, ok5, "Meta, responsável e acompanhamento",
-        el("p", { class: "pequeno suave" }, "[quantidade] [o quê] até [quando]; reavaliar em 30, 60 ou 90 dias"),
-        el("label", { for: "meta-qtd" }, "Quantidade"), qtd,
-        el("p", { class: "rotulo-secao" }, "O quê"), sugestoes.length ? chips(sugestoes, k.oque, { multiplo: false, aoMudar: render }) : "",
-        livre("oqueLivre", "Ou escreva o que será medido", "o-livre"),
-        el("p", { class: "rotulo-secao" }, "Até quando"), chips(PRAZOS, k.prazo, { multiplo: false, aoMudar: render }),
-        el("p", { class: "rotulo-secao" }, "Reavaliar em"), chips(REVISOES, k.revisao, { multiplo: false, aoMudar: render }),
-        el("p", { class: "rotulo-secao" }, "Responsável"), chips(RESPONSAVEIS, k.responsavel, { multiplo: false, aoMudar: render }),
-        el("p", { class: "rotulo-secao" }, "Indicador de acompanhamento"), chips(estado.cfg.indicadores.map((i) => i.nome), k.indicador, { multiplo: false, aoMudar: render })),
-      avisoVoz(),
-      el("div", { class: "acoes" }, el("button", { class: "botao bloco", onclick: () => { SOM.tocar("confirmar"); telaAta(); } }, "Ver a Ata da decisão", icone("chevron-right", 18))));
-  };
-  tela(passosTrimestre(2), passoRoteiro() ? faixaRoteiro("os passos já vêm preenchidos; confira e avance.") : "", corpo);
-  render();
-}
-
-function gerarAta() {
-  const c = estado.campanha.cenario;
-  const k = construtor();
-  const nomes = Object.fromEntries(c.atores.map((a) => [a.id, a.nome]));
-  const fin = c.demandas.filter((d) => estado.aloc[d.id] > 0).sort((a, b) => estado.aloc[b.id] - estado.aloc[a.id])
-    .map((d) => `${d.titulo} (${brl(estado.aloc[d.id])}${estado.aloc[d.id] < d.custo ? ` de ${brl(d.custo)}` : ""})`);
-  const adi = c.demandas.filter((d) => !estado.aloc[d.id]).map((d) => d.titulo);
-  const cortes = c.demandas.filter((d) => estado.aloc[d.id] < (estado.base[d.id] || 0)).map((d) => `${d.titulo} −${brl((estado.base[d.id] || 0) - estado.aloc[d.id])}`);
-  const saldo = c.disponivel - Object.values(estado.aloc).reduce((a, b) => a + b, 0);
-  const limites = [`teto de ${brl(c.disponivel)}` + (c.evento ? ` (${min1(c.evento.titulo)})` : "")];
-  if (c.regras[0]) limites.push(min1(c.regras[0].texto.replace(/\.$/, "")));
-  const crit = [...k.motivos, k.motivoLivre.trim()].filter(Boolean);
-  const canais = [...k.canais, k.canalLivre.trim()].filter(Boolean);
-  return [
-    `Prioridade: ${fin.join("; ") || "nenhum pedido financiado"}` + (adi.length ? `. Adiado: ${adi.join(", ")}` : "") + (saldo > 0 ? `. Saldo guardado: ${brl(saldo)}` : "") + ".",
-    `Critérios: ${crit.map(min1).join("; ") || "(não informado)"}.`,
-    `Envolvidos antes de decidir: ${k.envolvidos.map((id) => nomes[id]).join(", ") || "(ninguém)"}.`,
-    cortes.length ? `Cortes: ${cortes.join("; ")}; motivo: ${k.cortes.map(min1).join("; ") || "não informado"}.` : "Cortes: nenhum em relação ao ano anterior.",
-    `Limites que pesaram: ${limites.join("; ")}.`,
-    `Comunicação: ${canais.map((x) => (x === "WhatsApp" ? x : min1(x))).join(", ") || "(não definida)"}.`,
-    `Meta: ${textoMeta(k) || "(não definida)"}` + (k.responsavel[0] ? `; responsável: ${min1(k.responsavel[0])}` : "") + (k.indicador[0] ? `; indicador: ${min1(k.indicador[0])}` : "") + ".",
-  ].join("\n");
-}
-
-function telaAta() {
-  const k = construtor();
-  topo("Ata da decisão", "Conferir e confirmar", telaDecisao); abas(null);
-  const area = el("textarea", { id: "ata", maxlength: estado.cfg.decisao.max_caracteres, rows: 9, class: "ata" });
-  area.value = k.ataEditada || gerarAta();
-  area.addEventListener("input", () => { k.ataEditada = area.value; });
-  const completo = (k.motivos.length || k.motivoLivre) && k.envolvidos.length && (k.canais.length || k.canalLivre) && textoMeta(k);
-  const botao = el("button", { class: "botao bloco", type: "submit" }, icone("file-check", 18), "Confirmar a decisão");
-  const form = el("form", { class: "cartao", onsubmit: async (ev) => {
-    ev.preventDefault(); botao.disabled = true;
-    const c = estado.campanha.cenario;
-    const escolhas = {
-      construtor: k, motivos: [...k.motivos, k.motivoLivre].filter(Boolean), canais: [...k.canais, k.canalLivre].filter(Boolean),
-      envolvidos: [...k.envolvidos], cortes_justificativa: [...k.cortes], responsavel: k.responsavel[0] || "", indicador_acompanhamento: k.indicador[0] || "",
-      revisao_dias: Number((k.revisao[0] || "").split(" ")[0]) || null, meta: textoMeta(k), ano_anterior: { ...estado.base },
-      comunicacao: (k.canais.length || k.canalLivre) ? 1 : 0, meta_mensuravel: textoMeta(k) ? 1 : 0, revisao_programada: k.revisao.length ? 1 : 0,
-      resumo_completo: completo ? 1 : 0, continuidade: estado.escolhas.continuidade, considerou_vivencias: estado.escolhas.considerou_vivencias ? 1 : 0,
-      envolveu_diretoria: k.envolvidos.some((id) => ["diretoria", "conselho"].includes(c.atores.find((a) => a.id === id)?.tipo)) ? 1 : 0,
-    };
-    try {
-      const r = await api(`/api/campanhas/${estado.campanhaId}/tentativas`, { method: "POST", body: { decisao: area.value, alocacao: estado.aloc, escolhas } });
-      clearInterval(estado.relogio);
-      SOM.tocar("inicio_simulacao");
-      telaResultado(r.tentativa_id);
-    } catch (e) { mostrarErro(form, e); botao.disabled = false; }
-  } },
-    el("p", { class: "pequeno suave", style: "margin-top:0" }, "Alguém de fora deve entender a prioridade e os limites que pesaram. Você pode editar."),
-    el("label", { for: "ata", class: "sr" }, "Ata da decisão"), area,
-    el("div", { class: "linha" }, botaoVoz(area), el("button", { type: "button", class: "botao fantasma", onclick: () => { k.ataEditada = ""; area.value = gerarAta(); } }, icone("refresh-ccw", 16), "Refazer")),
-    completo ? "" : el("div", { class: "aviso" }, icone("info", 18), el("span", {}, "Com critério, envolvidos, comunicação e meta preenchidos, a Ata fica mais clara.")),
-    botao);
-  tela(passosTrimestre(2), form);
-}
-
-// ------------------------------------------------------------------ resultado
-async function telaResultado(tid) {
-  const t = await api(`/api/tentativas/${tid}`);
-  const camp = estado.campanha;
-  topo("Resultado", camp.cenario?.titulo || "", telaPainel); abas(null);
-  if (!t.resultado) return tela(el("div", { class: "info" }, icone("refresh-ccw", 18), el("span", {}, "Processando…")));
-  const r = t.resultado, ind = r.indicadores;
-  const nomeInd = Object.fromEntries(estado.cfg.indicadores.map((i) => [i.id, i.nome]));
-  const status = el("div", { "aria-live": "polite" });
-  const blocoSim = el("div", {});
-  const devol = el("div", {});
-  const conversaBox = el("div", {});
-  const barras = (indic) => el("div", { class: "barras-ind cartao" }, Object.keys(indic.depois).map((k) =>
-    el("div", { class: "l" }, el("span", {}, nomeInd[k]), el("span", { class: "barra" }, el("span", { style: `width:${indic.depois[k]}%` })),
-      el("span", { class: "v" }, Number(indic.depois[k]).toFixed(0)), delta(indic.variacao[k]))));
-  const caixaBarras = el("div", {}, barras(ind));
-  tela(passosTrimestre(3),
-    t.modo === "contingencia" && t.aviso ? el("div", { class: "aviso" }, icone("info", 18), el("span", {}, t.aviso)) : "",
-    el("p", { class: "rotulo-secao", style: "margin-top:0" }, "Indicadores"), caixaBarras,
-    el("details", { class: "cartao pequeno" }, el("summary", {}, el("strong", {}, "Como calculamos")),
-      el("p", {}, "O resultado sai primeiro da divisão do orçamento, por regras fixas. A simulação dos agentes ajusta no máximo 10 pontos por indicador."),
-      el("ul", {}, ind.auditoria.slice(0, 40).map((a) => el("li", {}, `${nomeInd[a.indicador] || a.indicador}: ${a.pontos > 0 ? "+" : ""}${a.pontos} — ${a.detalhe}`)))),
-    r.meta ? el("div", { class: "cartao" }, el("h3", {}, "Meta"), el("p", { class: "pequeno" }, r.meta.texto),
-      el("div", { class: "barra", role: "meter", "aria-valuemin": 0, "aria-valuemax": r.meta.alvo, "aria-valuenow": r.meta.previsto, "aria-label": `Previsto ${r.meta.previsto} de ${r.meta.alvo}` },
-        el("span", { style: `width:${Math.min(100, r.meta.pct)}%` })),
-      el("p", { class: "pequeno" }, `Previsto: ${r.meta.previsto} de ${r.meta.alvo} (${r.meta.pct}%) · ${r.meta.situacao}`)) : "",
-    status, blocoSim, devol, conversaBox,
-    el("details", { class: "cartao" }, el("summary", {}, el("strong", {}, "Ata da decisão")), el("pre", { class: "ata" }, t.decisao)),
-    el("div", { class: "acoes" },
-      el("button", { class: "botao secundario", onclick: async () => { estado.campanha = await api(`/api/campanhas/${camp.id}`); iniciarTrimestre(t.alocacao); } }, icone("refresh-ccw", 18), "Refazer a decisão"),
-      el("button", { class: "botao", onclick: async () => {
-        try {
-          estado.campanha = await api(`/api/campanhas/${camp.id}/avancar`, { method: "POST", body: { tentativa_id: t.id } });
-          SOM.tocar("confirmar");
-          estado.campanha.status === "concluida" ? irPara("relatorio") : iniciarTrimestre();
-        } catch (e) { mostrarErro(main(), e); } } }, camp.indice_atual + 1 >= camp.total ? "Concluir o mandato" : "Próximo trimestre", icone("chevron-right", 18))),
-    el("p", { class: "pequeno suave" }, `Custo desta tentativa: R$ ${t.custo.total_brl.toFixed(2)}.`));
-  verificarSelos();
-  let revelado = r.fase === "completo";
-  const atualizar = (tt) => {
-    const rr = tt.resultado;
-    if (rr.fase !== "completo") {
-      status.replaceChildren(el("div", { class: "info" }, el("span", { class: "girando", style: "display:inline-flex" }, icone("refresh-ccw", 18)),
-        el("span", {}, `Os envolvidos estão reagindo à decisão (${tt.progresso || 0}%). A devolutiva e a conversa já estão disponíveis.`)));
-    } else {
-      status.replaceChildren();
-      if (!revelado) { revelado = true; SOM.tocar("fim_simulacao"); setTimeout(() => SOM.tocar("revelar"), 350); }
-      caixaBarras.replaceChildren(barras(rr.indicadores));
-      blocoSim.replaceChildren(blocoPrevisao(rr));
-    }
-    if (tt.devolutiva && !devol.dataset.ok) { devol.dataset.ok = "1"; devol.replaceChildren(blocoDevolutiva(tt.devolutiva)); }
-    if (!conversaBox.dataset.ok) { conversaBox.dataset.ok = "1"; painelConversa(tt).then((p) => conversaBox.replaceChildren(p)); }
-    return rr.fase === "completo" && tt.devolutiva;
-  };
-  if (!atualizar(t)) {
-    estado.timer = setInterval(async () => {
-      try { const tt = await api(`/api/tentativas/${tid}`); if (atualizar(tt)) { clearInterval(estado.timer); verificarSelos(); } } catch (_) {}
-    }, 3000);
-  }
-}
-
-function blocoPrevisao(rr) {
-  const momentos = rr.momentos || [];
-  const riscos = rr.riscos || [];
-  return el("div", {},
-    momentos.length ? el("div", { class: "cartao" }, el("h3", {}, "Reações previstas"),
-      el("ol", { class: "linha-tempo" }, momentos.map((m) => {
-        const a = ator(m.ator_id) || { id: m.ator_id, nome: m.nome, tipo: m.tipo };
-        const reac = (rr.reacoes || []).find((x) => x.ator_id === m.ator_id);
-        return el("li", {}, avatarDe(a, AVATAR.expressaoDePostura(reac?.postura_final ?? 0), 44), el("div", {}, el("strong", {}, a.nome), el("div", { class: "pequeno" }, m.fala)));
-      })),
-      rr.resumo ? el("details", {}, el("summary", { class: "pequeno" }, "Resumo da simulação"), el("p", { class: "pequeno" }, rr.resumo)) : "") : "",
-    riscos.length ? el("div", { class: "cartao" }, el("h3", {}, "Mapa de riscos"), mapaRiscos(riscos),
-      el("ol", { class: "pequeno" }, riscos.map((x) => el("li", {}, `${x.descricao} (probabilidade ${x.probabilidade}, impacto ${x.impacto})`))),
-      (rr.sinais_alerta || []).length ? [el("h3", {}, "Sinais de alerta"), el("ul", { class: "pequeno" }, rr.sinais_alerta.map((s) => el("li", {}, s)))] : "",
-      el("p", { class: "aviso-fixo" }, "Simulação para apoio à decisão; não é garantia de resultado.")) : "");
-}
-
 function mapaRiscos(riscos) {
   const rot = { alto: "Alta", medio: "Média", baixo: "Baixa" };
   const grade = el("div", { class: "mapa-riscos", role: "table", "aria-label": "Mapa de riscos: probabilidade por impacto" },
@@ -737,16 +330,6 @@ function mapaRiscos(riscos) {
     });
   });
   return grade;
-}
-
-function blocoDevolutiva(dev) {
-  if (dev.erro) return el("p", { class: "suave pequeno" }, dev.erro);
-  const lista = (t, itens) => (itens?.length ? [el("h3", {}, t), el("ul", { class: "pequeno" }, itens.map((i) => el("li", {}, i)))] : "");
-  return el("details", { class: "cartao" }, el("summary", {}, el("strong", {}, "Devolutiva: pontos fortes, riscos e perguntas")),
-    lista("Pontos fortes", dev.pontos_fortes), lista("Riscos que ficaram de fora", dev.riscos_ignorados), lista("O que ganhou e o que custou", dev.trade_offs),
-    lista("Para refletir", dev.perguntas_reflexivas),
-    el("details", {}, el("summary", { class: "pequeno" }, "Competências (rubrica)"),
-      el("table", {}, el("tbody", {}, dev.competencias.map((c) => el("tr", {}, el("th", { scope: "row" }, c.nome), el("td", {}, c.nivel ? `${c.nivel} — ${c.nivel_nome}` : c.nivel_nome)))))));
 }
 
 // ------------------------------------------------------------------ conversa
@@ -768,7 +351,7 @@ function perguntasSugeridas(t, atorId) {
 async function painelConversa(t) {
   const cen = estado.campanha.cenario;
   const sel = el("select", { id: "interlocutor" }, el("option", { value: "relatorio" }, "Analista (resumo da simulação)"),
-    cen.atores.map((a) => el("option", { value: a.id }, `${a.nome} — ${TIPOS[a.tipo] || a.tipo}`)));
+    cen.atores.map((a) => el("option", { value: a.id }, nomeFuncao(a))));
   const log = el("div", { class: "chat", role: "log", "aria-live": "polite", "aria-label": "Conversa" });
   const campo = el("input", { type: "text", id: "msg", maxlength: 800, placeholder: "Sua pergunta" });
   const enviar = el("button", { type: "submit", class: "botao" }, "Enviar");
@@ -853,7 +436,8 @@ async function telaFacilitador() {
   const carregar = async () => {
     area.replaceChildren(el("p", { class: "suave" }, "Carregando…"));
     try {
-      const [p, cen, fts, perf] = await Promise.all([f("/api/facilitador/partidas"), f("/api/facilitador/cenarios"), f("/api/facilitador/fatos"), f("/api/facilitador/perfil-padrao")]);
+      const [p, cen, fts, perf, sims] = await Promise.all([f("/api/facilitador/partidas"), f("/api/facilitador/cenarios"), f("/api/facilitador/fatos"),
+        f("/api/facilitador/perfil-padrao"), f("/api/facilitador/simulacoes")]);
       sessionStorage.setItem("lej_fac", codigo);
       const extras = typeof secoesFacilitadorExtras === "function" ? await secoesFacilitadorExtras(f, carregar) : [];
       area.replaceChildren(
@@ -866,6 +450,16 @@ async function telaFacilitador() {
         el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: async () => {
           const r = await fetch("/api/facilitador/export.csv", { headers: { "X-Facilitador": codigo } });
           el("a", { href: URL.createObjectURL(await r.blob()), download: "turma.csv" }).click(); } }, icone("download", 18), "Baixar dados da turma (CSV)")),
+        el("p", { class: "rotulo-secao" }, "Revisão humana das simulações"),
+        el("p", { class: "pequeno suave" }, "Cada simulação começa como pendente. Valide depois de ler o resultado; o status aparece no Plano exportado."),
+        sims.simulacoes.length ? el("div", { class: "tabela-rolagem cartao", style: "padding:0" }, el("table", {},
+          el("thead", {}, el("tr", {}, ["Apelido", "Missão", "Carimbo", "Riscos", "Modo", "Revisão"].map((h) => el("th", { scope: "col" }, h)))),
+          el("tbody", {}, sims.simulacoes.map((x) => el("tr", {}, el("td", {}, x.apelido), el("td", { class: "num" }, String(x.missao)), el("td", {}, x.carimbo || "—"),
+            el("td", { class: "num" }, String(x.riscos)), el("td", {}, x.modo === "mirofish" ? "agentes (MiroFish)" : "offline"),
+            el("td", {}, el("button", { class: `botao mini ${x.revisao_humana === "validada" ? "secundario" : ""}`, onclick: async () => {
+              await f(`/api/facilitador/simulacoes/${x.id}/revisao`, { method: "POST", body: { status: x.revisao_humana === "validada" ? "pendente" : "validada" } });
+              avisoCurto("Revisão atualizada."); carregar(); } }, x.revisao_humana === "validada" ? "Validada (desfazer)" : "Validar")))))))
+          : el("p", { class: "pequeno suave" }, "Nenhuma simulação ainda."),
         el("p", { class: "rotulo-secao" }, "Adaptar para outra associação"),
         el("p", { class: "pequeno suave" }, "Perfil usado nos novos mandatos. Para criar outro perfil, copie um arquivo de config/perfis/ e ajuste orçamento, equipe e personagens."),
         perf.perfis.map((x) => el("label", { class: "opcao" }, el("input", { type: "radio", name: "perfil-padrao", value: x.id, checked: x.id === perf.padrao,

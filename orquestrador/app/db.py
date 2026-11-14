@@ -61,7 +61,8 @@ JSON_COLS = {"cenarios", "indicadores", "historico", "esclarecimentos", "parciai
 # Colunas acrescentadas depois da primeira versão (migração simples e idempotente).
 MIGRACOES = {
     "campanhas": {"perfil": "TEXT", "selos": "TEXT DEFAULT '[]'"},
-    "tentativas": {"alocacao": "TEXT", "escolhas": "TEXT", "devolutiva": "TEXT", "fase": "TEXT"},
+    "tentativas": {"alocacao": "TEXT", "escolhas": "TEXT", "devolutiva": "TEXT", "fase": "TEXT",
+                   "revisao_humana": "TEXT DEFAULT 'pendente'"},
 }
 
 

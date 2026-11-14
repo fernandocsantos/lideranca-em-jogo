@@ -30,6 +30,7 @@
   /* Forma */
   --raio: 8px; --raio-g: 12px; --sombra: 0 1px 2px rgba(26,34,48,.06), 0 2px 8px rgba(26,34,48,.06);
   --fonte: 1rem;
+  --fonte-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -270,3 +271,65 @@ body.alto-contraste .cartao, body.alto-contraste .ind, body.alto-contraste .chip
 .orcamento-destaque .depois { font-size: 1.7rem; font-weight: 800; color: var(--cacb-primaria-escura); }
 .orcamento-destaque .horas { margin-left: auto; display: inline-flex; gap: .3rem; align-items: center; font-weight: 600; }
 .frase-abertura { font-size: 1.15rem; font-weight: 800; margin: .2rem 0 1rem; }
+
+/* rodada 4: fluxo da missão */
+.etapas { display: flex; gap: .25rem; list-style: none; padding: 0; margin: 0 0 1rem; }
+.etapas li { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .2rem; font-size: .7rem; color: var(--texto-suave); position: relative; }
+.etapas li::before { content: ""; position: absolute; top: 13px; left: -50%; width: 100%; height: 3px; background: var(--borda); z-index: 0; }
+.etapas li:first-child::before { display: none; }
+.etapas li.feito::before, .etapas li.atual::before { background: var(--cacb-primaria); }
+.etapas .n { position: relative; z-index: 1; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--borda-forte); background: var(--superficie); font-weight: 700; color: var(--texto); }
+.etapas li.feito .n { background: var(--cacb-primaria); border-color: var(--cacb-primaria); color: #fff; }
+.etapas li.atual .n { border-color: var(--cacb-primaria); color: var(--cacb-primaria); box-shadow: 0 0 0 3px var(--cacb-primaria-clara); }
+.etapas li.atual .rot { color: var(--texto); font-weight: 700; }
+.ator { display: inline-flex; align-items: center; gap: .55rem; text-align: left; }
+.ator-texto { display: flex; flex-direction: column; line-height: 1.2; }
+.ator-funcao { font-size: .8rem; color: var(--texto-suave); }
+.cartoes-demanda { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.cartao.demanda { margin: 0; display: flex; flex-direction: column; gap: .35rem; }
+.cartao.demanda p { margin: 0; }
+.numeros-demanda { display: flex; gap: 1rem; font-weight: 700; }
+.numeros-demanda > span { display: flex; flex-direction: column; }
+.rotulo-mono { font-family: var(--fonte-mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-suave); font-weight: 600; }
+.relato-grande { margin: .8rem 0; padding: .2rem 0 .2rem 1rem; border-left: 4px solid var(--cacb-destaque); font-size: 1.05rem; }
+.chips.grandes .chip { min-height: 48px; padding: .5rem .9rem; font-size: .95rem; }
+.totais-mesa { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); position: sticky; top: 0; z-index: 5;
+  background: var(--fundo); padding: .4rem 0; }
+.medidor { background: var(--superficie); border: 2px solid var(--borda-forte); border-radius: var(--raio); padding: .55rem .8rem; }
+.medidor.estouro { border-color: var(--estado-erro); }
+.horas-linha { font-size: .78rem; color: var(--texto-suave); }
+.justifica-corte { grid-column: 1 / -1; background: var(--cacb-destaque-claro); border-radius: var(--raio); padding: .5rem .7rem; margin: .2rem 0 .6rem; }
+.justifica-corte input { margin-top: .4rem; }
+.botao.mini { min-height: 36px; padding: .2rem .7rem; font-size: .88rem; }
+.mini-link { min-height: 0; padding: .1rem 0; font-size: .82rem; }
+.chip .x { border: 0; background: none; padding: 0 0 0 .3rem; cursor: pointer; color: inherit; }
+.chip.ativo { border-color: var(--cacb-primaria); background: var(--cacb-primaria-clara); }
+table.comparacao th, table.comparacao td { vertical-align: top; min-width: 120px; }
+.indicador-sugerido { margin: .4rem 0; }
+.hipoteses { list-style: none; padding: 0; margin: 0; }
+.hipoteses li { display: flex; justify-content: space-between; gap: .8rem; align-items: center; padding: .7rem 0; border-bottom: 1px solid var(--borda); }
+.hipoteses li.ajustada strong { color: var(--cacb-primaria-escura); }
+.carimbo-resultado { text-align: center; margin: .2rem 0 1rem; }
+.carimbo { display: inline-block; font-family: var(--fonte-mono); font-weight: 800; font-size: clamp(1.5rem, 6vw, 2.2rem); letter-spacing: .08em;
+  padding: .35rem 1rem; border: 4px solid currentColor; border-radius: 6px; transform: rotate(-3deg); animation: carimbar .35s ease-out; }
+.carimbo-resultado.sucesso .carimbo { color: var(--cacb-secundaria-escura); }
+.carimbo-resultado.parcial .carimbo { color: var(--cacb-destaque-texto); background: var(--cacb-destaque-claro); }
+.carimbo-resultado.fracasso .carimbo { color: var(--estado-erro); }
+.carimbo-resultado .motivo { font-weight: 600; margin: .7rem 0 .5rem; }
+@keyframes carimbar { from { transform: scale(1.6) rotate(-8deg); opacity: 0; } to { transform: scale(1) rotate(-3deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .carimbo { animation: none; } }
+.grade-resultado { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.grade-resultado .cartao { margin: 0 0 .6rem; }
+.pesos { list-style: none; padding: 0; margin: 0; font-size: .9rem; }
+.pesos li { display: flex; gap: .4rem; align-items: flex-start; padding: .3rem 0; }
+.pesos li.positivo .icone { color: var(--estado-sucesso); } .pesos li.negativo .icone { color: var(--estado-erro); }
+.lista-ind { list-style: none; padding: 0; columns: 1; }
+.baloes { list-style: none; padding: 0; margin: 0; display: grid; gap: .7rem; }
+.balao-reacao { display: grid; gap: .3rem; }
+.balao-reacao .balao, .fala-abertura .balao { background: var(--superficie); border: 2px solid var(--borda-forte); border-radius: 14px 14px 14px 4px; padding: .5rem .8rem; margin: 0; }
+.conceito { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid currentColor; font-weight: 800; font-family: var(--fonte-mono); }
+.conceito.cA { color: var(--cacb-secundaria-escura); } .conceito.cB { color: var(--cacb-primaria); } .conceito.cC { color: var(--cacb-destaque-texto); } .conceito.cD { color: var(--estado-erro); }
+.conceito-geral { display: flex; align-items: center; gap: .8rem; margin-bottom: .8rem; }
+.conceito-geral .conceito { width: 52px; height: 52px; font-size: 1.5rem; }
+table.desempenho td, table.desempenho th { vertical-align: middle; }

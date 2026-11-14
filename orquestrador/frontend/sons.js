@@ -37,6 +37,11 @@ const SOM = (() => {
     inicio_simulacao: () => { nota(392, 0, 0.35, { tipo: "sine", ganho: 0.45, deslize: 587 }); },
     fim_simulacao: () => { nota(587, 0, 0.3, { tipo: "sine", ganho: 0.45, deslize: 440 }); },
     revelar: () => { nota(784, 0, 0.18, { tipo: "sine", ganho: 0.5 }); nota(1046.5, 0.1, 0.3, { tipo: "sine", ganho: 0.4 }); },
+    transicao: () => { nota(523.25, 0, 0.08, { tipo: "sine", ganho: 0.3 }); nota(659.25, 0.05, 0.1, { tipo: "sine", ganho: 0.25 }); },
+    carimbo_sucesso: () => { nota(196, 0, 0.12, { tipo: "triangle", ganho: 0.8 }); [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => nota(f, 0.1 + i * 0.07, 0.45, { tipo: "sine", ganho: 0.4 })); },
+    carimbo_parcial: () => { nota(196, 0, 0.12, { tipo: "triangle", ganho: 0.8 }); [523.25, 659.25, 698.46].forEach((f, i) => nota(f, 0.1 + i * 0.08, 0.4, { tipo: "sine", ganho: 0.4 })); },
+    carimbo_fracasso: () => { nota(196, 0, 0.12, { tipo: "triangle", ganho: 0.8 }); nota(392, 0.12, 0.25, { tipo: "triangle", ganho: 0.45 }); nota(311.13, 0.32, 0.4, { tipo: "triangle", ganho: 0.45 }); },
+    missao_cumprida: () => { nota(220, 0, 0.1, { tipo: "triangle", ganho: 0.8 }); [392, 523.25, 659.25, 783.99].forEach((f, i) => nota(f, 0.12 + i * 0.09, 0.6, { tipo: "sine", ganho: 0.42 })); },
     certificacao: () => { [392, 493.88, 587.33, 783.99].forEach((f, i) => nota(f, i * 0.07, 0.5, { tipo: "sine", ganho: 0.45 })); nota(1567.98, 0.32, 0.4, { tipo: "sine", ganho: 0.18 }); },
   };
 

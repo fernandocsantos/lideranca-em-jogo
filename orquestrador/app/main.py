@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import io
 import logging
 import secrets
@@ -20,7 +21,7 @@ import asyncio
 from . import alocacao as aloc_mod
 from . import campanha as camp
 from . import mascaramento
-from . import cenarios, config, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao, vivencias
+from . import avaliacao, cenarios, config, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao, vivencias
 from .llm import Ctx, ErroLLM
 from .mirofish_client import novo as novo_mirofish
 
@@ -175,6 +176,7 @@ async def config_publica():
         "perfis": perfis.listar(),
         "roteiro_demo": jg.get("roteiro_demo"),
         "perfil_padrao": perfis.padrao(),
+        "expectativas": [{"id": e["id"], "texto": e["texto"]} for e in avaliacao.expectativas()],
         "simulacao": {"max_rodadas": jg["simulacao"]["max_rodadas"], "rodadas_padrao": jg["simulacao"]["rodadas_padrao"]},
         "limites": {"simulacoes_por_dia": jg["limites"]["simulacoes_por_dia"],
                     "mensagens_conversa_por_tentativa": jg["limites"]["mensagens_conversa_por_tentativa"]},
@@ -384,7 +386,8 @@ async def ver_tentativa(tid: str, s: dict = Depends(sessao_atual)):
         "rodadas": t["rodadas"], "decisao": t["decisao"], "esclarecimentos": t["esclarecimentos"],
         "resultado": t["resultado"], "erro": t["erro"], "cenario_id": t["cenario_id"], "fase": t.get("fase"),
         "alocacao": t.get("alocacao"), "escolhas": t.get("escolhas"), "devolutiva": t.get("devolutiva"),
-        "custo": custos.resumo("tentativa_id", tid),
+        "custo": custos.resumo("tentativa_id", tid), "revisao_humana": t.get("revisao_humana") or "pendente",
+        "indice": t["indice"],
     }
 
 
@@ -613,6 +616,36 @@ async def partidas():
                          for c in linhas],
             "gasto_mes_brl": round(custos.gasto_mes_brl(), 2),
             "orcamento_mensal_brl": config.jogo()["limites"]["orcamento_mensal_brl"]}
+
+
+@app.get("/api/facilitador/simulacoes", dependencies=[Depends(facilitador)])
+async def fac_simulacoes():
+    """Simulações com resultado, para a revisão humana (sem dados identificáveis além do apelido)."""
+    ts = db.varios("SELECT t.id, t.cenario_id, t.indice, t.modo, t.criado_em, t.revisao_humana, t.resultado, s.apelido "
+                   "FROM tentativas t JOIN sessoes s ON s.id = t.sessao_id WHERE t.resultado IS NOT NULL "
+                   "ORDER BY t.criado_em DESC LIMIT 60")
+    out = []
+    for t in ts:
+        res = t["resultado"] if isinstance(t["resultado"], dict) else json.loads(t["resultado"] or "{}")
+        av = res.get("avaliacao") or {}
+        out.append({"id": t["id"], "apelido": t["apelido"], "cenario_id": t["cenario_id"], "missao": t["indice"] + 1,
+                    "modo": t["modo"], "criado_em": t["criado_em"], "revisao_humana": t["revisao_humana"] or "pendente",
+                    "carimbo": av.get("carimbo"), "riscos": len(res.get("riscos") or []), "fase": res.get("fase")})
+    return {"simulacoes": out}
+
+
+class Revisao(BaseModel):
+    status: str
+
+
+@app.post("/api/facilitador/simulacoes/{tid}/revisao", dependencies=[Depends(facilitador)])
+async def fac_revisao(tid: str, dados: Revisao):
+    if dados.status not in ("pendente", "validada"):
+        raise HTTPException(400, "Status inválido: use pendente ou validada.")
+    if not db.um("SELECT id FROM tentativas WHERE id=?", (tid,)):
+        raise HTTPException(404, "Simulação não encontrada.")
+    db.atualizar("tentativas", tid, {"revisao_humana": dados.status})
+    return {"ok": True, "status": dados.status}
 
 
 @app.get("/api/facilitador/cenarios", dependencies=[Depends(facilitador)])

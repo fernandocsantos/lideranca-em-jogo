@@ -57,30 +57,38 @@ facilitador:
 roteiro_demo:
   perfil: media
   trimestres:
-    - alocacao: {digitalizacao: 16000, formacao_vendas: 0, atendimento: 8000}
+    - relato: {interpretacao: formato, consultar: true}
+      alternativas:
+        - {digitalizacao: 12000, formacao_online: 6000, atendimento: 6000}
+        - {digitalizacao: 12000, formacao_online: 8000, atendimento: 4000}
+      escolher: 0
+      motivo_alternativa: ["Atende mais associados", "Cabe nas horas da equipe"]
+      alocacao: {digitalizacao: 12000, formacao_vendas: 0, formacao_online: 6000, atendimento: 6000}
+      cortes_linhas:
+        digitalizacao: ["Falta de horas da equipe"]
+        formacao_vendas: ["Há alternativa mais barata", "Baixa adesão no passado"]
+        atendimento: ["Menor impacto no curto prazo"]
       construtor:
-        motivos: ["Mais associados beneficiados", "Menor risco financeiro"]
-        canais: ["Assembleia", "WhatsApp"]
-        qtd: "40"
+        motivos: ["Mais associados beneficiados", "Cabe nas horas da equipe"]
+        motivoLivre: "A formação vai para a noite, online, como os associados pediram"
+        qtd: "25"
         oque: ["lojas vendendo pela internet"]
         prazo: ["o fim do trimestre"]
         revisao: ["30 dias"]
-        envolvidos: [tesoureiro, conselho]
-        cortes: ["Pode esperar o próximo trimestre"]
         responsavel: ["Diretoria executiva"]
-        indicador: ["Engajamento dos associados"]
-      conversa: {ator: lojista_tradicional, pergunta: "Por que você ficou insatisfeito?"}
+        expectativa: ["Os lojistas vão aderir aos projetos financiados"]
+      conversa: {ator: lojista_tradicional, pergunta: "O que você achou da formação online à noite?"}
     - continuidade: ajustar
       alocacao: {digitalizacao: 10500, formacao_vendas: 5000, atendimento: 8000, black_friday: 9000}
+      cortes_linhas:
+        digitalizacao: ["Pode esperar o próximo trimestre"]
       construtor:
-        motivos: ["Exigência de parceiro", "Mais associados beneficiados"]
-        canais: ["Reunião setorial", "Jornal local"]
+        motivos: ["Mais associados beneficiados", "Maior impacto nas vendas"]
+        motivoLivre: "A contrapartida da prefeitura exige meta pública; a Black Friday inclui os bairros."
         qtd: "60"
         oque: ["lojas participando da campanha"]
         prazo: ["60 dias"]
         revisao: ["30 dias"]
-        envolvidos: [parceiro, lojista_digital]
-        cortes: ["Há outra fonte de recurso", "Menor impacto no curto prazo"]
         responsavel: ["Gerência"]
-        indicador: ["Relação com poder público e parceiros"]
+        expectativa: ["A associação ganha visibilidade na cidade"]
       conversa: {ator: associado_bairro, pergunta: "O que você achou da decisão?"}

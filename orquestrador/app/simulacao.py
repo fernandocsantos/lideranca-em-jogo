@@ -10,7 +10,7 @@ import unicodedata
 from typing import Any
 
 from . import alocacao as alocacao_mod
-from . import cenarios, config, custos, db, devolutiva, indicadores, settings, sinais
+from . import avaliacao, cenarios, config, custos, db, devolutiva, indicadores, settings, sinais
 from .contingencia import simular as simular_contingencia
 from .esclarecimento import decisao_completa
 from .llm import Ctx
@@ -271,11 +271,14 @@ def resultado_base(c: Cenario, aloc: dict[str, int], escolhas: dict, antes: dict
     calc = alocacao_mod.calcular(c, aloc, escolhas)
     cons = indicadores.consolidar(antes, calc["pontos"], {i: 0.0 for i in config.INDICADORES})
     cons["auditoria"] = calc["auditoria"] + cons["auditoria"]
-    return {"fase": "base", "resumo": "", "momentos": [], "reacoes": reacoes_previstas(c, calc["demandas"]),
-            "meta": alocacao_mod.progresso_meta(c, aloc, escolhas, cons["depois"]),
-            "sinais": [], "flags": [], "indicadores": cons, "pontos_base": calc["pontos"],
-            "demandas": calc["demandas"], "saldo": calc["saldo"], "disponivel": calc["disponivel"],
-            "relatorio": "", "acoes": []}
+    res = {"fase": "base", "resumo": "", "momentos": [], "reacoes": reacoes_previstas(c, calc["demandas"]),
+           "meta": alocacao_mod.progresso_meta(c, aloc, escolhas, cons["depois"]),
+           "sinais": [], "flags": [], "indicadores": cons, "pontos_base": calc["pontos"],
+           "demandas": calc["demandas"], "saldo": calc["saldo"], "disponivel": calc["disponivel"],
+           "horas_usadas": alocacao_mod.horas_usadas(c, aloc, escolhas), "horas_equipe": c.horas_equipe,
+           "relatorio": "", "acoes": []}
+    res["avaliacao"] = avaliacao.avaliar(c, res, escolhas, aloc)
+    return res
 
 
 async def gerar_devolutiva(tid: str) -> None:
@@ -387,6 +390,8 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
             "relatorio": relatorio[:20000],
             "acoes": acoes[:200],
         }
+        if aloc and c.demandas:
+            resultado["avaliacao"] = avaliacao.avaliar(c, resultado, escolhas, aloc)
         db.atualizar("tentativas", tid, {"status": "concluida", "etapa": "Concluída", "progresso": 100,
                                          "fase": "completo", "resultado": resultado,
                                          "indicadores_depois": final["depois"]})

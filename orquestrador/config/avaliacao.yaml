@@ -1,0 +1,33 @@
+# Regras do resultado da missão (determinísticas e auditáveis; nenhuma IA decide aqui).
+# A simulação dos agentes só ajusta os indicadores dentro de ±ajuste_llm_max (indicadores.yaml).
+
+# ---------------------------------------------------------------- carimbo
+# Pontos somados; limites estourados (teto ou horas) dão FRACASSO direto.
+carimbo:
+  meta:          # % previsto da meta que o próprio jogador definiu
+    - {min_pct: 80, pontos: 2}
+    - {min_pct: 40, pontos: 1}
+  indicadores:   # soma das variações dos 6 indicadores no trimestre
+    - {min_soma: 4, pontos: 2}
+    - {min_soma: -2, pontos: 1}
+  ata_completa: 1  # justificativa geral + meta + revisão + todo corte justificado
+  faixas:          # total de 0 a 5; SUCESSO também exige a meta ao menos "atrasada" (1 ponto)
+    sucesso: 4
+    parcial: 2
+
+# ---------------------------------------------------------------- expectativa
+# "O que você espera que aconteça?" — comparada com a variação do indicador na simulação.
+expectativas:
+  - {id: adesao,       texto: "Os lojistas vão aderir aos projetos financiados",            indicador: engajamento,      direcao: sobe}
+  - {id: caixa,        texto: "O caixa da associação vai se equilibrar",                    indicador: saude_financeira, direcao: sobe}
+  - {id: unidade,      texto: "Quem teve corte vai reclamar, mas a diretoria segue unida",  indicador: coesao,           direcao: estavel}
+  - {id: visibilidade, texto: "A associação ganha visibilidade na cidade",                  indicador: reputacao,        direcao: sobe}
+
+# ---------------------------------------------------------------- desempenho acadêmico (A a D)
+# A = 4, B = 3, C = 2, D = 1. O conceito geral é a média dos critérios aplicáveis, arredondada.
+desempenho:
+  meta_resultado:   [{min_pct: 80, conceito: A}, {min_pct: 60, conceito: B}, {min_pct: 40, conceito: C}]
+  # expectativa × simulação: fração das expectativas confirmadas (1 = A, >= 0,5 = B, > 0 = C, 0 ou nenhuma = D)
+  # justificativa completa: elementos faltando (0 = A, 1 = B, 2 = C, 3 ou mais = D)
+  # interpretação do relato: adequada + consultou = A; só adequada = B; só consultou = C; nenhuma = D
+  # dentro dos limites: teto e horas respeitados = A; caso contrário = D
