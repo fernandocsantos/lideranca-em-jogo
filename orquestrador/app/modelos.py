@@ -35,6 +35,14 @@ class Ator(AtorGerado):
     # Aparência do avatar ilustrado (nunca foto). Se ausente, é derivada do id de forma estável.
     idade: Optional[int] = None
     genero: Optional[Literal["f", "m"]] = None
+    funcao: Optional[str] = None  # função curta exibida junto ao nome: "Otávio (presidente da associação)"
+
+    @property
+    def funcao_curta(self) -> str:
+        if self.funcao:
+            return self.funcao
+        p = self.papel.split(",")[0].strip()
+        return p[:1].lower() + p[1:] if p and not p[:2].isupper() else p
 
 
 class Associacao(Estrito):
@@ -64,6 +72,10 @@ class Demanda(Estrito):
     minimo_util: float = 0.5        # abaixo desta fração o benefício cai pela metade
     meta_sugerida: str = ""         # unidade da meta, ex.: "lojas vendendo pela internet"
     ano_anterior: Optional[int] = None  # valor executado no período anterior (ponto de partida da Mesa)
+    horas: int = 0                  # horas da equipe se financiada por inteiro (proporcional à verba)
+    grupo: Optional[str] = None     # alternativas do mesmo grupo são excludentes (ex.: formação presencial × online)
+    requer_consulta: bool = False   # só aparece na Mesa depois de "Consultar os associados"
+    indicador_sugerido: str = ""    # indicador de acompanhamento sugerido na Ata
 
 
 class Regra(Estrito):
@@ -78,6 +90,36 @@ class Evento(Estrito):
     texto: str
     delta_orcamento: int = 0
     fonte: Optional[Referencia] = None
+
+
+class OpcaoRelato(Estrito):
+    id: str
+    texto: str
+    adequada: bool = False
+
+
+class Relato(Estrito):
+    """Relato fixo do cenário que vira exercício: interpretar e decidir se consulta os associados."""
+    autor: str
+    funcao: str
+    texto: str
+    pergunta: str = "O que esse relato sugere?"
+    opcoes: list[OpcaoRelato]
+    consulta_horas: int = 8
+    consulta_achado: str = ""
+    consulta_libera: Optional[str] = None  # id da demanda alternativa liberada pela consulta
+
+
+class Hipotese(Estrito):
+    id: str
+    texto: str                      # premissa padrão usada na simulação
+    alternativa: str                # premissa trocada pelo jogador
+    efeito_alternativa: dict[str, float] = {}  # pontos por indicador (determinístico) se trocada
+
+
+class Fala(Estrito):
+    ator_id: str
+    texto: str
 
 
 class Cenario(BaseModel):
@@ -104,6 +146,12 @@ class Cenario(BaseModel):
     trimestre: int = 1
     continua_de: Optional[str] = None  # cenário anterior encadeado (manter/ajustar/rever)
     vivencias_base: int = 0         # "Construído a partir de N vivências da rede"
+    # --- rodada 4 (Legado) ---
+    horas_equipe: int = 0           # horas da equipe disponíveis no período
+    frase_abertura: str = ""        # ex.: "Tudo importa. O dinheiro não cobre tudo."
+    fala_abertura: Optional[Fala] = None
+    relato: Optional[Relato] = None
+    hipoteses: list[Hipotese] = []
 
     @property
     def disponivel(self) -> int:

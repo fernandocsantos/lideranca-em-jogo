@@ -1,6 +1,6 @@
 {
   "id": "guia_t2_orcamento",
-  "titulo": "Trimestre 2: manter, ajustar ou rever?",
+  "titulo": "A contrapartida da prefeitura",
   "tema": "orcamento_prioridades",
   "dificuldade": 2,
   "associacao": {
@@ -10,7 +10,7 @@
     "associados": 380,
     "situacao_financeira": "Equilibrada, mas sem folga: a reserva cobre 2 meses de despesas."
   },
-  "texto": "No segundo trimestre, a Associação Comercial e Empresarial de Vale Sereno volta a ter R$ 30 mil livres para projetos. Os resultados da decisão do primeiro trimestre já aparecem: alguns associados elogiam, outros cobram. A prefeitura oferece R$ 5 mil a mais, desde que a associação divulgue uma meta pública para o projeto apoiado. A Black Friday se aproxima, e o comércio dos bairros pede uma campanha conjunta (R$ 9 mil). Os projetos do trimestre anterior pedem continuidade: segunda etapa da digitalização (R$ 12 mil), nova turma de formação em vendas (R$ 10 mil) e manutenção do reforço no atendimento (R$ 8 mil). A diretoria precisa decidir se mantém, ajusta ou revê a decisão anterior, com base nos resultados.",
+  "texto": "No segundo trimestre, a Associação Comercial e Empresarial de Vale Sereno volta a ter R$ 30 mil livres para projetos. Os resultados da decisão do primeiro trimestre já aparecem: alguns associados elogiam, outros cobram. A prefeitura oferece R$ 5 mil a mais, desde que a associação divulgue uma meta pública para o projeto apoiado. A Black Friday se aproxima, e o comércio dos bairros pede uma campanha conjunta (R$ 9 mil). Os projetos do trimestre anterior pedem continuidade: segunda etapa da digitalização (R$ 12 mil), nova turma de formação em vendas (R$ 10 mil) e manutenção do reforço no atendimento (R$ 8 mil). A diretoria precisa decidir se mantém, ajusta ou revê a decisão anterior, com base nos resultados. A equipe tem 120 horas no trimestre: digitalização 40 h, formação 30 h, atendimento 40 h e Black Friday 30 h.",
   "restricoes": [
     "Os R$ 5 mil da prefeitura exigem uma meta pública divulgada.",
     "A reserva de emergência não pode ser usada em projetos.",
@@ -181,7 +181,9 @@
         "reputacao": -1.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "novas lojas vendendo pela internet"
+      "meta_sugerida": "novas lojas vendendo pela internet",
+      "horas": 40,
+      "indicador_sugerido": "% de lojistas digitalizados"
     },
     {
       "id": "formacao_vendas",
@@ -199,7 +201,9 @@
         "coesao": -1.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "vendedores formados"
+      "meta_sugerida": "vendedores formados",
+      "horas": 30,
+      "indicador_sugerido": "participação na formação"
     },
     {
       "id": "atendimento",
@@ -216,7 +220,9 @@
         "coesao": -1.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "associados com mensalidade em dia"
+      "meta_sugerida": "associados com mensalidade em dia",
+      "horas": 40,
+      "indicador_sugerido": "tempo de resposta ao associado"
     },
     {
       "id": "black_friday",
@@ -233,7 +239,9 @@
         "engajamento": -1.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "lojas participando da campanha"
+      "meta_sugerida": "lojas participando da campanha",
+      "horas": 30,
+      "indicador_sugerido": "lojas dos bairros na campanha"
     }
   ],
   "regras": [
@@ -258,5 +266,38 @@
   },
   "usa_perfil": true,
   "trimestre": 2,
-  "continua_de": "guia_t1_orcamento"
+  "continua_de": "guia_t1_orcamento",
+  "fala_abertura": {
+    "ator_id": "presidente",
+    "texto": "Mantemos, ajustamos ou revemos?"
+  },
+  "frase_abertura": "O que funcionou merece continuar. O que não funcionou merece outra chance ou um fim.",
+  "horas_equipe": 120,
+  "hipoteses": [
+    {
+      "id": "prefeitura",
+      "texto": "A prefeitura cumpre a contrapartida se a meta for divulgada",
+      "alternativa": "A prefeitura atrasa o repasse",
+      "efeito_alternativa": {
+        "saude_financeira": -2.0,
+        "capital_politico": -1.0
+      }
+    },
+    {
+      "id": "blackfriday",
+      "texto": "O comércio dos bairros adere à Black Friday",
+      "alternativa": "Poucas lojas dos bairros aderem",
+      "efeito_alternativa": {
+        "engajamento": -1.5
+      }
+    },
+    {
+      "id": "receita",
+      "texto": "A receita se mantém estável",
+      "alternativa": "A inadimplência volta a subir",
+      "efeito_alternativa": {
+        "saude_financeira": -2.0
+      }
+    }
+  ]
 }

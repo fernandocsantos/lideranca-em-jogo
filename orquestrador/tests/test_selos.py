@@ -22,8 +22,9 @@ def test_selos_por_comportamento_e_certificado():
         t = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={
             "decisao": "Prioridade: atendimento. Meta: 50 associados recontatados.", "alocacao": {"atendimento": 8000},
             "escolhas": {"resumo_completo": 1, "meta_mensuravel": 1, "considerou_vivencias": 1}}).json()
-        cli.post(f"/api/tentativas/{t['tentativa_id']}/conversa", headers=h,
-                 json={"interlocutor": "associado_bairro", "mensagem": "Por que você desconfia da diretoria?"})
+        rc = cli.post(f"/api/tentativas/{t['tentativa_id']}/conversa", headers=h,
+                      json={"interlocutor": "associado_bairro", "mensagem": "Por que você desconfia da diretoria?"})
+        assert rc.status_code == 200, rc.text
         r = cli.get(f"/api/campanhas/{camp['id']}/selos", headers=h).json()
         ganhos = {x["id"] for x in r["selos"] if x["ganho"]}
         assert {"considerou_vivencia", "decisao_clara", "meta_mensuravel", "ouviu_discordante"} <= ganhos

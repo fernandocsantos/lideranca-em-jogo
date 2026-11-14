@@ -1,6 +1,6 @@
 {
   "id": "guia_t1_orcamento",
-  "titulo": "Trimestre 1: três pedidos, um orçamento",
+  "titulo": "O corte de R$ 6.000",
   "tema": "orcamento_prioridades",
   "dificuldade": 1,
   "associacao": {
@@ -10,7 +10,7 @@
     "associados": 380,
     "situacao_financeira": "Equilibrada, mas sem folga: a reserva cobre 2 meses de despesas."
   },
-  "texto": "A Associação Comercial e Empresarial de Vale Sereno tem uma diretoria recém-eleita e voluntária, que se reúne pouco. O trimestre começa com R$ 30 mil livres para projetos, mas a tesouraria avisa que mensalidades atrasadas derrubaram a receita prevista em R$ 6 mil, deixando R$ 24 mil. Três pedidos disputam esse dinheiro. Os jovens lojistas querem um programa de digitalização (R$ 18 mil) para vender pela internet. Lojistas tradicionais do centro pedem uma formação em vendas e atendimento para os vendedores (R$ 14 mil). A gerente executiva pede reforço no atendimento ao associado (R$ 8 mil), porque associados mal atendidos estão deixando de pagar. Associados dos bairros reclamam que a associação só olha para o centro. O diretor financeiro quer números claros e não aceita mexer na reserva de emergência. A prefeitura acompanha de longe e pode se tornar parceira de projetos com resultado visível. A diretoria precisa decidir o que financiar, o que adiar e como comunicar a escolha.",
+  "texto": "A Associação Comercial e Empresarial de Vale Sereno tem uma diretoria voluntária, que se reúne pouco. Vanessa, lojista, está no primeiro mandato como diretora. Otávio, presidente da associação, abre a reunião: o orçamento de projetos do trimestre caiu de R$ 30 mil para R$ 24 mil, porque mensalidades atrasadas derrubaram a receita. No ano anterior, três frentes receberam verba: digitalização dos lojistas (R$ 18 mil), formação em vendas (R$ 14 mil) e atendimento ao associado (R$ 8 mil). Tudo importa, mas o dinheiro não cobre tudo. A equipe da associação tem 100 horas disponíveis no trimestre, e cada frente consome horas: digitalização 60 h, formação 40 h e atendimento 50 h. Uma ex-diretora de capacitação relata que uma formação anterior teve baixa participação porque o horário não atendia aos lojistas.",
   "restricoes": [
     "A reserva de emergência não pode ser usada em projetos.",
     "A decisão precisa constar na ata e na prestação de contas do trimestre.",
@@ -157,7 +157,7 @@
   ],
   "inspirado_em": null,
   "status": "curado",
-  "narrativa": "Você acaba de assumir a presidência. Há R$ 30 mil para projetos neste trimestre, mas os três pedidos não cabem juntos. Na véspera da reunião, a tesouraria avisa que a receita prevista caiu R$ 6 mil. Decida o que financiar, o que adiar e como explicar aos associados.",
+  "narrativa": "É o seu primeiro mandato na diretoria. O orçamento de projetos caiu de R$ 30 mil para R$ 24 mil. No ano anterior, foram R$ 18 mil em digitalização dos lojistas, R$ 14 mil em formação em vendas e R$ 8 mil em atendimento ao associado. A equipe tem 100 horas no trimestre. Decida o que financiar, o que cortar e como explicar.",
   "tags": [
     "Orçamento apertado",
     "Associados divididos",
@@ -182,11 +182,13 @@
       },
       "minimo_util": 0.5,
       "meta_sugerida": "lojas vendendo pela internet",
-      "ano_anterior": 12000
+      "ano_anterior": 18000,
+      "horas": 60,
+      "indicador_sugerido": "% de lojistas digitalizados"
     },
     {
       "id": "formacao_vendas",
-      "titulo": "Formação em vendas",
+      "titulo": "Formação em vendas (presencial)",
       "custo": 14000,
       "solicitante": "lojista_tradicional",
       "beneficio": "Curso de atendimento e vendas para 60 vendedores do comércio.",
@@ -201,7 +203,33 @@
       },
       "minimo_util": 0.5,
       "meta_sugerida": "vendedores formados",
-      "ano_anterior": 10000
+      "ano_anterior": 14000,
+      "horas": 40,
+      "grupo": "formacao",
+      "indicador_sugerido": "participação na formação"
+    },
+    {
+      "id": "formacao_online",
+      "titulo": "Formação em vendas — online, noturna",
+      "custo": 8000,
+      "solicitante": "lojista_tradicional",
+      "beneficio": "Curso online à noite, no horário que os lojistas preferem; atende os mesmos 60 vendedores.",
+      "efeitos": {
+        "engajamento": 3.5,
+        "reputacao": 2.0,
+        "coesao": 1.0
+      },
+      "efeitos_adiar": {
+        "engajamento": -2.0,
+        "coesao": -1.0
+      },
+      "minimo_util": 0.5,
+      "meta_sugerida": "vendedores formados",
+      "ano_anterior": 0,
+      "horas": 16,
+      "grupo": "formacao",
+      "requer_consulta": true,
+      "indicador_sugerido": "participação na formação"
     },
     {
       "id": "atendimento",
@@ -220,7 +248,9 @@
       },
       "minimo_util": 0.5,
       "meta_sugerida": "associados atrasados recontatados",
-      "ano_anterior": 8000
+      "ano_anterior": 8000,
+      "horas": 50,
+      "indicador_sugerido": "tempo de resposta ao associado"
     }
   ],
   "regras": [
@@ -238,16 +268,87 @@
     },
     {
       "icone": "⏱️",
-      "texto": "Os fornecedores pedem resposta em 7 dias."
+      "texto": "A equipe tem 100 horas no trimestre; consultar os associados consome 8 h."
     }
   ],
   "evento": {
-    "titulo": "Receita prevista cai R$ 6 mil",
+    "titulo": "Orçamento cai de R$ 30 mil para R$ 24 mil",
     "texto": "Mensalidades atrasadas reduziram a receita do trimestre.",
     "delta_orcamento": -6000,
     "fonte": null
   },
   "usa_perfil": true,
   "trimestre": 1,
-  "continua_de": null
+  "continua_de": null,
+  "frase_abertura": "Tudo importa. O dinheiro não cobre tudo.",
+  "fala_abertura": {
+    "ator_id": "presidente",
+    "texto": "O que vamos priorizar?"
+  },
+  "horas_equipe": 100,
+  "relato": {
+    "autor": "Helena",
+    "funcao": "ex-diretora de capacitação, personagem fictícia",
+    "texto": "Fizemos uma formação em vendas às 14 h, num dia útil. Inscreveram-se 50 vendedores, mas só 12 apareceram. Depois descobrimos que o horário não atendia aos lojistas: ninguém podia fechar a loja à tarde.",
+    "pergunta": "O que esse relato sugere?",
+    "opcoes": [
+      {
+        "id": "formato",
+        "texto": "O formato precisa caber na rotina dos lojistas",
+        "adequada": true
+      },
+      {
+        "id": "cortar",
+        "texto": "Formação não funciona; melhor cortar",
+        "adequada": false
+      },
+      {
+        "id": "divulgar",
+        "texto": "Faltou divulgação",
+        "adequada": false
+      },
+      {
+        "id": "preco",
+        "texto": "O curso precisa ser mais barato",
+        "adequada": false
+      }
+    ],
+    "consulta_horas": 8,
+    "consulta_achado": "Consulta rápida por WhatsApp: 68% dos associados preferem formação online à noite.",
+    "consulta_libera": "formacao_online"
+  },
+  "hipoteses": [
+    {
+      "id": "tempo",
+      "texto": "Lojistas com pouco tempo livre durante o dia",
+      "alternativa": "Lojistas com tempo livre à tarde",
+      "efeito_alternativa": {
+        "engajamento": 1.0
+      }
+    },
+    {
+      "id": "receita",
+      "texto": "A receita não volta neste trimestre",
+      "alternativa": "Parte da receita volta no fim do trimestre",
+      "efeito_alternativa": {
+        "saude_financeira": 2.0
+      }
+    },
+    {
+      "id": "whatsapp",
+      "texto": "Associados respondem às mensagens no WhatsApp",
+      "alternativa": "Associados quase não leem as mensagens",
+      "efeito_alternativa": {
+        "engajamento": -1.5
+      }
+    },
+    {
+      "id": "diretoria",
+      "texto": "A diretoria apoia a decisão se houver meta pública",
+      "alternativa": "A diretoria está dividida",
+      "efeito_alternativa": {
+        "coesao": -2.0
+      }
+    }
+  ]
 }

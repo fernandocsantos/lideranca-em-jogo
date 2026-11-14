@@ -12,7 +12,8 @@ def definicoes() -> dict[str, dict[str, Any]]:
 
 def _postura(resultado: dict, ator_id: str) -> int:
     """Postura mais crítica que o jogador viu desse ator (prévia da alocação ou fim da simulação)."""
-    vistas = [int(r.get("postura_final", 0)) for r in resultado.get("reacoes", []) if r["ator_id"] == ator_id]
+    vistas = [int(r.get(k, 0)) for r in resultado.get("reacoes", []) if r["ator_id"] == ator_id
+              for k in ("postura_inicial", "postura_final")]  # a pauta já mostra a postura inicial
     vistas += [int(d.get("postura_prevista", 0)) for d in resultado.get("demandas", []) if d.get("solicitante") == ator_id]
     return min(vistas) if vistas else 0
 

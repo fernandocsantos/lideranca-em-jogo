@@ -258,3 +258,15 @@ body.alto-contraste .cartao, body.alto-contraste .ind, body.alto-contraste .chip
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 420px) { .indicadores { grid-template-columns: repeat(2, 1fr); } .barras-ind .l { grid-template-columns: 1fr 2.2rem 4rem; } .barras-ind .barra { display: none; } }
 @media print { .barra-topo, .abas, .acoes, .aviso-curto { display: none !important; } main { padding: 0; } body { background: #fff; } }
+
+/* rodada 4: pauta do pitch */
+.fala-abertura { display: flex; gap: .8rem; align-items: center; margin: .2rem 0 1rem; }
+.fala-abertura .balao { margin: .25rem 0 0; background: var(--superficie); border: 1px solid var(--borda-forte); border-radius: 14px 14px 14px 4px;
+  padding: .5rem .8rem; font-size: 1.05rem; font-weight: 600; }
+.orcamento-destaque { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; background: var(--cacb-primaria-clara);
+  border-radius: var(--raio); padding: .8rem 1rem; margin-bottom: .6rem; }
+.orcamento-destaque .rotulo { width: 100%; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-suave); }
+.orcamento-destaque .antes { font-size: 1.3rem; text-decoration: line-through; color: var(--texto-suave); }
+.orcamento-destaque .depois { font-size: 1.7rem; font-weight: 800; color: var(--cacb-primaria-escura); }
+.orcamento-destaque .horas { margin-left: auto; display: inline-flex; gap: .3rem; align-items: center; font-weight: 600; }
+.frase-abertura { font-size: 1.15rem; font-weight: 800; margin: .2rem 0 1rem; }

@@ -59,7 +59,7 @@ def test_dois_trimestres_do_guia_com_mirofish():
         acima = cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
                          json={"alocacao": {"digitalizacao": 18000, "formacao_vendas": 14000}}).json()
         assert acima["excedente"] == 8000 and not acima["fechado"]  # Mesa mostra "Falta cortar R$ 8.000"
-        assert [d["ano_anterior"] for d in cen["demandas"]] == [12000, 10000, 8000]  # soma 30 mil > teto 24 mil
+        assert [d["ano_anterior"] for d in cen["demandas"]] == [18000, 14000, 0, 8000]  # soma 40 mil > teto 24 mil
         t0 = time.time()
         pv = cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
                       json={"alocacao": {"formacao_vendas": 14000, "atendimento": 8000}}).json()
@@ -73,10 +73,10 @@ def test_dois_trimestres_do_guia_com_mirofish():
             "alocacao": aloc1, "escolhas": {"comunicacao": "assembleia"}}).json()
         t = cli.get(f"/api/tentativas/{r['tentativa_id']}", headers=h).json()
         assert t["resultado"]["fase"] in ("base", "completo") and t["resultado"]["indicadores"]["depois"]  # na hora
-        assert "R$ 0 | adiada" in falso.ultimo_material or falso.ultimo_material == ""
+        assert "R$ 0 | 0 h | adiada" in falso.ultimo_material or falso.ultimo_material == ""
         t = _esperar_completo(cli, r["tentativa_id"], h)
         assert t["fase"] == "completo" and t["modo"] == "mirofish"
-        assert "| Formação em vendas | Dona Cida Moraes | R$ 14.000 | R$ 14.000 | financiada |" in falso.ultimo_material
+        assert "| Formação em vendas (presencial) | Dona Cida Moraes | R$ 14.000 | R$ 14.000 | 40 h | financiada |" in falso.ultimo_material
         res = t["resultado"]
         assert 3 <= len(res["momentos"]) <= 5 and res["resumo"]
         assert t["devolutiva"]["perguntas_reflexivas"]
@@ -93,7 +93,7 @@ def test_dois_trimestres_do_guia_com_mirofish():
         # refazer: mesmo ponto de partida
         falso.polls_execucao = 0
         r2 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={
-            "decisao": "Financiamos a digitalização e o atendimento.", "alocacao": {"digitalizacao": 16000, "atendimento": 8000}}).json()
+            "decisao": "Financiamos a digitalização e o atendimento.", "alocacao": {"digitalizacao": 15000, "atendimento": 8000}}).json()
         t2 = _esperar_completo(cli, r2["tentativa_id"], h)
         assert t2["resultado"]["indicadores"]["antes"] == t["resultado"]["indicadores"]["antes"]
         assert len(cli.get(f"/api/campanhas/{camp['id']}/comparar", params={"indice": 0}, headers=h).json()["tentativas"]) == 2
@@ -173,7 +173,7 @@ def test_relatorio_tem_ata_padronizada_com_7_secoes():
                       "alocacao": {"digitalizacao": 6000, "formacao_vendas": 10000, "atendimento": 8000}, "escolhas": esc}).json()
         _esperar_completo(cli, r1["tentativa_id"], h)
         r2 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Refeito: atendimento e digitalização.",
-                      "alocacao": {"digitalizacao": 16000, "atendimento": 8000}, "escolhas": esc}).json()
+                      "alocacao": {"digitalizacao": 15000, "atendimento": 8000}, "escolhas": esc}).json()
         _esperar_completo(cli, r2["tentativa_id"], h)
         cli.post(f"/api/campanhas/{camp['id']}/avancar", headers=h, json={"tentativa_id": r1["tentativa_id"]})
         rel = cli.get(f"/api/campanhas/{camp['id']}/relatorio", headers=h).json()

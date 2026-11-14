@@ -199,6 +199,7 @@ function telaPosse() {
       estado.token = r.token; estado.apelido = r.apelido;
       localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
       localStorage.removeItem("lej_roteiro");
+      localStorage.setItem("lej_jogador", JSON.stringify({ apelido: r.apelido, funcao: "diretora ou diretor em 1º mandato" }));
       await novaCampanha(form.querySelector("input[name=perfil]:checked")?.value);
       SOM.tocar("confirmar");
     } catch (e) { mostrarErro(form, e); }
@@ -212,11 +213,19 @@ function telaPosse() {
   const roteiro = estado.cfg.roteiro_demo ? el("button", { class: "botao secundario bloco", onclick: async () => {
     try {
       localStorage.setItem("lej_roteiro", "1");
-      const r = await api("/api/sessoes", { method: "POST", body: { apelido: campo.value || "Demonstração" } });
-      estado.token = r.token; localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
+      localStorage.setItem("lej_jogador", JSON.stringify(VANESSA));
+      const r = await api("/api/sessoes", { method: "POST", body: { apelido: VANESSA.apelido } });
+      estado.token = r.token; estado.apelido = r.apelido; localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
       await novaCampanha(estado.cfg.roteiro_demo.perfil);
-    } catch (e) { mostrarErro(form, e); } } }, icone("play", 18), "Roteiro da demonstração (2 trimestres)") : "";
+    } catch (e) { mostrarErro(form, e); } } }, icone("play", 18), "Entrar como Vanessa (demonstração)") : "";
   tela(el("p", { class: "suave" }, FRASE), form, roteiro);
+}
+
+// Perfil de quem joga: fica só no aparelho (nada identificável). Vanessa é o perfil de demonstração do pitch.
+const VANESSA = { apelido: "Vanessa", funcao: "lojista, diretora em 1º mandato", papel: "Diretora", segmento: "Varejo", porte: "Pequena empresa", demo: true };
+function jogador() {
+  try { return JSON.parse(localStorage.getItem("lej_jogador") || "null") || { apelido: estado.apelido || "Você", funcao: "diretora ou diretor em 1º mandato" }; }
+  catch (_) { return { apelido: estado.apelido || "Você", funcao: "diretora ou diretor em 1º mandato" }; }
 }
 
 async function novaCampanha(perfil) {
@@ -316,6 +325,14 @@ function telaPauta() {
     passosTrimestre(0),
     rot ? faixaRoteiro(rot.continuidade ? `escolha "${rot.continuidade[0].toUpperCase() + rot.continuidade.slice(1)}" abaixo.` : "leia a pauta e abra a Mesa do Orçamento.") : "",
     c.continua_de && anterior ? blocoTrimestreAnterior(c, anterior) : "",
+    c.fala_abertura && ator(c.fala_abertura.ator_id) ? el("div", { class: "fala-abertura" },
+      avatarDe(ator(c.fala_abertura.ator_id), "neutra", 56, true),
+      el("div", {}, el("strong", {}, `${ator(c.fala_abertura.ator_id).nome.split(" ")[0]} (${ator(c.fala_abertura.ator_id).funcao})`),
+        el("p", { class: "balao" }, `“${c.fala_abertura.texto}”`))) : "",
+    c.evento ? el("div", { class: "orcamento-destaque", role: "group", "aria-label": `Orçamento: de ${brl(c.orcamento)} para ${brl(c.disponivel)}` },
+      el("span", { class: "rotulo" }, "Orçamento"), el("span", { class: "antes" }, brl(c.orcamento)), icone("move-right", 22), el("span", { class: "depois" }, brl(c.disponivel)),
+      c.horas_equipe ? el("span", { class: "horas" }, icone("clock", 16), `${c.horas_equipe} h da equipe`) : "") : "",
+    c.frase_abertura ? el("p", { class: "frase-abertura" }, c.frase_abertura) : "",
     el("div", { class: "cartao" },
       el("div", { class: "cabecalho-doc" }, el("span", {}, "Pauta"), el("span", {}, c.associacao.nome.match(/\(([^)]+)\)/)?.[1] || ""), el("span", {}, `Teto ${brl(c.disponivel)}`)),
       el("p", { class: "narrativa" }, c.narrativa || c.texto.split(/\n\n/)[0]),
@@ -428,7 +445,7 @@ function telaMesa() {
     pedirPrevia(aplicarPrevia);
   };
 
-  const cartaoLinhas = el("div", { class: "cartao", style: "padding:.2rem 1rem" }, c.demandas.map((d) => {
+  const cartaoLinhas = el("div", { class: "cartao", style: "padding:.2rem 1rem" }, c.demandas.filter((d) => !d.requer_consulta || estado.escolhas.consultou_associados).map((d) => {
     const a = ator(d.solicitante);
     const l = { valor: el("output", { "aria-live": "polite" }), status: el("span", {}), barra: el("span", {}), avatar: el("span", {}) };
     l.menos = el("button", { type: "button", "aria-label": `Diminuir ${d.titulo} em R$ 500`, onclick: () => definir(d, estado.aloc[d.id] - 500) }, icone("minus", 20));

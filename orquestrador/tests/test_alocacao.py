@@ -13,7 +13,32 @@ def _c(perfil="media"):
 def test_caso_do_guia():
     c = _c()
     assert c.orcamento == 30000 and c.disponivel == 24000
-    assert {d.id: d.custo for d in c.demandas} == {"digitalizacao": 18000, "formacao_vendas": 14000, "atendimento": 8000}
+    assert {d.id: d.custo for d in c.demandas} == {"digitalizacao": 18000, "formacao_vendas": 14000,
+                                                   "formacao_online": 8000, "atendimento": 8000}
+    assert {d.id: d.ano_anterior for d in c.demandas if d.ano_anterior} == {"digitalizacao": 18000, "formacao_vendas": 14000,
+                                                                          "atendimento": 8000}
+    assert c.horas_equipe == 100 and {d.id: d.horas for d in c.demandas}["digitalizacao"] == 60
+    assert c.fala_abertura.texto == "O que vamos priorizar?" and c.frase_abertura == "Tudo importa. O dinheiro não cobre tudo."
+    assert c.relato.autor == "Helena" and "ex-diretora de capacitação" in c.relato.funcao
+    nomes = {a.id: (a.nome, a.funcao_curta) for a in c.atores}
+    assert nomes["presidente"] == ("Otávio Rezende", "presidente da associação")
+
+
+def test_horas_alternativas_e_consulta():
+    c = _c()
+    # horas: atendimento cheio (50 h) + digitalização R$ 16 mil (53 h) = 103 h > 100 h
+    with pytest.raises(AlocacaoInvalida, match="horas"):
+        alocacao.normalizar(c, {"atendimento": 8000, "digitalizacao": 16000})
+    # alternativa online só depois da consulta, e nunca junto com a presencial
+    with pytest.raises(AlocacaoInvalida, match="consultar"):
+        alocacao.normalizar(c, {"formacao_online": 8000})
+    with pytest.raises(AlocacaoInvalida, match="uma só alternativa"):
+        alocacao.normalizar(c, {"formacao_online": 4000, "formacao_vendas": 4000}, escolhas={"consultou_associados": True})
+    ok = {"digitalizacao": 12000, "formacao_online": 6000, "atendimento": 6000}
+    assert alocacao.horas_usadas(c, ok, {"consultou_associados": True}) == 40 + 12 + 38 + 8
+    assert alocacao.normalizar(c, ok, escolhas={"consultou_associados": True})["formacao_online"] == 6000
+    p = alocacao.previa(c, {"atendimento": 8000, "digitalizacao": 16000}, INI)
+    assert p["horas_excedente"] == 3 and not p["fechado"]
 
 
 def test_soma_nunca_passa_do_disponivel():
@@ -24,7 +49,8 @@ def test_soma_nunca_passa_do_disponivel():
         alocacao.normalizar(c, {"inexistente": 100})
     with pytest.raises(AlocacaoInvalida):
         alocacao.normalizar(c, {"atendimento": 9000})  # acima do custo
-    assert alocacao.normalizar(c, {"atendimento": 8000}) == {"atendimento": 8000, "digitalizacao": 0, "formacao_vendas": 0}
+    assert alocacao.normalizar(c, {"atendimento": 8000}) == {"atendimento": 8000, "digitalizacao": 0, "formacao_vendas": 0,
+                                                                          "formacao_online": 0}
 
 
 def test_previa_deterministica_e_expressoes():
@@ -67,7 +93,7 @@ def test_perfis_escalam_orcamento_e_custos():
 def test_material_semente_tem_alocacao_estruturada():
     c = _c()
     m = cenarios.material_semente(c, "Priorizamos o atendimento.", {"atendimento": 8000})
-    assert "| Atendimento ao associado | Patrícia Lemos | R$ 8.000 | R$ 8.000 | financiada |" in m
+    assert "| Atendimento ao associado | Patrícia Lemos | R$ 8.000 | R$ 8.000 | 50 h | financiada |" in m
     assert "adiada" in m and "Regras que a decisão e a simulação devem respeitar" in m
 
 

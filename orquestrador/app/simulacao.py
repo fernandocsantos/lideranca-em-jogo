@@ -228,7 +228,8 @@ def _item_legivel(i: dict, nomes: dict[int, str]) -> dict:
 def chave_simulacao(t: dict, aloc: dict | None, escolhas: dict, fato: dict | None) -> str:
     """Mesma pauta + mesmo perfil + mesma divisão do orçamento + mesma escolha de continuidade = mesma simulação."""
     bruto = json.dumps([t["cenario_id"], perfil_da_campanha(t["campanha_id"]), sorted((aloc or {}).items()),
-                        escolhas.get("continuidade"), (fato or {}).get("id"),
+                        escolhas.get("continuidade"), (fato or {}).get("id"), escolhas.get("interpretacao"),
+                        bool(escolhas.get("consultou_associados")), sorted(escolhas.get("hipoteses_trocadas") or []),
                         None if aloc else t["decisao"]], ensure_ascii=False)
     return hashlib.sha256(bruto.encode()).hexdigest()
 
@@ -304,9 +305,11 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
     if fato:  # fato novo do trimestre (de notícia aprovada) entra como contexto da simulação
         c.texto += f"\n\nFato novo do trimestre: {fato['titulo']}. {fato['texto']}"
     ctx = Ctx(t["sessao_id"], t["campanha_id"], tid)
-    decisao = decisao_completa(t["decisao"], t["esclarecimentos"])
     aloc = t.get("alocacao") or None
     escolhas = t.get("escolhas") or {}
+    decisao = decisao_completa(t["decisao"], t["esclarecimentos"])
+    if aloc and c.demandas:  # relato, consulta, horas, justificativas, metas, expectativa e hipóteses
+        decisao += "\n\n" + "\n".join(cenarios.bloco_decisao(c, aloc, escolhas))
     experiencias = escolhas.get("experiencias_citadas") or None
     if not experiencias:
         from . import vivencias

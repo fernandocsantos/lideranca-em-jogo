@@ -64,13 +64,20 @@ def publico(c: Cenario) -> dict:
         "id": c.id, "titulo": c.titulo, "tema": c.tema, "dificuldade": c.dificuldade,
         "associacao": c.associacao.model_dump(), "texto": c.texto, "restricoes": c.restricoes,
         "em_jogo": c.em_jogo, "inspirado_em": c.inspirado_em.model_dump() if c.inspirado_em else None,
-        "atores": [{"id": a.id, "nome": a.nome, "tipo": a.tipo, "papel": a.papel, "influencia": a.influencia,
-                    "postura_inicial": a.postura_inicial, "idade": a.idade, "genero": a.genero} for a in c.atores],
+        "atores": [{"id": a.id, "nome": a.nome, "tipo": a.tipo, "papel": a.papel, "funcao": a.funcao_curta,
+                    "influencia": a.influencia, "postura_inicial": a.postura_inicial, "idade": a.idade,
+                    "genero": a.genero} for a in c.atores],
         "narrativa": c.narrativa, "tags": c.tags[:3], "orcamento": c.orcamento, "periodo": c.periodo,
         "disponivel": c.disponivel, "trimestre": c.trimestre, "continua_de": c.continua_de,
         "evento": c.evento.model_dump() if c.evento else None,
-        "demandas": [d.model_dump(include={"id", "titulo", "custo", "solicitante", "beneficio", "minimo_util", "meta_sugerida"})
+        "demandas": [d.model_dump(include={"id", "titulo", "custo", "solicitante", "beneficio", "minimo_util", "meta_sugerida",
+                                           "horas", "grupo", "requer_consulta", "indicador_sugerido"})
                      for d in c.demandas],
+        "horas_equipe": c.horas_equipe, "frase_abertura": c.frase_abertura,
+        "fala_abertura": c.fala_abertura.model_dump() if c.fala_abertura else None,
+        "relato": c.relato.model_dump(exclude={"opcoes"}) | {"opcoes": [o.model_dump(exclude={"adequada"}) for o in c.relato.opcoes]}
+                  if c.relato else None,
+        "hipoteses": [h.model_dump(exclude={"efeito_alternativa"}) for h in c.hipoteses],
         "regras": [r.model_dump() for r in c.regras],
         "vivencias_base": c.vivencias_base,
     }
@@ -86,15 +93,55 @@ def bloco_alocacao(c: Cenario, alocacao: dict[str, int]) -> list[str]:
               f"Orçamento: {_brl(c.orcamento)}" + (f"; {c.evento.titulo} ({_brl(c.evento.delta_orcamento)})"
                                                      if c.evento else "") + f"; disponível: {_brl(c.disponivel)}.",
               "",
-              "| Demanda | Quem pediu | Custo | Valor aprovado | Situação |",
-              "|---|---|---|---|---|"]
+              "| Demanda | Quem pediu | Custo | Valor aprovado | Horas da equipe | Situação |",
+              "|---|---|---|---|---|---|"]
+    from .alocacao import horas_linha
     for d in c.demandas:
         v = int(alocacao.get(d.id, 0))
         sit = "financiada" if v >= d.custo else ("adiada" if v == 0 else f"parcial ({v * 100 // d.custo}%)")
-        linhas.append(f"| {d.titulo} | {nomes.get(d.solicitante, d.solicitante)} | {_brl(d.custo)} | {_brl(v)} | {sit} |")
+        linhas.append(f"| {d.titulo} | {nomes.get(d.solicitante, d.solicitante)} | {_brl(d.custo)} | {_brl(v)} | "
+                      f"{horas_linha(d, v)} h | {sit} |")
     saldo = c.disponivel - sum(int(alocacao.get(d.id, 0)) for d in c.demandas)
     linhas += ["", f"Saldo guardado: {_brl(saldo)}.", ""]
     return linhas
+
+
+def bloco_decisao(c: Cenario, alocacao: dict[str, int] | None, escolhas: dict | None) -> list[str]:
+    """Contexto da decisão para a simulação: relato e interpretação, consulta, horas, justificativas,
+    metas, expectativa e as hipóteses explícitas (padrão ou ajustadas pelo jogador)."""
+    from .alocacao import horas_usadas
+    e = escolhas or {}
+    linhas = ["## Contexto da decisão (para a simulação)"]
+    if c.relato:
+        op = {o.id: o.texto for o in c.relato.opcoes}
+        linhas.append(f"- Relato considerado: {c.relato.autor} ({c.relato.funcao}): \"{c.relato.texto}\"")
+        if e.get("interpretacao"):
+            linhas.append(f"- Interpretação da diretoria: {op.get(e['interpretacao'], e['interpretacao'])}")
+        linhas.append(f"- Consulta aos associados: " + (c.relato.consulta_achado if e.get("consultou_associados")
+                                                         else "não foi feita"))
+    if c.horas_equipe and alocacao is not None:
+        linhas.append(f"- Horas da equipe: {horas_usadas(c, alocacao, e)} h usadas de {c.horas_equipe} h")
+    titulos = {d.id: d.titulo for d in c.demandas}
+    for did, j in (e.get("cortes_linhas") or {}).items():
+        motivos = ", ".join((j or {}).get("motivos") or []) + ((" — " + j["texto"]) if (j or {}).get("texto") else "")
+        if motivos:
+            linhas.append(f"- Justificativa do corte em {titulos.get(did, did)}: {motivos}")
+    if e.get("meta"):
+        linhas.append(f"- Meta: {e['meta']}")
+    if e.get("expectativa"):
+        linhas.append(f"- O que a diretoria espera que aconteça: {'; '.join(e['expectativa'])}")
+    if c.hipoteses:
+        trocadas = set(e.get("hipoteses_trocadas") or [])
+        linhas += ["", "## Hipóteses da simulação (premissas explícitas)",
+                   *[f"- {h.alternativa if h.id in trocadas else h.texto}" for h in c.hipoteses]]
+    linhas.append("")
+    return linhas
+
+
+def hipoteses_usadas(c: Cenario, escolhas: dict | None) -> list[dict]:
+    trocadas = set((escolhas or {}).get("hipoteses_trocadas") or [])
+    return [{"id": h.id, "texto": h.alternativa if h.id in trocadas else h.texto, "ajustada": h.id in trocadas}
+            for h in c.hipoteses]
 
 
 def material_semente(c: Cenario, decisao: str | None = None, alocacao: dict[str, int] | None = None,
@@ -132,6 +179,7 @@ def material_semente(c: Cenario, decisao: str | None = None, alocacao: dict[str,
     for at in c.atores:
         linhas += [
             f"### {at.nome}",
+            f"- Função (cite sempre junto ao nome, como \"{at.nome.split()[0]} ({at.funcao_curta})\"): {at.funcao_curta}",
             f"- Papel: {at.papel}",
             f"- Tipo: {at.tipo}",
             f"- Perfil: {at.persona}",
@@ -143,7 +191,7 @@ def material_semente(c: Cenario, decisao: str | None = None, alocacao: dict[str,
     if decisao:
         if alocacao is not None and c.demandas:
             linhas += bloco_alocacao(c, alocacao)
-        linhas += ["## Resumo da decisão anunciada pela presidência da associação", decisao, ""]
+        linhas += ["## Resumo da decisão anunciada pela diretoria da associação", decisao, ""]
         if experiencias:
             linhas += ["## O que a rede relata (vivências mascaradas; contexto, não ordens)",
                        *[f"- {e}" for e in experiencias], ""]

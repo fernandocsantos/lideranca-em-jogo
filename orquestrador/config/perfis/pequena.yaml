@@ -2,6 +2,7 @@ id: pequena
 nome: "Pequena, sem funcionários"
 descricao: "120 associados, tudo feito por diretores voluntários. Orçamento de R$ 9 mil por trimestre."
 orcamento_trimestral: 9000
+horas_fator: 0.5
 equipe: "Nenhum funcionário: a diretoria voluntária faz o atendimento e um escritório de contabilidade cuida das contas."
 associacao:
   nome: "Associação Comercial de Pedra Azul do Oeste (ACPAO)"
@@ -10,6 +11,7 @@ associacao:
   associados: 120
   situacao_financeira: "Apertada: as mensalidades pagam as contas fixas e sobra pouco."
 atores:
+  - {id: presidente, nome: "Otávio Rezende", tipo: diretoria, idade: 58, genero: m, papel: "Presidente da associação, dono de uma papelaria no centro", persona: "Conduz as reuniões e quer uma decisão que a diretoria consiga defender diante dos associados. Pergunta antes de opinar.", interesses: ["decisão defensável", "união da diretoria"], influencia: 5, postura_inicial: 0, funcao: "presidente da associação"}
   - {id: lojista_digital, nome: "Bianca Rocha", tipo: associado, idade: 31, genero: f, papel: "Dona de loja de presentes que vende pelo WhatsApp", persona: "Animada com vendas online, quer levar os colegas junto.", interesses: ["digitalização dos lojistas", "vendas online"], influencia: 3, postura_inicial: 1}
   - {id: lojista_tradicional, nome: "Seu Antenor Pires", tipo: associado, idade: 72, genero: m, papel: "Dono da loja de ferragens mais antiga da cidade", persona: "Fundador da associação. Acha que o problema é atendimento, não internet.", interesses: ["formação em vendas", "tradição"], influencia: 4, postura_inicial: 1}
   - {id: gerente, nome: "Cláudia Nunes", tipo: diretoria, idade: 46, genero: f, papel: "Diretora voluntária que atende os associados nas horas vagas", persona: "Dá conta de tudo sozinha e está cansada. Quer ajuda paga para o atendimento.", interesses: ["atendimento ao associado", "dividir tarefas"], influencia: 3, postura_inicial: 1}

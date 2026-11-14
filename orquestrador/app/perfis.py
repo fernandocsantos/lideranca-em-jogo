@@ -81,11 +81,44 @@ def aplicar(c: Cenario, perfil_id: str | None) -> Cenario:
                   f"orçamento de R$ {novo.orcamento:,}".replace(",", ".") +
                   (f", variação de R$ {novo.evento.delta_orcamento:,}".replace(",", ".") if novo.evento else "") +
                   f". Pedidos: {valores}.")
+    # horas da equipe: escala própria do perfil (equipe maior ou menor), não a do orçamento
+    hf = float(p.get("horas_fator", 1.0))
+    if hf != 1.0:
+        novo.horas_equipe = int(round(c.horas_equipe * hf))
+        for d in novo.demandas:
+            d.horas = max(1, int(round(d.horas * hf)))
     nome_ref = c.associacao.nome
-    novo.narrativa = c.narrativa.replace("R$ 30 mil", f"R$ {novo.orcamento // 1000} mil")
+    # valores citados nos textos: troca os de referência pelos do perfil (mil e milhar)
+    pares = [(c.orcamento, novo.orcamento), (c.disponivel, novo.disponivel)]
+    if c.evento and novo.evento:
+        pares.append((abs(c.evento.delta_orcamento), abs(novo.evento.delta_orcamento)))
+    for d0, d1 in zip(c.demandas, novo.demandas):
+        pares += [(d0.custo, d1.custo)] + ([(d0.ano_anterior, d1.ano_anterior)] if d0.ano_anterior else [])
+    trocas: dict[str, str] = {}
+    for ref, val in sorted(set(pares), key=lambda x: -x[0]):
+        if not ref or ref == val:
+            continue
+        trocas[f"R$ {ref // 1000} mil"] = f"R$ {val / 1000:g} mil".replace(".", ",")
+        trocas[f"R$ {ref:,}".replace(",", ".")] = f"R$ {val:,}".replace(",", ".")
+    if hf != 1.0 and c.horas_equipe:
+        trocas[f"{c.horas_equipe} horas"] = f"{novo.horas_equipe} horas"
+
+    def trocar(t: str) -> str:
+        if not t:
+            return t
+        # passa por marcadores para não trocar duas vezes (ex.: 30 → 9 → 2,5)
+        marc = {}
+        for i, (a, b) in enumerate(trocas.items()):
+            if a in t:
+                t = t.replace(a, f"\x00{i}\x00")
+                marc[f"\x00{i}\x00"] = b
+        for k, v in marc.items():
+            t = t.replace(k, v)
+        return t
+    novo.narrativa = trocar(c.narrativa)
+    novo.titulo = trocar(c.titulo)
     if novo.evento and c.evento:
-        ref = abs(c.evento.delta_orcamento) // 1000
-        novo.narrativa = novo.narrativa.replace(f"R$ {ref} mil", f"R$ {abs(novo.evento.delta_orcamento) / 1000:g} mil".replace(".", ","))
-        novo.evento.titulo = c.evento.titulo.replace(f"R$ {ref} mil", f"R$ {abs(novo.evento.delta_orcamento) / 1000:g} mil".replace(".", ","))
+        novo.evento.titulo = trocar(c.evento.titulo)
+    novo.regras = [r.model_copy(update={"texto": trocar(r.texto)}) for r in novo.regras]
     novo.texto = novo.texto.replace(nome_ref, novo.associacao.nome)
     return novo

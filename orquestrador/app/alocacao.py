@@ -34,8 +34,22 @@ def anos_anteriores(c: Cenario, anterior: dict[str, int] | None = None) -> dict[
     return out
 
 
-def normalizar(c: Cenario, alocacao: dict[str, Any], permitir_excesso: bool = False) -> dict[str, int]:
-    """Valida: só demandas do cenário, valores entre 0 e o custo, soma <= disponível."""
+def horas_linha(d, valor: int) -> int:
+    """Horas da equipe consumidas por uma linha: proporcionais à verba aprovada."""
+    return int(round(d.horas * valor / d.custo)) if d.custo and d.horas else 0
+
+
+def horas_usadas(c: Cenario, alocacao: dict[str, int], escolhas: dict[str, Any] | None = None) -> int:
+    h = sum(horas_linha(d, int(alocacao.get(d.id, 0))) for d in c.demandas)
+    if (escolhas or {}).get("consultou_associados") and c.relato:
+        h += c.relato.consulta_horas
+    return h
+
+
+def normalizar(c: Cenario, alocacao: dict[str, Any], permitir_excesso: bool = False,
+               escolhas: dict[str, Any] | None = None) -> dict[str, int]:
+    """Valida: só demandas do cenário, valores entre 0 e o custo, soma <= disponível, horas <= equipe,
+    alternativas do mesmo grupo excludentes e alternativa liberada só depois da consulta."""
     ids = {d.id: d for d in c.demandas}
     out: dict[str, int] = {}
     for did, v in (alocacao or {}).items():
@@ -52,6 +66,20 @@ def normalizar(c: Cenario, alocacao: dict[str, Any], permitir_excesso: bool = Fa
         out.setdefault(d.id, 0)
     if sum(out.values()) > c.disponivel and not permitir_excesso:
         raise AlocacaoInvalida(f"A soma passa do teto de R$ {c.disponivel}. Falta cortar R$ {sum(out.values()) - c.disponivel}.")
+    consultou = bool((escolhas or {}).get("consultou_associados"))
+    grupos: dict[str, list[str]] = {}
+    for d in c.demandas:
+        if out[d.id] > 0 and d.requer_consulta and not consultou:
+            raise AlocacaoInvalida(f"{d.titulo} só fica disponível depois de consultar os associados.")
+        if out[d.id] > 0 and d.grupo:
+            grupos.setdefault(d.grupo, []).append(d.titulo)
+    for nomes in grupos.values():
+        if len(nomes) > 1:
+            raise AlocacaoInvalida(f"Escolha uma só alternativa: {' ou '.join(nomes)}.")
+    if c.horas_equipe and not permitir_excesso:
+        h = horas_usadas(c, out, escolhas)
+        if h > c.horas_equipe:
+            raise AlocacaoInvalida(f"As horas da equipe passam do limite: {h} h de {c.horas_equipe} h. Corte {h - c.horas_equipe} h.")
     return out
 
 
@@ -110,6 +138,13 @@ def calcular(c: Cenario, alocacao: dict[str, int], escolhas: dict[str, Any] | No
         pontos["saude_financeira"] += pts
         auditoria.append({"regra": "saldo", "indicador": "saude_financeira", "pontos": round(pts, 2),
                           "detalhe": f"R$ {saldo} guardados ({saldo / c.disponivel:.0%} do disponível)", "evidencia": ""})
+    trocadas = set((escolhas or {}).get("hipoteses_trocadas") or [])
+    for h in c.hipoteses:
+        if h.id in trocadas:
+            for ind, p in h.efeito_alternativa.items():
+                pontos[ind] += float(p)
+                auditoria.append({"regra": "hipotese", "indicador": ind, "pontos": float(p),
+                                  "detalhe": f"Hipótese ajustada: {h.alternativa}", "evidencia": ""})
     for chave, efeitos in r.get("bonus_decisao", {}).items():
         if (escolhas or {}).get(chave):
             for ind, p in efeitos.items():
@@ -123,14 +158,18 @@ def calcular(c: Cenario, alocacao: dict[str, int], escolhas: dict[str, Any] | No
 def previa(c: Cenario, alocacao: dict[str, Any], antes: dict[str, float],
            escolhas: dict[str, Any] | None = None) -> dict[str, Any]:
     from .indicadores import consolidar
-    aloc = normalizar(c, alocacao, permitir_excesso=True)
+    aloc = normalizar(c, alocacao, permitir_excesso=True, escolhas=escolhas)
     excedente = max(0, sum(aloc.values()) - c.disponivel)
+    horas = horas_usadas(c, aloc, escolhas)
+    horas_exc = max(0, horas - c.horas_equipe) if c.horas_equipe else 0
     calc = calcular(c, aloc, escolhas)
     cons = consolidar(antes, calc["pontos"], {i: 0.0 for i in INDICADORES})
     tend = {i: ("sobe" if v > 0.5 else "desce" if v < -0.5 else "estavel") for i, v in cons["variacao"].items()}
     return {"saldo": calc["saldo"], "disponivel": calc["disponivel"], "demandas": calc["demandas"],
             "variacao": cons["variacao"], "tendencia": tend, "excedente": excedente,
-            "fechado": excedente == 0}
+            "fechado": excedente == 0 and horas_exc == 0, "horas_usadas": horas,
+            "horas_equipe": c.horas_equipe, "horas_excedente": horas_exc,
+            "horas_linhas": {d.id: horas_linha(d, aloc.get(d.id, 0)) for d in c.demandas}}
 
 
 def progresso_meta(c: Cenario, aloc: dict[str, int], escolhas: dict[str, Any] | None,

@@ -346,11 +346,11 @@ async def nova_tentativa(cid: str, dados: Decisao, s: dict = Depends(sessao_atua
     jg = config.jogo()["simulacao"]
     rodadas = max(3, min(int(dados.rodadas or jg["rodadas_padrao"]), int(jg["max_rodadas"])))
     cen = _cenario_atual(c)
+    escolhas = dict(dados.escolhas or {})
     try:
-        aloc = aloc_mod.normalizar(cen, dados.alocacao) if cen.demandas else {}
+        aloc = aloc_mod.normalizar(cen, dados.alocacao, escolhas=escolhas) if cen.demandas else {}
     except aloc_mod.AlocacaoInvalida as e:
         raise HTTPException(400, str(e)) from e
-    escolhas = dict(dados.escolhas or {})
     # LGPD: o texto livre do jogador é mascarado antes de salvar e de seguir para o LLM e o MiroFish.
     ficticios = _nomes_ficticios(cen)
     texto = mascaramento.mascarar(texto, permitidos=ficticios, generalizar_valores=False)["texto"]
