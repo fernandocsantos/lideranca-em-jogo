@@ -162,5 +162,72 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "Em seis semanas, 23 lojas do centro foram furtadas à noite e um vídeo viralizou no início da temporada de turismo. Lojistas querem segurança privada; outros querem protestar. A polícia pede um plano integrado e a prefeitura retoma as câmeras se a associação ajudar. Uma ONG denuncia hostilização de pessoas em situação de rua. Há R$ 30 mil.",
+  "tags": [
+    "Segurança",
+    "Turismo",
+    "Direitos humanos"
+  ],
+  "orcamento": 30000,
+  "demandas": [
+    {
+      "id": "cameras",
+      "titulo": "Contrapartida para câmeras da prefeitura",
+      "custo": 15000,
+      "solicitante": "prefeito",
+      "beneficio": "Retomar o videomonitoramento integrado com a polícia.",
+      "efeitos": {
+        "capital_politico": 3,
+        "reputacao": 2
+      },
+      "efeitos_adiar": {
+        "capital_politico": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "seguranca_privada",
+      "titulo": "Rondas de segurança privada autorizada",
+      "custo": 22000,
+      "solicitante": "lojista_vitrine",
+      "beneficio": "Rondas noturnas por empresa autorizada.",
+      "efeitos": {
+        "engajamento": 3,
+        "saude_financeira": -1
+      },
+      "efeitos_adiar": {
+        "engajamento": -3
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "campanha_turismo",
+      "titulo": "Campanha 'Centro seguro' para o turismo",
+      "custo": 8000,
+      "solicitante": "turismo",
+      "beneficio": "Comunicação positiva para salvar a temporada.",
+      "efeitos": {
+        "reputacao": 3
+      },
+      "efeitos_adiar": {
+        "reputacao": -2
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "📜",
+      "texto": "Taxa extra obrigatória exige assembleia."
+    },
+    {
+      "icone": "🛡️",
+      "texto": "Segurança privada só por empresa autorizada."
+    },
+    {
+      "icone": "🤝",
+      "texto": "Nada de 'justiça com as próprias mãos' ou vigilância informal."
+    }
+  ]
 }

@@ -1,5 +1,8 @@
 campanha:
-  numero_cenarios: 6          # entre 5 e 8
+  modo: demonstracao          # demonstracao = 2 trimestres do caso do guia; completa = + casos da biblioteca
+  trimestres_iniciais: [guia_t1_orcamento, guia_t2_orcamento]
+  perfil_padrao: media        # perfis em config/perfis/ (pequena, media, grande)
+  numero_cenarios: 6          # só no modo completa (entre 5 e 8)
   indicadores_iniciais:
     engajamento: 55
     saude_financeira: 50
@@ -10,12 +13,13 @@ campanha:
 
 decisao:
   max_caracteres: 1500
-  min_caracteres: 80
+  min_caracteres: 20
+  minutos_reuniao: 10         # cronômetro de "reunião" na tela de orçamento
   max_perguntas_esclarecimento: 2
 
 simulacao:
   max_rodadas: 20             # teto rígido: o jogador/facilitador não passa disso
-  rodadas_padrao: 12
+  rodadas_padrao: 4           # a simulação roda em segundo plano; o resultado base sai na hora
   max_agentes: 15
 
 limites:
@@ -37,7 +41,8 @@ mirofish:
   idioma: pt
   rodadas_noturnas: 8             # o MiroFish começa à 0h simulada e os agentes só agem a partir das ~8h;
                                   # essas rodadas vazias não chamam o LLM (custo zero) e passam na hora
-  estabilidade_s: 90              # simulação concluída quando a atividade fica parada por este tempo
+  gerar_relatorio: false          # o Report Agent leva ~4 min; os sinais saem direto das interações
+  estabilidade_s: 45              # simulação concluída quando a atividade fica parada por este tempo
   memoria_no_grafo: false        # true travou o OASIS no teste real; ver docs/arquitetura.md
   tipos_genericos_excluidos: [Person, Organization]
 

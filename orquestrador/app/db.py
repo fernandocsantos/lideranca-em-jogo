@@ -46,7 +46,14 @@ CREATE INDEX IF NOT EXISTS idx_uso_sessao ON uso_tokens(sessao_id);
 """
 
 JSON_COLS = {"cenarios", "indicadores", "historico", "esclarecimentos", "parciais", "resultado",
-             "indicadores_antes", "indicadores_depois", "mirofish"}
+             "indicadores_antes", "indicadores_depois", "mirofish", "alocacao", "escolhas", "devolutiva",
+             "selos", "dados"}
+
+# Colunas acrescentadas depois da primeira versão (migração simples e idempotente).
+MIGRACOES = {
+    "campanhas": {"perfil": "TEXT", "selos": "TEXT DEFAULT '[]'"},
+    "tentativas": {"alocacao": "TEXT", "escolhas": "TEXT", "devolutiva": "TEXT", "fase": "TEXT"},
+}
 
 
 def agora() -> str:
@@ -68,6 +75,11 @@ def conectar(caminho: str | None = None) -> sqlite3.Connection:
         _conn = sqlite3.connect(caminho, check_same_thread=False)
         _conn.row_factory = sqlite3.Row
         _conn.executescript(SCHEMA)
+        for tabela, cols in MIGRACOES.items():
+            existentes = {r[1] for r in _conn.execute(f"PRAGMA table_info({tabela})")}
+            for col, tipo in cols.items():
+                if col not in existentes:
+                    _conn.execute(f"ALTER TABLE {tabela} ADD COLUMN {col} {tipo}")
         _conn.commit()
         return _conn
 

@@ -162,5 +162,74 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "O marketplace da cidade, pago com emenda parlamentar, vende pouco e custa caro. Um gigante do comércio eletrônico oferece absorver os lojistas, e um portal revelou que a empresa da plataforma pertence ao cunhado de um diretor. A prefeitura quer explicações em 15 dias. Há R$ 60 mil até o fim do convênio.",
+  "tags": [
+    "Integridade",
+    "Dinheiro público",
+    "Futuro digital"
+  ],
+  "orcamento": 60000,
+  "demandas": [
+    {
+      "id": "auditoria",
+      "titulo": "Auditoria independente do convênio",
+      "custo": 20000,
+      "solicitante": "conselho_fiscal",
+      "beneficio": "Apurar a contratação e responder à prefeitura.",
+      "efeitos": {
+        "conformidade": 5,
+        "reputacao": 2
+      },
+      "efeitos_adiar": {
+        "conformidade": -4,
+        "reputacao": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "manter_plataforma",
+      "titulo": "Manter a plataforma até o fim do convênio",
+      "custo": 36000,
+      "solicitante": "lojista_digital",
+      "beneficio": "Quatro meses de operação para quem já vende.",
+      "efeitos": {
+        "engajamento": 2,
+        "saude_financeira": -1
+      },
+      "efeitos_adiar": {
+        "engajamento": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "capacitacao_digital",
+      "titulo": "Capacitação digital dos lojistas",
+      "custo": 25000,
+      "solicitante": "lojista_cetico",
+      "beneficio": "Ensinar a vender em qualquer canal, inclusive o gigante.",
+      "efeitos": {
+        "engajamento": 3,
+        "reputacao": 1
+      },
+      "efeitos_adiar": {
+        "engajamento": -1
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "⚖️",
+      "texto": "Dirigente com conflito de interesse deve se declarar impedido."
+    },
+    {
+      "icone": "🏛️",
+      "texto": "Recurso público mal usado pode ter de ser devolvido."
+    },
+    {
+      "icone": "⏱️",
+      "texto": "Explicações à prefeitura em 15 dias."
+    }
+  ]
 }

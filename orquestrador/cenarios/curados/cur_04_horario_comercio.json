@@ -161,5 +161,74 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "Um projeto na Câmara libera o comércio aos domingos. O shopping apoia; as lojas de rua dizem que não têm gente nem dinheiro para abrir. O sindicato dos comerciários marcou um ato e o sindicato patronal quer que a associação não se meta. A votação é em 18 dias. Há R$ 25 mil para a resposta da associação.",
+  "tags": [
+    "Associados divididos",
+    "Câmara municipal",
+    "Sindicatos"
+  ],
+  "orcamento": 25000,
+  "demandas": [
+    {
+      "id": "pesquisa_assembleia",
+      "titulo": "Pesquisa com associados e assembleia",
+      "custo": 9000,
+      "solicitante": "conselho",
+      "beneficio": "Ouvir formalmente a base antes de se posicionar.",
+      "efeitos": {
+        "engajamento": 3,
+        "coesao": 2,
+        "conformidade": 1
+      },
+      "efeitos_adiar": {
+        "coesao": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "estudo_impacto",
+      "titulo": "Estudo de impacto com dados locais",
+      "custo": 12000,
+      "solicitante": "diretor_jovem",
+      "beneficio": "Números sobre vendas e empregos para levar à Câmara.",
+      "efeitos": {
+        "capital_politico": 3,
+        "reputacao": 2
+      },
+      "efeitos_adiar": {
+        "capital_politico": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "apoio_lojas_rua",
+      "titulo": "Programa de apoio às lojas de rua",
+      "custo": 14000,
+      "solicitante": "lojista_rua",
+      "beneficio": "Revezamento e campanha para quem não consegue abrir sozinho.",
+      "efeitos": {
+        "engajamento": 3,
+        "coesao": 1
+      },
+      "efeitos_adiar": {
+        "engajamento": -2
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "📜",
+      "texto": "Posição pública sobre lei precisa de aprovação da diretoria."
+    },
+    {
+      "icone": "⚖️",
+      "texto": "Jornada de trabalho é assunto dos sindicatos, não da associação."
+    },
+    {
+      "icone": "⏱️",
+      "texto": "Votação em primeiro turno em 18 dias."
+    }
+  ]
 }

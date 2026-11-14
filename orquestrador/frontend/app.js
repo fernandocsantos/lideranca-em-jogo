@@ -1,14 +1,16 @@
-/* Liderança em Jogo — SPA sem dependências. Todo texto dinâmico entra via textContent (sem innerHTML). */
+/* Liderança em Jogo — SPA sem dependências. Todo texto dinâmico entra via textContent (sem innerHTML).
+   Fluxo do trimestre: pauta → orçamento (prévia instantânea, sem IA) → decisão → resultado e conversa. */
 "use strict";
 
 const estado = { cfg: null, token: localStorage.getItem("lej_token"), apelido: localStorage.getItem("lej_apelido"),
-  campanhaId: localStorage.getItem("lej_campanha"), campanha: null, tentativaAtual: null, timer: null,
-  esclarecimentos: [] };
+  campanhaId: localStorage.getItem("lej_campanha"), campanha: null, timer: null, aloc: {}, previa: null,
+  reuniaoFim: null, relogio: null, escolhas: {} };
 
-const POSTURA = { "-2": "hostil", "-1": "desconfiada", "0": "neutra", "1": "favorável", "2": "aliada" };
+const POSTURA = { "-2": "insatisfeita", "-1": "desconfiada", "0": "neutra", "1": "favorável", "2": "favorável" };
 const TIPOS = { associado: "Associado", diretoria: "Diretoria", conselho: "Conselho", funcionarios: "Equipe",
   poder_publico: "Poder público", imprensa: "Imprensa", sindicato: "Sindicato", consumidores: "Comunidade",
-  entidade_concorrente: "Outra entidade", federacao: "Federação", parceiro: "Parceiro" };
+  entidade_concorrente: "Outra entidade", federacao: "Federação", parceiro: "Parceiro", conselheiro: "Conselheiro" };
+const SETA = { sobe: "▲", desce: "▼", estavel: "■" };
 
 // ------------------------------------------------------------------ utilidades
 function el(tag, attrs = {}, ...filhos) {
@@ -19,12 +21,13 @@ function el(tag, attrs = {}, ...filhos) {
     else if (k === "class") n.className = v;
     else n.setAttribute(k, v === true ? "" : v);
   }
-  for (const f of filhos.flat()) if (f !== null && f !== undefined && f !== false)
+  for (const f of filhos.flat(Infinity)) if (f !== null && f !== undefined && f !== false && f !== "")
     n.append(f instanceof Node ? f : document.createTextNode(String(f)));
   return n;
 }
 const $ = (s) => document.querySelector(s);
 const main = () => $("#conteudo");
+const brl = (v) => "R$ " + Math.round(Number(v) || 0).toLocaleString("pt-BR");
 
 function tela(titulo, ...conteudo) {
   clearInterval(estado.timer);
@@ -48,6 +51,7 @@ async function api(caminho, opcoes = {}) {
 }
 
 function mostrarErro(container, e) {
+  container.querySelectorAll(":scope > .erro").forEach((n) => n.remove());
   const caixa = el("div", { class: "erro", role: "alert" }, e.message || String(e));
   container.prepend(caixa);
   caixa.scrollIntoView({ block: "center" });
@@ -61,16 +65,31 @@ function delta(v) {
   return el("span", { class: "suave" }, "= 0");
 }
 
+function ator(id) { return (estado.campanha?.cenario?.atores || []).find((a) => a.id === id); }
+
+function avatarDe(a, expressao, tamanho = 56) {
+  const svg = AVATAR.criar({ id: a?.id, tipo: a?.tipo, genero: a?.genero, idade: a?.idade, expressao, tamanho });
+  svg.setAttribute("aria-label", `${a?.nome || "?"}, ${AVATAR.NOME_EXPR[expressao] || "neutra"}`);
+  return svg;
+}
+
+function influencia(n) {
+  return el("span", { class: "influencia", "aria-label": `Influência ${n} de 5` }, "●".repeat(n), el("span", { class: "apagado" }, "●".repeat(5 - n)));
+}
+
 // ------------------------------------------------------------------ indicadores
-function renderIndicadores(valores, variacao) {
+function renderIndicadores(valores, variacao, tendencia) {
   const sec = $("#indicadores");
   if (!valores) { sec.hidden = true; return; }
   sec.hidden = false;
   sec.replaceChildren(...estado.cfg.indicadores.map((i) => {
     const v = Number(valores[i.id] ?? 0);
+    const t = tendencia?.[i.id];
     return el("div", { class: "indicador", title: i.descricao },
       el("div", { class: "nome" }, i.nome),
-      el("div", { class: "valor" }, v.toFixed(0), " ", variacao ? delta(variacao[i.id]) : ""),
+      el("div", { class: "valor" }, v.toFixed(0), " ",
+        variacao ? delta(variacao[i.id]) : "",
+        t ? el("span", { class: `tendencia t-${t}`, "aria-label": `tendência: ${t}` }, SETA[t]) : ""),
       el("div", { class: "barra", role: "meter", "aria-valuemin": 0, "aria-valuemax": 100,
         "aria-valuenow": v.toFixed(0), "aria-label": `${i.nome}: ${v.toFixed(0)} de 100` },
         el("span", { style: `width:${Math.max(0, Math.min(100, v))}%` })));
@@ -80,298 +99,408 @@ function renderIndicadores(valores, variacao) {
 async function verificarStatus() {
   try {
     const s = await api("/api/status");
-    $("#faixa-status").replaceChildren(s.mirofish ? "" : el("div", { class: "aviso", style: "max-width:980px;margin:.75rem auto" },
-      "Aviso: o simulador multiagente (MiroFish) está indisponível. O jogo continua em modo de contingência, ",
-      "com simulações simplificadas feitas diretamente por um modelo de linguagem."));
+    $("#faixa-status").replaceChildren(s.mirofish ? "" : el("div", { class: "aviso faixa" },
+      "Simulador de agentes indisponível: o jogo segue em modo de contingência (simulação simplificada)."));
   } catch (_) { /* silencioso */ }
 }
 
-// ------------------------------------------------------------------ boas-vindas
+// ------------------------------------------------------------------ início
 function telaInicio() {
   renderIndicadores(null);
   const campo = el("input", { type: "text", id: "apelido", maxlength: 40, autocomplete: "nickname",
     value: estado.apelido || "", "aria-describedby": "dica-apelido" });
+  const perfis = estado.cfg.perfis || [];
+  const escolhaPerfil = el("fieldset", { class: "perfis" }, el("legend", {}, "Qual associação você vai liderar?"),
+    perfis.map((p) => el("label", { class: "cartao-opcao" },
+      el("input", { type: "radio", name: "perfil", value: p.id, checked: p.id === estado.cfg.perfil_padrao }),
+      el("strong", {}, p.nome), el("span", { class: "pequeno" }, p.descricao))));
   const form = el("form", { class: "cartao", onsubmit: async (ev) => {
     ev.preventDefault();
     try {
       const r = await api("/api/sessoes", { method: "POST", body: { apelido: campo.value } });
       estado.token = r.token; estado.apelido = r.apelido;
       localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
-      await novaCampanha();
+      const perfil = form.querySelector("input[name=perfil]:checked")?.value;
+      await novaCampanha(perfil);
     } catch (e) { mostrarErro(form, e); }
   } },
-    el("label", { for: "apelido" }, "Como quer ser chamado(a)?"),
-    campo,
-    el("p", { id: "dica-apelido", class: "suave pequeno" },
-      "Use um apelido — não precisa ser seu nome. Não pedimos e-mail nem outros dados pessoais (LGPD)."),
-    el("button", { type: "submit" }, "Começar uma campanha"));
+    el("label", { for: "apelido" }, "Como quer ser chamado(a)?"), campo,
+    el("p", { id: "dica-apelido", class: "suave pequeno" }, "Pode ser um apelido. Não pedimos e-mail nem dados pessoais."),
+    perfis.length > 1 ? escolhaPerfil : "",
+    el("button", { type: "submit", class: "grande" }, "Começar"));
   const continuar = estado.token && estado.campanhaId
-    ? el("p", {}, el("button", { class: "secundario", onclick: () => abrirCampanha(estado.campanhaId) }, "Continuar a campanha em andamento"))
+    ? el("p", {}, el("button", { class: "secundario grande", onclick: () => abrirCampanha(estado.campanhaId) }, "Continuar de onde parei"))
     : null;
-  tela("Você na presidência da associação",
-    el("p", {}, "Neste jogo você lidera uma associação comercial fictícia do interior paulista. A cada cenário — ",
-      "inspirado em problemas reais do comércio — você escreve a sua decisão. Agentes de IA que representam associados, ",
-      "diretoria, prefeitura, imprensa e outros atores reagem, e você vê os efeitos nos indicadores da associação."),
-    el("p", {}, "Não existe resposta única certa: a devolutiva mostra trade-offs, riscos e perguntas para reflexão."),
+  tela("Formar lideranças para decidir e acompanhar resultados",
+    el("p", { class: "destaque" }, "Você vai presidir uma associação comercial por dois trimestres: escolher prioridades, dividir o orçamento e acompanhar os resultados."),
     continuar, form);
 }
 
-async function novaCampanha() {
-  const c = await api("/api/campanhas", { method: "POST" });
+async function novaCampanha(perfil) {
+  const c = await api("/api/campanhas", { method: "POST", body: { perfil } });
   estado.campanhaId = c.id; localStorage.setItem("lej_campanha", c.id);
   estado.campanha = c;
-  telaCenario();
+  iniciarTrimestre();
 }
 
 async function abrirCampanha(id) {
   try {
     estado.campanha = await api(`/api/campanhas/${id}`);
-    const pendente = estado.campanha.tentativas.find((t) => t.status === "na_fila" || t.status === "executando");
     if (estado.campanha.status === "concluida") return telaFinal();
-    if (pendente) return telaEspera(pendente.id);
-    telaCenario();
+    const ultima = estado.campanha.tentativas.at(-1);
+    if (ultima) return telaResultado(ultima.id);
+    iniciarTrimestre();
   } catch (e) {
     if (e.status === 401 || e.status === 404) { localStorage.removeItem("lej_campanha"); estado.campanhaId = null; telaInicio(); }
     else alert(e.message);
   }
 }
 
-// ------------------------------------------------------------------ cenário + decisão
-function blocoCenario(c) {
-  const a = c.associacao;
-  return el("div", {},
-    el("p", { class: "linha" }, el("span", { class: "etiqueta" }, `Dificuldade ${c.dificuldade} de 3`),
-      el("span", { class: "etiqueta" }, `Tema: ${c.tema.replaceAll("_", " ")}`)),
-    el("div", { class: "cartao" },
-      el("h2", {}, a.nome),
-      el("p", {}, `${a.cidade} · porte ${a.porte} · ${a.associados} associados`),
-      el("p", {}, el("strong", {}, "Situação financeira: "), a.situacao_financeira)),
-    ...c.texto.split(/\n\n+/).map((p) => el("p", {}, p)),
-    el("h2", {}, "Restrições"), el("ul", {}, c.restricoes.map((r) => el("li", {}, r))),
-    el("h2", {}, "O que está em jogo"), el("p", {}, c.em_jogo),
+function iniciarTrimestre(alocInicial) {
+  const c = estado.campanha.cenario;
+  estado.aloc = {};
+  for (const d of c.demandas) estado.aloc[d.id] = alocInicial?.[d.id] ?? 0;
+  estado.escolhas = {};
+  estado.previa = null;
+  estado.reuniaoFim = null;
+  telaPauta();
+}
+
+// ------------------------------------------------------------------ pauta
+function cabecalhoTrimestre() {
+  const camp = estado.campanha;
+  return el("p", { class: "etapas", "aria-label": "Etapa atual" },
+    ["Pauta", "Orçamento", "Decisão", "Resultado"].map((n, i) => el("span", { class: "etapa", "data-i": i }, n)),
+    el("span", { class: "suave" }, ` · ${camp.cenario.periodo} ${camp.indice_atual + 1} de ${camp.total}`));
+}
+
+function marcarEtapa(i) { document.querySelectorAll(".etapa").forEach((e) => e.classList.toggle("atual", Number(e.dataset.i) === i)); }
+
+function cartaoAtor(a, expressao) {
+  const detalhe = el("div", { class: "ator-detalhe", hidden: true },
+    el("strong", {}, a.nome), el("div", { class: "pequeno" }, a.papel),
+    el("div", { class: "pequeno" }, "Influência: ", influencia(a.influencia)),
+    el("div", { class: "pequeno" }, `Postura: ${POSTURA[a.postura_inicial]}`));
+  const botao = el("button", { class: "ator-botao", type: "button", "aria-expanded": "false",
+    onclick: () => { detalhe.hidden = !detalhe.hidden; botao.setAttribute("aria-expanded", String(!detalhe.hidden)); } },
+    avatarDe(a, expressao || AVATAR.expressaoDePostura(a.postura_inicial)),
+    el("span", { class: "ator-nome" }, a.nome.split(" ").slice(0, 2).join(" ")));
+  return el("li", { class: "ator-item" }, botao, detalhe);
+}
+
+function telaPauta() {
+  const camp = estado.campanha;
+  const c = camp.cenario;
+  renderIndicadores(camp.indicadores);
+  tela(c.titulo, cabecalhoTrimestre(),
+    el("div", { class: "cartao narrativa" }, el("p", {}, c.narrativa || c.texto.split(/\n\n/)[0])),
+    c.evento ? el("div", { class: "cartao evento" }, el("span", { class: "icone-grande", "aria-hidden": "true" }, Number(c.evento.delta_orcamento) < 0 ? "📉" : "📈"),
+      el("div", {}, el("strong", {}, c.evento.titulo), el("div", { class: "pequeno" }, c.evento.texto))) : "",
+    el("div", { class: "linha tags", "aria-label": "O que está em jogo" }, c.tags.map((t) => el("span", { class: "etiqueta" }, t))),
     el("h2", {}, "Quem está envolvido"),
-    el("ul", { class: "atores", role: "list" }, c.atores.map((t) => el("li", { class: "ator" },
-      el("div", { class: "tipo" }, TIPOS[t.tipo] || t.tipo),
-      el("strong", {}, t.nome), el("div", { class: "pequeno" }, t.papel),
-      el("div", { class: "pequeno suave" }, `Influência ${t.influencia}/5 · postura inicial: ${POSTURA[t.postura_inicial]}`)))),
+    el("ul", { class: "fileira-avatares", role: "list" }, c.atores.map((a) => cartaoAtor(a))),
+    el("p", { class: "suave pequeno" }, "Toque em uma pessoa para ver papel, influência e postura."),
+    el("h2", {}, "Regras deste trimestre"),
+    el("ul", { class: "regras", role: "list" }, c.regras.map((r) => el("li", {}, el("span", { class: "icone", "aria-hidden": "true" }, r.icone), r.texto))),
     c.inspirado_em ? el("p", { class: "suave pequeno" }, "Inspirado em: ",
       el("a", { href: c.inspirado_em.url, rel: "noopener", target: "_blank" }, c.inspirado_em.titulo),
-      ` — ${c.inspirado_em.veiculo}, ${c.inspirado_em.data}. Nomes de pessoas, empresas e cidades foram trocados por fictícios.`) : null);
+      ` — ${c.inspirado_em.veiculo}, ${c.inspirado_em.data}. Nomes trocados por fictícios.`) : "",
+    el("p", {}, el("button", { class: "grande", onclick: telaOrcamento }, "Ir para o orçamento →")));
+  marcarEtapa(0);
 }
 
-function telaCenario(decisaoInicial = "") {
-  const camp = estado.campanha;
-  renderIndicadores(camp.indicadores);
-  if (camp.status === "concluida") return telaFinal();
-  const c = camp.cenario;
-  const lim = estado.cfg.decisao;
-  estado.esclarecimentos = [];
-  const area = el("textarea", { id: "decisao", maxlength: lim.max_caracteres, "aria-describedby": "dica-decisao contador" });
-  area.value = decisaoInicial;
-  const contador = el("div", { id: "contador", class: "contador", "aria-live": "polite" });
-  const atualiza = () => { contador.textContent = `${area.value.length} de ${lim.max_caracteres} caracteres`; };
-  area.addEventListener("input", atualiza); atualiza();
-  const sim = estado.cfg.simulacao;
-  const rodadas = el("input", { type: "range", id: "rodadas", min: 3, max: sim.max_rodadas, value: sim.rodadas_padrao,
-    "aria-describedby": "valor-rodadas" });
-  const valorR = el("span", { id: "valor-rodadas" }, `${sim.rodadas_padrao} rodadas`);
-  rodadas.addEventListener("input", () => { valorR.textContent = `${rodadas.value} rodadas`; });
-  const perguntas = el("div", { id: "perguntas" });
-  const botao = el("button", { type: "submit" }, "Revisar e enviar decisão");
-  const form = el("form", { class: "cartao", onsubmit: async (ev) => {
-    ev.preventDefault();
-    form.querySelectorAll(".erro").forEach((n) => n.remove());
-    // recolhe respostas de esclarecimento já exibidas
-    const respostas = [...perguntas.querySelectorAll("textarea")];
-    if (respostas.length) {
-      if (respostas.some((r) => !r.value.trim())) return mostrarErro(form, new Error("Responda às perguntas de esclarecimento."));
-      estado.esclarecimentos.push(...respostas.map((r) => ({ pergunta: r.dataset.pergunta, resposta: r.value.trim() })));
-      perguntas.replaceChildren();
-    }
-    botao.disabled = true; botao.textContent = "Analisando a decisão…";
-    try {
-      const corpo = { decisao: area.value, esclarecimentos: estado.esclarecimentos, rodadas: Number(rodadas.value) };
-      const av = await api(`/api/campanhas/${camp.id}/decisoes/avaliar`, { method: "POST", body: corpo });
-      if (!av.permitido) throw new Error(av.motivo);
-      if (!av.simulavel && av.perguntas.length) {
-        perguntas.replaceChildren(el("div", { class: "aviso", role: "status" },
-          el("p", {}, el("strong", {}, "Antes de simular, precisamos entender melhor sua decisão:")),
-          ...av.perguntas.map((p, i) => el("div", {},
-            el("label", { for: `esc-${i}` }, p),
-            el("textarea", { id: `esc-${i}`, "data-pergunta": p, style: "min-height:80px", maxlength: 600 })))));
-        perguntas.querySelector("textarea").focus();
-        botao.textContent = "Responder e continuar";
-        botao.disabled = false;
-        return;
-      }
-      const r = await api(`/api/campanhas/${camp.id}/tentativas`, { method: "POST", body: corpo });
-      telaEspera(r.tentativa_id);
-    } catch (e) { mostrarErro(form, e); botao.disabled = false; botao.textContent = "Revisar e enviar decisão"; }
-  } },
-    el("h2", {}, "Sua decisão"),
-    el("label", { for: "decisao" }, "O que você decide e por quê?"),
-    el("p", { id: "dica-decisao", class: "suave pequeno" },
-      "Diga o que será feito, quem será envolvido, como e quando, e o porquê. Escreva como presidente da associação. ",
-      `Mínimo de ${lim.min_caracteres} caracteres.`),
-    area, contador,
-    el("label", { for: "rodadas" }, "Duração da simulação"), rodadas, " ", valorR,
-    el("p", { class: "suave pequeno" }, "Mais rodadas = mais interação entre os agentes, mais tempo de espera e mais custo."),
-    perguntas, botao);
-  const tentativas = camp.tentativas.filter((t) => t.status === "concluida");
-  tela(`Cenário ${camp.indice_atual + 1} de ${camp.total}: ${c.titulo}`, blocoCenario(c),
-    tentativas.length ? el("div", { class: "aviso" }, `Você já tem ${tentativas.length} tentativa(s) neste cenário. `,
-      el("button", { class: "secundario", onclick: () => telaResultado(tentativas.at(-1).id) }, "Ver última tentativa")) : null,
-    form);
-}
-
-// ------------------------------------------------------------------ espera
-function telaEspera(tid) {
-  const barra = el("progress", { max: 100, value: 0, "aria-labelledby": "etapa" });
-  const etapa = el("p", { id: "etapa", "aria-live": "polite" }, "Enviando…");
-  const fila = el("p", { class: "suave" });
-  const aviso = el("div", {});
-  const feed = el("ul", { class: "feed", "aria-label": "Reações parciais dos agentes" });
-  tela("Simulando as reações", etapa, barra, fila, aviso,
-    el("h2", {}, "O que os agentes estão fazendo"), feed,
-    el("p", { class: "suave pequeno" }, "A simulação pode levar alguns minutos. Você pode sair e voltar depois: o progresso fica salvo."));
-  let ultimaEtapa = "";
-  const tick = async () => {
-    try {
-      const t = await api(`/api/tentativas/${tid}`);
-      barra.value = t.progresso || 0;
-      if (t.etapa !== ultimaEtapa) { etapa.textContent = `${t.etapa || "Aguardando"} (${t.progresso || 0}%)`; ultimaEtapa = t.etapa; }
-      fila.textContent = t.posicao_fila ? `Posição na fila: ${t.posicao_fila}` : "";
-      aviso.replaceChildren(t.aviso ? el("div", { class: "aviso", role: "status" }, t.aviso) : "");
-      feed.replaceChildren(...(t.parciais || []).map((p) => el("li", {},
-        el("strong", {}, p.autor), p.rodada ? ` (rodada ${p.rodada})` : "", ": ", p.texto || p.tipo)));
-      if (t.status === "concluida") { clearInterval(estado.timer); telaResultado(tid); }
-      if (t.status === "erro") { clearInterval(estado.timer); mostrarErro(main(), new Error(t.erro));
-        main().append(el("button", { onclick: () => abrirCampanha(estado.campanhaId) }, "Voltar ao cenário")); }
-    } catch (e) { etapa.textContent = `Falha ao consultar o progresso: ${e.message}`; }
+// ------------------------------------------------------------------ orçamento
+function iniciarRelogio(caixa) {
+  const min = estado.cfg.decisao.minutos_reuniao || 10;
+  if (!estado.reuniaoFim) estado.reuniaoFim = Date.now() + min * 60000;
+  clearInterval(estado.relogio);
+  const tick = () => {
+    const resta = Math.max(0, estado.reuniaoFim - Date.now());
+    const m = Math.floor(resta / 60000), s = Math.floor((resta % 60000) / 1000);
+    caixa.textContent = resta > 0 ? `⏱️ Reunião: ${m}:${String(s).padStart(2, "0")}` : "⏱️ Tempo da reunião esgotado: decida com o que tem.";
+    caixa.classList.toggle("urgente", resta < 60000);
+    if (!document.body.contains(caixa)) clearInterval(estado.relogio);
   };
   tick();
-  estado.timer = setInterval(tick, 2500);
+  estado.relogio = setInterval(tick, 1000);
+}
+
+let previaPendente = null;
+function pedirPrevia(atualizar) {
+  clearTimeout(previaPendente);
+  previaPendente = setTimeout(async () => {
+    try {
+      estado.previa = await api(`/api/campanhas/${estado.campanhaId}/previa`, { method: "POST",
+        body: { alocacao: estado.aloc, escolhas: estado.escolhas } });
+      atualizar(estado.previa);
+    } catch (_) { /* a validação aparece na tela */ }
+  }, 80);
+}
+
+function telaOrcamento() {
+  const camp = estado.campanha;
+  const c = camp.cenario;
+  const disp = c.disponivel;
+  const relogio = el("div", { class: "relogio", role: "timer", "aria-live": "off" });
+  const barra = el("div", { class: "barra-orcamento", role: "img" });
+  const saldoTxt = el("p", { class: "saldo", "aria-live": "polite" });
+  const linhas = {};
+
+  const soma = () => Object.values(estado.aloc).reduce((a, b) => a + Number(b), 0);
+  const atualizarTotais = () => {
+    const usado = soma();
+    barra.replaceChildren(...c.demandas.map((d, i) => el("span", { class: `fatia f${i % 4}`,
+      style: `width:${(estado.aloc[d.id] / disp) * 100}%`, title: `${d.titulo}: ${brl(estado.aloc[d.id])}` })));
+    barra.setAttribute("aria-label", `Usado ${brl(usado)} de ${brl(disp)}`);
+    saldoTxt.replaceChildren(el("strong", {}, `Saldo: ${brl(disp - usado)}`), ` · usado ${brl(usado)} de ${brl(disp)}`);
+  };
+  const aplicarPrevia = (p) => {
+    renderIndicadores(camp.indicadores, null, p.tendencia);
+    for (const d of p.demandas) {
+      const l = linhas[d.id]; if (!l) continue;
+      l.avatar.replaceChildren(avatarDe(ator(d.solicitante), d.expressao, 64));
+      l.humor.textContent = `${ator(d.solicitante)?.nome.split(" ")[0] || ""} fica ${AVATAR.NOME_EXPR[d.expressao]}`;
+    }
+  };
+  const definir = (d, valor) => {
+    const outros = soma() - estado.aloc[d.id];
+    const v = Math.max(0, Math.min(d.custo, disp - outros, Math.round(valor / 500) * 500));
+    estado.aloc[d.id] = v;
+    const l = linhas[d.id];
+    l.slider.value = v; l.valor.textContent = `${brl(v)} de ${brl(d.custo)}`;
+    l.slider.setAttribute("aria-valuetext", `${brl(v)} de ${brl(d.custo)}`);
+    atualizarTotais();
+    pedirPrevia(aplicarPrevia);
+  };
+
+  const cartoes = c.demandas.map((d) => {
+    const a = ator(d.solicitante);
+    const slider = el("input", { type: "range", min: 0, max: d.custo, step: 500, value: estado.aloc[d.id], id: `s-${d.id}`,
+      "aria-describedby": `b-${d.id}` });
+    slider.addEventListener("input", () => definir(d, Number(slider.value)));
+    const l = { slider, valor: el("span", { class: "valor-demanda" }), avatar: el("span", { class: "avatar-demanda" }),
+      humor: el("span", { class: "pequeno suave humor", "aria-live": "polite" }) };
+    linhas[d.id] = l;
+    l.avatar.append(avatarDe(a, AVATAR.expressaoDePostura(a?.postura_inicial ?? 0), 64));
+    return el("article", { class: "cartao demanda" },
+      el("div", { class: "demanda-topo" }, l.avatar,
+        el("div", {}, el("h3", {}, d.titulo), el("div", { class: "pequeno" }, `Pede: ${a?.nome || d.solicitante}`),
+          el("div", { id: `b-${d.id}`, class: "pequeno" }, d.beneficio))),
+      el("label", { for: `s-${d.id}`, class: "linha-valor" }, el("span", {}, `Custo: ${brl(d.custo)}`), l.valor),
+      slider,
+      el("div", { class: "linha botoes-rapidos" },
+        el("button", { type: "button", class: "secundario", onclick: () => definir(d, d.custo) }, "Financiar tudo"),
+        el("button", { type: "button", class: "secundario", onclick: () => definir(d, d.custo / 2) }, "Metade"),
+        el("button", { type: "button", class: "secundario", onclick: () => definir(d, 0) }, "Adiar")),
+      l.humor);
+  });
+
+  const continuidade = c.continua_de && estado.campanha.historico.length
+    ? blocoManterAjustar(c, (aloc) => { for (const d of c.demandas) definir(d, 0); for (const d of c.demandas) definir(d, aloc[d.id] || 0); })
+    : "";
+
+  tela("Dividir o orçamento", cabecalhoTrimestre(), relogio,
+    el("div", { class: "cartao" },
+      el("p", {}, el("strong", {}, `Disponível neste ${c.periodo}: ${brl(disp)}`),
+        c.evento ? el("span", { class: "pequeno suave" }, ` (${brl(c.orcamento)} ${Number(c.evento.delta_orcamento) < 0 ? "−" : "+"} ${brl(Math.abs(c.evento.delta_orcamento))}: ${c.evento.titulo.toLowerCase()})`) : ""),
+      barra, saldoTxt,
+      el("p", { class: "pequeno suave" }, "Os pedidos somam mais do que o disponível. As setas nos indicadores mostram a tendência da sua escolha.")),
+    continuidade, cartoes,
+    el("p", {}, el("button", { class: "secundario", onclick: telaPauta }, "← Voltar à pauta"),
+      el("button", { class: "grande", onclick: telaDecisao }, "Registrar a decisão →")));
+  marcarEtapa(1);
+  for (const d of c.demandas) { linhas[d.id].valor.textContent = `${brl(estado.aloc[d.id])} de ${brl(d.custo)}`; }
+  atualizarTotais();
+  iniciarRelogio(relogio);
+  pedirPrevia(aplicarPrevia);
+}
+
+function blocoManterAjustar(c, aplicar) {
+  const anterior = estado.campanha.historico.at(-1);
+  const fracoes = anterior?.fracoes || {};
+  // mesma proporção de cada projeto no trimestre anterior; pedidos novos começam em zero
+  const escala = (fator) => Object.fromEntries(c.demandas.map((d) => [d.id, Math.min(d.custo, Math.round(d.custo * (fracoes[d.id] || 0) * fator / 500) * 500)]));
+  const msg = el("p", { class: "pequeno", "aria-live": "polite" });
+  return el("div", { class: "cartao continuidade" },
+    el("h2", {}, "Manter, ajustar ou rever a decisão anterior?"),
+    anterior?.resumo ? el("p", { class: "pequeno" }, el("strong", {}, "No trimestre passado: "), anterior.resumo.split("\n")[0]) : "",
+    el("div", { class: "linha" },
+      el("button", { type: "button", onclick: () => { estado.escolhas.continuidade = "manter"; aplicar(escala(1)); msg.textContent = "Mantido: os mesmos projetos continuam."; } }, "Manter"),
+      el("button", { type: "button", class: "secundario", onclick: () => { estado.escolhas.continuidade = "ajustar"; aplicar(escala(1)); msg.textContent = "Ajustar: começamos da decisão anterior. Mexa nos controles abaixo."; document.querySelector(".demanda input[type=range]")?.focus(); } }, "Ajustar"),
+      el("button", { type: "button", class: "secundario", onclick: () => { estado.escolhas.continuidade = "rever"; aplicar({}); msg.textContent = "Rever: começando do zero."; } }, "Rever")),
+    msg);
+}
+
+// ------------------------------------------------------------------ decisão (versão simples; P3 traz o construtor guiado)
+function resumoAlocacao() {
+  const c = estado.campanha.cenario;
+  const partes = c.demandas.map((d) => {
+    const v = estado.aloc[d.id];
+    return v >= d.custo ? `financiar ${d.titulo.toLowerCase()} (${brl(v)})` : v > 0 ? `financiar em parte ${d.titulo.toLowerCase()} (${brl(v)} de ${brl(d.custo)})` : `adiar ${d.titulo.toLowerCase()}`;
+  });
+  const saldo = c.disponivel - Object.values(estado.aloc).reduce((a, b) => a + b, 0);
+  return `Decidimos ${partes.join("; ")}.` + (saldo > 0 ? ` Guardamos ${brl(saldo)}.` : "");
+}
+
+function telaDecisao() {
+  const area = el("textarea", { id: "decisao", maxlength: estado.cfg.decisao.max_caracteres });
+  area.value = estado.escolhas.textoLivre || resumoAlocacao() + " Motivo: ";
+  const botao = el("button", { class: "grande", type: "submit" }, "Confirmar e ver o resultado");
+  const form = el("form", { class: "cartao", onsubmit: async (ev) => {
+    ev.preventDefault(); botao.disabled = true; botao.textContent = "Enviando…";
+    try { await enviarDecisao(area.value); } catch (e) { mostrarErro(form, e); botao.disabled = false; botao.textContent = "Confirmar e ver o resultado"; }
+  } }, el("label", { for: "decisao" }, "Resumo da decisão (o que, por quê e como vai comunicar)"), area, botao);
+  tela("Registrar a decisão", cabecalhoTrimestre(), form,
+    el("p", {}, el("button", { class: "secundario", onclick: telaOrcamento }, "← Voltar ao orçamento")));
+  marcarEtapa(2);
+}
+
+async function enviarDecisao(texto, escolhas = estado.escolhas) {
+  const camp = estado.campanha;
+  const r = await api(`/api/campanhas/${camp.id}/tentativas`, { method: "POST",
+    body: { decisao: texto, alocacao: estado.aloc, escolhas } });
+  clearInterval(estado.relogio);
+  telaResultado(r.tentativa_id);
 }
 
 // ------------------------------------------------------------------ resultado
 async function telaResultado(tid) {
   const t = await api(`/api/tentativas/${tid}`);
+  if (!t.resultado) return telaEspera(tid);  // fluxo antigo (sem orçamento)
   estado.tentativaAtual = t;
-  const r = t.resultado, ind = r.indicadores, dev = r.devolutiva;
+  const camp = estado.campanha;
+  const r = t.resultado, ind = r.indicadores;
   renderIndicadores(ind.depois, ind.variacao);
   const nomeInd = Object.fromEntries(estado.cfg.indicadores.map((i) => [i.id, i.nome]));
-  const abas = [
-    ["Resultado", () => el("div", {},
-      el("h2", {}, "O que aconteceu"), el("p", {}, r.resumo),
-      el("h2", {}, "Impacto nos indicadores"),
-      el("table", {}, el("caption", { class: "suave" }, "Valores de 0 a 100"),
-        el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Indicador"), el("th", { scope: "col" }, "Antes"),
-          el("th", { scope: "col" }, "Depois"), el("th", { scope: "col" }, "Variação"))),
-        el("tbody", {}, Object.keys(ind.depois).map((k) => el("tr", {}, el("th", { scope: "row" }, nomeInd[k]),
-          el("td", {}, Number(ind.antes[k]).toFixed(0)), el("td", {}, Number(ind.depois[k]).toFixed(0)),
-          el("td", {}, delta(ind.variacao[k])))))),
-      el("details", { class: "cartao" }, el("summary", {}, "Como calculamos (auditoria)"),
-        el("p", { class: "pequeno suave" }, "Um modelo de linguagem extrai sinais da simulação; a conversão em pontos é feita por regras fixas e públicas (config/indicadores.yaml)."),
-        el("table", { class: "pequeno" }, el("thead", {}, el("tr", {}, ["Regra", "Indicador", "Pontos", "Detalhe"].map((h) => el("th", { scope: "col" }, h)))),
-          el("tbody", {}, ind.auditoria.map((a) => el("tr", {}, el("td", {}, a.regra), el("td", {}, nomeInd[a.indicador]),
-            el("td", {}, a.pontos), el("td", {}, a.detalhe, a.evidencia ? el("div", { class: "suave" }, a.evidencia) : "")))))),
-      el("h2", {}, "Reações dos principais atores"),
-      el("ul", { class: "atores", role: "list" }, r.reacoes.map((x) => el("li", { class: "ator" },
-        el("div", { class: "tipo" }, TIPOS[x.tipo] || x.tipo), el("strong", {}, x.nome),
-        el("div", { class: "pequeno" }, `Postura: ${POSTURA[x.postura_inicial]} → ${POSTURA[x.postura_final]}`),
-        el("p", { class: "pequeno" }, x.reacao), x.citacao ? el("blockquote", { class: "pequeno" }, `“${x.citacao}”`) : "")))) ],
-    ["Devolutiva", () => el("div", {},
-      el("h2", {}, "Competências"),
-      el("table", {}, el("thead", {}, el("tr", {}, ["Competência", "Nível", "Evidência"].map((h) => el("th", { scope: "col" }, h)))),
-        el("tbody", {}, dev.competencias.map((c) => el("tr", {}, el("th", { scope: "row" }, c.nome),
-          el("td", {}, c.nivel ? `${c.nivel} — ${c.nivel_nome}` : c.nivel_nome, el("div", { class: "pequeno suave" }, c.descritor)),
-          el("td", {}, c.evidencia))))),
-      lista("Pontos fortes", dev.pontos_fortes), lista("Riscos ignorados", dev.riscos_ignorados),
-      lista("Atores não considerados", dev.atores_nao_considerados),
-      dev.atores_nao_mencionados?.length ? el("p", { class: "suave pequeno" }, "Não mencionados na sua decisão: ", dev.atores_nao_mencionados.join(", "), ".") : "",
-      lista("Trade-offs", dev.trade_offs),
-      el("h2", {}, "Para refletir"), el("ol", {}, dev.perguntas_reflexivas.map((p) => el("li", {}, p))),
-      el("p", {}, el("button", { class: "secundario", onclick: () => window.print() }, "Imprimir / salvar em PDF"))) ],
-    ["Conversar", () => painelConversa(t)],
-    ["Comparar tentativas", () => painelComparar()],
-  ];
-  const corpo = el("div", { id: "painel-aba", role: "tabpanel", tabindex: 0 });
-  const botoes = abas.map(([nome, f], i) => el("button", { role: "tab", "aria-selected": i === 0 ? "true" : "false", id: `aba-${i}`,
-    "aria-controls": "painel-aba", onclick: async (ev) => {
-      botoes.forEach((b) => b.setAttribute("aria-selected", "false"));
-      ev.currentTarget.setAttribute("aria-selected", "true");
-      corpo.setAttribute("aria-labelledby", ev.currentTarget.id);
-      corpo.replaceChildren(await f());
-    } }, nome));
-  corpo.setAttribute("aria-labelledby", "aba-0");
-  corpo.replaceChildren(await abas[0][1]());
-  const camp = estado.campanha;
-  tela("Resultado da simulação",
-    t.modo === "contingencia" ? el("div", { class: "aviso", role: "status" }, t.aviso) : null,
-    el("details", { class: "cartao" }, el("summary", {}, "Sua decisão"), el("p", {}, t.decisao),
-      t.esclarecimentos.map((e) => el("p", { class: "pequeno" }, el("strong", {}, e.pergunta), " ", e.resposta))),
-    el("div", { class: "abas", role: "tablist", "aria-label": "Seções do resultado" }, botoes), corpo,
+  const status = el("div", { class: "status-sim", role: "status", "aria-live": "polite" });
+  const linhaTempo = el("section", { "aria-label": "Linha do tempo" });
+  const devol = el("section", { "aria-label": "Devolutiva" });
+  const conversaBox = el("section", {});
+
+  const barras = el("div", { class: "barras-resultado" }, Object.keys(ind.depois).map((k) =>
+    el("div", { class: "linha-barra" }, el("span", { class: "rotulo" }, nomeInd[k]),
+      el("span", { class: "barra" }, el("span", { style: `width:${ind.depois[k]}%` })),
+      el("span", { class: "num" }, Number(ind.depois[k]).toFixed(0)), delta(ind.variacao[k]))));
+
+  const demandas = el("ul", { class: "resultado-demandas", role: "list" }, (r.demandas || []).map((d) => {
+    const dem = camp.cenario.demandas.find((x) => x.id === d.id) || { titulo: d.id };
+    const a = ator(d.solicitante);
+    return el("li", { class: "cartao-mini" }, avatarDe(a, d.expressao, 48),
+      el("div", {}, el("strong", {}, dem.titulo), el("div", { class: "pequeno" },
+        d.valor >= d.custo ? `Financiada (${brl(d.valor)})` : d.valor > 0 ? `Parcial: ${brl(d.valor)} de ${brl(d.custo)}` : "Adiada")));
+  }));
+
+  tela(`Resultado do ${camp.cenario.periodo}`, cabecalhoTrimestre(),
+    t.modo === "contingencia" && t.aviso ? el("div", { class: "aviso" }, t.aviso) : "",
+    el("details", { class: "cartao" }, el("summary", {}, "Resumo da decisão"), el("p", {}, t.decisao)),
+    el("h2", {}, "Indicadores"), barras,
+    el("details", { class: "cartao pequeno" }, el("summary", {}, "Como calculamos"),
+      el("p", {}, "O resultado base sai da sua divisão do orçamento, por regras fixas e públicas. A simulação dos agentes só ajusta até ±10 pontos."),
+      el("ul", {}, ind.auditoria.slice(0, 40).map((a) => el("li", {}, `${nomeInd[a.indicador] || a.indicador}: ${a.pontos > 0 ? "+" : ""}${a.pontos} — ${a.detalhe}`)))),
+    el("h2", {}, "O que você financiou"), demandas,
+    status, linhaTempo, devol, conversaBox,
     el("div", { class: "cartao" },
       el("h2", {}, "E agora?"),
-      el("p", {}, "Você pode refazer a decisão (os indicadores voltam ao estado anterior a este cenário) ou seguir com esta tentativa."),
-      el("button", { class: "secundario", onclick: async () => { estado.campanha = await api(`/api/campanhas/${camp.id}`); telaCenario(t.decisao); } }, "Refazer a decisão"),
-      el("button", { onclick: async () => {
-        try { estado.campanha = await api(`/api/campanhas/${camp.id}/avancar`, { method: "POST", body: { tentativa_id: t.id } });
-          estado.campanha.status === "concluida" ? telaFinal() : telaCenario(); } catch (e) { mostrarErro(main(), e); } } },
-        camp.indice_atual + 1 >= camp.total ? "Concluir a campanha com esta tentativa" : "Avançar com esta tentativa"),
-      el("p", { class: "suave pequeno" }, `Custo desta tentativa: R$ ${t.custo.total_brl.toFixed(2)} (inclui estimativa do simulador).`)));
+      el("button", { class: "secundario", onclick: async () => {
+        estado.campanha = await api(`/api/campanhas/${camp.id}`); iniciarTrimestre(t.alocacao); } }, "Refazer a decisão"),
+      el("button", { class: "grande", onclick: async () => {
+        try {
+          estado.campanha = await api(`/api/campanhas/${camp.id}/avancar`, { method: "POST", body: { tentativa_id: t.id } });
+          estado.campanha.status === "concluida" ? telaFinal() : iniciarTrimestre();
+        } catch (e) { mostrarErro(main(), e); } } },
+        camp.indice_atual + 1 >= camp.total ? "Concluir" : "Ir para o próximo trimestre →"),
+      el("p", { class: "suave pequeno" }, `Custo desta tentativa até agora: R$ ${t.custo.total_brl.toFixed(2)}.`)));
+  marcarEtapa(3);
+
+  const atualizar = (tt) => {
+    const rr = tt.resultado;
+    if (rr.fase !== "completo") {
+      status.replaceChildren(el("div", { class: "aviso suave-aviso" }, el("span", { class: "girando", "aria-hidden": "true" }, "⏳"),
+        ` Os agentes estão reagindo à sua decisão (${tt.progresso || 0}%). ${tt.etapa || ""}`,
+        tt.posicao_fila ? ` Posição na fila: ${tt.posicao_fila}.` : ""));
+    } else {
+      status.replaceChildren(rr.resumo ? el("div", { class: "cartao" }, el("h2", {}, "O que aconteceu"), el("p", {}, rr.resumo)) : "");
+      renderIndicadores(rr.indicadores.depois, rr.indicadores.variacao);
+      linhaTempo.replaceChildren(rr.momentos?.length ? el("div", {}, el("h2", {}, "Momentos-chave"),
+        el("ol", { class: "linha-tempo" }, rr.momentos.map((m) => {
+          const a = ator(m.ator_id) || { id: m.ator_id, nome: m.nome, tipo: m.tipo };
+          const reac = rr.reacoes.find((x) => x.ator_id === m.ator_id);
+          return el("li", {}, avatarDe(a, AVATAR.expressaoDePostura(reac?.postura_final ?? 0), 52),
+            el("div", { class: "balao" }, el("strong", {}, a.nome), el("p", {}, m.fala)));
+        }))) : "");
+    }
+    if (tt.devolutiva && !devol.dataset.ok) { devol.dataset.ok = "1"; devol.replaceChildren(blocoDevolutiva(tt.devolutiva)); }
+    if (!conversaBox.dataset.ok) { conversaBox.dataset.ok = "1"; painelConversa(tt).then((p) => conversaBox.replaceChildren(p)); }
+    return rr.fase === "completo" && tt.devolutiva;
+  };
+  if (!atualizar(t)) {
+    estado.timer = setInterval(async () => {
+      try { const tt = await api(`/api/tentativas/${tid}`); if (atualizar(tt)) clearInterval(estado.timer); } catch (_) {}
+    }, 3000);
+  }
+}
+
+function blocoDevolutiva(dev) {
+  if (dev.erro) return el("p", { class: "suave" }, dev.erro);
+  return el("div", { class: "cartao" }, el("h2", {}, "Devolutiva"),
+    lista("Pontos fortes", dev.pontos_fortes), lista("Riscos que ficaram de fora", dev.riscos_ignorados),
+    lista("Trade-offs", dev.trade_offs),
+    el("h3", {}, "Para refletir"), el("ol", {}, dev.perguntas_reflexivas.map((p) => el("li", {}, p))),
+    el("details", {}, el("summary", {}, "Competências (rubrica)"),
+      el("table", {}, el("tbody", {}, dev.competencias.map((c) => el("tr", {}, el("th", { scope: "row" }, c.nome),
+        el("td", {}, c.nivel ? `${c.nivel} — ${c.nivel_nome}` : c.nivel_nome), el("td", { class: "pequeno" }, c.evidencia)))))));
 }
 
 function lista(titulo, itens) {
   if (!itens || !itens.length) return "";
-  return el("div", {}, el("h2", {}, titulo), el("ul", {}, itens.map((i) => el("li", {}, i))));
+  return el("div", {}, el("h3", {}, titulo), el("ul", {}, itens.map((i) => el("li", {}, i))));
+}
+
+// Espera do fluxo antigo (cenários sem orçamento); mantida por compatibilidade
+function telaEspera(tid) {
+  const barra = el("progress", { max: 100, value: 0, "aria-labelledby": "etapa" });
+  const etapa = el("p", { id: "etapa", "aria-live": "polite" }, "Enviando…");
+  tela("Simulando as reações", etapa, barra);
+  const tick = async () => {
+    const t = await api(`/api/tentativas/${tid}`);
+    barra.value = t.progresso || 0; etapa.textContent = `${t.etapa || "Aguardando"} (${t.progresso || 0}%)`;
+    if (t.resultado) { clearInterval(estado.timer); telaResultado(tid); }
+  };
+  tick(); estado.timer = setInterval(tick, 2500);
 }
 
 async function painelConversa(t) {
   const cen = estado.campanha.cenario;
   const sel = el("select", { id: "interlocutor" },
-    el("option", { value: "relatorio" }, "Agente de relatório (análise da simulação)"),
+    el("option", { value: "relatorio" }, "Analista da simulação"),
     cen.atores.map((a) => el("option", { value: a.id }, `${a.nome} — ${TIPOS[a.tipo] || a.tipo}`)));
   const log = el("div", { class: "chat", role: "log", "aria-live": "polite", "aria-label": "Conversa" });
-  const campo = el("input", { type: "text", id: "msg", maxlength: 800, placeholder: "Ex.: Por que você votou contra?" });
+  const campo = el("input", { type: "text", id: "msg", maxlength: 800, placeholder: "Escreva sua pergunta" });
   const enviar = el("button", { type: "submit" }, "Enviar");
+  const dica = el("p", { class: "suave pequeno" });
   const carregar = async () => {
     const h = await api(`/api/tentativas/${t.id}/conversa?interlocutor=${encodeURIComponent(sel.value)}`);
     log.replaceChildren(...h.mensagens.map((m) => el("div", { class: `msg ${m.papel}` }, m.conteudo)));
     log.scrollTop = log.scrollHeight;
   };
   sel.addEventListener("change", carregar);
-  const form = el("form", { onsubmit: async (ev) => {
-    ev.preventDefault();
-    if (!campo.value.trim()) return;
+  const mandar = async (texto) => {
+    if (!texto.trim()) return;
     form.querySelectorAll(".erro").forEach((n) => n.remove());
-    const texto = campo.value; campo.value = ""; enviar.disabled = true;
+    enviar.disabled = true;
     log.append(el("div", { class: "msg jogador" }, texto), el("div", { class: "msg agente suave", id: "digitando" }, "…"));
     try {
       const r = await api(`/api/tentativas/${t.id}/conversa`, { method: "POST", body: { interlocutor: sel.value, mensagem: texto } });
       $("#digitando")?.remove();
-      log.append(el("div", { class: "msg agente" }, r.resposta,
-        r.fonte === "contingencia" ? el("div", { class: "pequeno suave" }, "(resposta gerada com a memória resumida da simulação)") : ""));
-      dica.textContent = `Mensagens restantes nesta tentativa: ${r.restantes}`;
+      log.append(el("div", { class: "msg agente" }, r.resposta));
+      dica.textContent = `Mensagens restantes: ${r.restantes}`;
     } catch (e) { $("#digitando")?.remove(); mostrarErro(form, e); }
-    enviar.disabled = false; log.scrollTop = log.scrollHeight; campo.focus();
-  } }, el("label", { for: "msg" }, "Sua mensagem"), el("div", { class: "linha" }, campo, enviar));
-  const dica = el("p", { class: "suave pequeno" });
+    enviar.disabled = false; log.scrollTop = log.scrollHeight;
+  };
+  const form = el("form", { onsubmit: (ev) => { ev.preventDefault(); const v = campo.value; campo.value = ""; mandar(v); } },
+    el("label", { for: "msg" }, "Sua pergunta"), el("div", { class: "linha" }, campo, enviar));
   await carregar();
-  return el("div", {}, el("label", { for: "interlocutor" }, "Conversar com"), sel,
-    el("p", { class: "suave pequeno" }, "Os agentes respondem de acordo com a persona e com o que viveram na simulação."), log, form, dica);
-}
-
-async function painelComparar() {
-  const camp = estado.campanha;
-  const r = await api(`/api/campanhas/${camp.id}/comparar?indice=${camp.indice_atual}`);
-  if (r.tentativas.length < 2) return el("p", {}, "Faça outra tentativa (\"Refazer a decisão\") para comparar resultados lado a lado.");
-  const nomes = estado.cfg.indicadores;
-  return el("table", {},
-    el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Tentativa"), nomes.map((i) => el("th", { scope: "col" }, i.nome)))),
-    el("tbody", {}, r.tentativas.map((t, n) => el("tr", {},
-      el("th", { scope: "row" }, `#${n + 1} `, el("div", { class: "pequeno suave" }, t.decisao.slice(0, 180), t.decisao.length > 180 ? "…" : "")),
-      nomes.map((i) => el("td", {}, delta(t.variacao?.[i.id])))))));
+  return el("div", { class: "cartao" }, el("h2", {}, "Conversar"), el("label", { for: "interlocutor" }, "Com quem?"), sel, log, form, dica);
 }
 
 // ------------------------------------------------------------------ final
@@ -379,13 +508,12 @@ async function telaFinal() {
   const camp = estado.campanha;
   renderIndicadores(camp.indicadores);
   tela("Campanha concluída",
-    el("p", {}, `Você liderou a associação por ${camp.total} cenários. Veja a trajetória dos indicadores:`),
-    el("table", {}, el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Cenário"),
+    el("p", {}, `Você liderou a associação por ${camp.total} ${camp.total > 1 ? "trimestres" : "trimestre"}.`),
+    el("table", {}, el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Trimestre"),
       estado.cfg.indicadores.map((i) => el("th", { scope: "col" }, i.nome)))),
       el("tbody", {}, camp.historico.map((h) => el("tr", {}, el("th", { scope: "row" }, `${h.indice + 1}`),
         estado.cfg.indicadores.map((i) => el("td", {}, Number(h.depois[i.id]).toFixed(0), " ", delta(h.depois[i.id] - h.antes[i.id]))))))),
-    el("p", {}, `Custo total da campanha: R$ ${camp.custo.total_brl.toFixed(2)}.`),
-    el("p", {}, el("button", { onclick: novaCampanha }, "Nova campanha"),
+    el("p", {}, el("button", { onclick: () => novaCampanha(camp.perfil) }, "Jogar de novo"),
       el("button", { class: "secundario", onclick: () => window.print() }, "Imprimir / salvar em PDF"),
       el("button", { class: "secundario", onclick: async () => {
         if (!confirm("Apagar todos os seus dados deste navegador e do servidor? Não dá para desfazer.")) return;

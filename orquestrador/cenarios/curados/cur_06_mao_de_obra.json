@@ -159,5 +159,80 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "Há 640 vagas abertas entre os associados, mas faltam trabalhadores e os jovens saem em menos de três meses. A maior indústria ameaça levar parte da produção para outra cidade. A escola técnica oferece cursos gratuitos se houver vagas garantidas. A associação não negocia salários. Há R$ 60 mil para o semestre.",
+  "tags": [
+    "Falta de trabalhadores",
+    "Grandes x pequenos",
+    "Escola técnica"
+  ],
+  "orcamento": 60000,
+  "demandas": [
+    {
+      "id": "parceria_escola",
+      "titulo": "Bolsa-estágio com a escola técnica",
+      "custo": 30000,
+      "solicitante": "escola_tecnica",
+      "beneficio": "120 vagas de estágio para formandos.",
+      "efeitos": {
+        "engajamento": 3,
+        "reputacao": 2,
+        "capital_politico": 1
+      },
+      "efeitos_adiar": {
+        "capital_politico": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "campanha_imagem",
+      "titulo": "Campanha 'Trabalhe no comércio'",
+      "custo": 20000,
+      "solicitante": "diretor_marketing",
+      "beneficio": "Comunicação para atrair jovens.",
+      "efeitos": {
+        "reputacao": 2
+      },
+      "efeitos_adiar": {},
+      "minimo_util": 0.5
+    },
+    {
+      "id": "banco_talentos",
+      "titulo": "Banco de talentos para associados",
+      "custo": 18000,
+      "solicitante": "plataforma",
+      "beneficio": "Plataforma de recrutamento por um ano.",
+      "efeitos": {
+        "engajamento": 2,
+        "saude_financeira": 1
+      },
+      "efeitos_adiar": {},
+      "minimo_util": 0.5
+    },
+    {
+      "id": "transporte_sabado",
+      "titulo": "Ampliar transporte aos sábados com a prefeitura",
+      "custo": 15000,
+      "solicitante": "sec_trabalho",
+      "beneficio": "Ônibus subsidiado também aos sábados.",
+      "efeitos": {
+        "capital_politico": 2,
+        "engajamento": 2
+      },
+      "efeitos_adiar": {
+        "engajamento": -1
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "⚖️",
+      "texto": "Salário e jornada são assunto dos sindicatos."
+    },
+    {
+      "icone": "📅",
+      "texto": "Plano precisa ir à reunião de diretoria na próxima semana."
+    }
+  ]
 }

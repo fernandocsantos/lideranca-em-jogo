@@ -150,5 +150,74 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "O clube de vantagens tem 14 mil consumidores cadastrados. Uma fintech oferece R$ 6 mil por mês para usar essa base, e o caixa está apertado. Os consumidores só autorizaram ofertas das lojas participantes. A fintech também aceita só patrocinar o clube, por R$ 2.500 mensais. Há R$ 20 mil para organizar a gestão de dados.",
+  "tags": [
+    "Dados dos consumidores",
+    "Caixa apertado",
+    "Confiança"
+  ],
+  "orcamento": 20000,
+  "demandas": [
+    {
+      "id": "dpo",
+      "titulo": "Encarregado de dados e revisão do cadastro",
+      "custo": 9000,
+      "solicitante": "advogado_associado",
+      "beneficio": "Contratar apoio jurídico e nomear o encarregado (LGPD).",
+      "efeitos": {
+        "conformidade": 5,
+        "reputacao": 1
+      },
+      "efeitos_adiar": {
+        "conformidade": -4
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "novo_consentimento",
+      "titulo": "Campanha de novo consentimento",
+      "custo": 8000,
+      "solicitante": "analista",
+      "beneficio": "Pedir autorização clara aos consumidores.",
+      "efeitos": {
+        "conformidade": 3,
+        "engajamento": 1,
+        "reputacao": 1
+      },
+      "efeitos_adiar": {
+        "conformidade": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "app_patrocinio",
+      "titulo": "Aplicativo do clube com patrocínio voluntário",
+      "custo": 12000,
+      "solicitante": "lojista_moda",
+      "beneficio": "Espaço publicitário para a fintech, sem repassar dados.",
+      "efeitos": {
+        "saude_financeira": 4,
+        "engajamento": 2
+      },
+      "efeitos_adiar": {
+        "saude_financeira": -2
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "🔒",
+      "texto": "Dados só podem ser usados para o que o consumidor autorizou (LGPD)."
+    },
+    {
+      "icone": "🧾",
+      "texto": "Receita recorrente acima de R$ 50 mil exige parecer do conselho fiscal."
+    },
+    {
+      "icone": "⏱️",
+      "texto": "A fintech quer resposta em 15 dias."
+    }
+  ]
 }

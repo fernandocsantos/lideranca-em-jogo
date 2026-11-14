@@ -55,8 +55,28 @@ flags:
   crise_mal_comunicada:     {reputacao: -6, descricao: "Silêncio ou contradição pública durante a crise."}
 
 limites:
-  delta_maximo_por_rodada: 15   # |variação| máxima de cada indicador por cenário
+  delta_maximo_por_rodada: 20   # |variação| máxima de cada indicador por trimestre (base + ajuste)
   elasticidade_min: 0.5
   elasticidade_max: 1.5
   minimo: 0
   maximo: 100
+
+# ---------------------------------------------------------------- versão CACB
+# Resultado BASE calculado só a partir da alocação do orçamento (sem IA). Também alimenta a prévia.
+alocacao:
+  # fração financiada (0..1) -> utilidade; abaixo de "minimo_util" de cada demanda o benefício cai à metade
+  fator_abaixo_minimo: 0.5
+  # saldo não gasto vira folga de caixa: pontos de saúde financeira por 10% do disponível guardado
+  saude_por_10pct_saldo: 1.0
+  # postura prevista de quem pediu (para os avatares): utilidade >= alta -> +1; < baixa -> -1;
+  # demanda adiada: postura cai 2 níveis (influência >= 4 -> direto para -2)
+  utilidade_alta: 0.9
+  utilidade_baixa: 0.4
+  # elementos da decisão guiada (resumo) que somam pontos
+  bonus_decisao:
+    comunicacao: {engajamento: 1.5}
+    meta_mensuravel: {coesao: 1.0, conformidade: 1.0}
+    revisao_programada: {conformidade: 1.0}
+
+# O LLM só ajusta o resultado base dentro desta faixa, a partir dos sinais da simulação dos agentes.
+ajuste_llm_max: 10

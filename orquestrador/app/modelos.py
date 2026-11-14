@@ -19,7 +19,8 @@ class Estrito(BaseModel):
 
 
 # ----------------------------------------------------------------- cenários
-class Ator(Estrito):
+class AtorGerado(Estrito):
+    """Formato pedido ao LLM na ficcionalização (sem campos de avatar)."""
     id: str
     nome: str
     tipo: TipoAtor
@@ -28,6 +29,12 @@ class Ator(Estrito):
     interesses: list[str]
     influencia: int  # 1..5
     postura_inicial: int  # -2 (hostil) .. +2 (aliado)
+
+
+class Ator(AtorGerado):
+    # Aparência do avatar ilustrado (nunca foto). Se ausente, é derivada do id de forma estável.
+    idade: Optional[int] = None
+    genero: Optional[Literal["f", "m"]] = None
 
 
 class Associacao(Estrito):
@@ -45,18 +52,59 @@ class Referencia(Estrito):
     url: str
 
 
+class Demanda(Estrito):
+    """Pedido que disputa o orçamento do período."""
+    id: str
+    titulo: str
+    custo: int                      # R$
+    solicitante: str                # ator_id de quem pede
+    beneficio: str                  # 1 linha
+    efeitos: dict[str, float]       # pontos por indicador se financiada por inteiro
+    efeitos_adiar: dict[str, float] = {}  # pontos por indicador se não financiada
+    minimo_util: float = 0.5        # abaixo desta fração o benefício cai pela metade
+
+
+class Regra(Estrito):
+    """Restrição que a decisão e a simulação devem respeitar (ícone + 1 linha)."""
+    icone: str
+    texto: str
+
+
+class Evento(Estrito):
+    """Fato novo do período (ex.: receita prevista cai R$ 6 mil)."""
+    titulo: str
+    texto: str
+    delta_orcamento: int = 0
+    fonte: Optional[Referencia] = None
+
+
 class Cenario(BaseModel):
     id: str
     titulo: str
     tema: str
     dificuldade: int = Field(ge=1, le=3)
     associacao: Associacao
-    texto: str
+    texto: str                      # contexto completo (vai ao MiroFish e à devolutiva)
     restricoes: list[str]
     em_jogo: str
     atores: list[Ator]
     inspirado_em: Optional[Referencia] = None
     status: Literal["curado", "pendente_revisao", "aprovado", "rejeitado"] = "curado"
+    # --- mecânica de orçamento (versão CACB) ---
+    narrativa: str = ""             # até 80 palavras, o que o jogador lê na pauta
+    tags: list[str] = []            # "o que está em jogo" em até 3 tags
+    orcamento: int = 0              # R$ disponíveis no período (antes do evento)
+    periodo: str = "trimestre"
+    demandas: list[Demanda] = []
+    regras: list[Regra] = []
+    evento: Optional[Evento] = None
+    usa_perfil: bool = False        # associação, atores e escala do orçamento vêm do perfil da AC
+    trimestre: int = 1
+    continua_de: Optional[str] = None  # cenário anterior encadeado (manter/ajustar/rever)
+
+    @property
+    def disponivel(self) -> int:
+        return max(0, self.orcamento + (self.evento.delta_orcamento if self.evento else 0))
 
 
 # ----------------------------------------------------------- saídas de LLM
@@ -85,8 +133,14 @@ class ReacaoAtor(Estrito):
     citacao: str
 
 
+class Momento(Estrito):
+    ator_id: str
+    fala: str  # até 2 frases, em 1ª pessoa
+
+
 class ExtracaoSinais(Estrito):
     resumo_narrativo: str
+    momentos: list[Momento]
     sinais: list[Sinal]
     reacoes: list[ReacaoAtor]
     flags: list[Flag]
@@ -129,5 +183,5 @@ class CenarioFiccional(Estrito):
     texto: str
     restricoes: list[str]
     em_jogo: str
-    atores: list[Ator]
+    atores: list[AtorGerado]
     nomes_reais_removidos: list[str]

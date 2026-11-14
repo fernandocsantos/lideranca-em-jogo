@@ -174,5 +174,86 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "A transição da reforma tributária deixou o comércio em pânico, com mensagens falsas circulando no WhatsApp. O vice-presidente fala à imprensa contra a reforma sem aprovação da diretoria. A federação pede dados de impacto em 30 dias e um deputado quer audiência na sede, em ano eleitoral. Há R$ 90 mil para o tema.",
+  "tags": [
+    "Desinformação",
+    "Neutralidade política",
+    "Diretoria dividida"
+  ],
+  "orcamento": 90000,
+  "demandas": [
+    {
+      "id": "forca_tarefa",
+      "titulo": "Força-tarefa com os contadores locais",
+      "custo": 40000,
+      "solicitante": "crc",
+      "beneficio": "Plantões de orientação gratuitos com contadores da cidade.",
+      "efeitos": {
+        "engajamento": 3,
+        "reputacao": 2,
+        "capital_politico": 1
+      },
+      "efeitos_adiar": {
+        "engajamento": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "plantao_pago",
+      "titulo": "Plantão da Reforma (serviço pago)",
+      "custo": 35000,
+      "solicitante": "dir_servicos",
+      "beneficio": "Consultoria paga para associados.",
+      "efeitos": {
+        "saude_financeira": 3,
+        "engajamento": 1
+      },
+      "efeitos_adiar": {},
+      "minimo_util": 0.5
+    },
+    {
+      "id": "estudo_federacao",
+      "titulo": "Levantamento de impacto para a federação",
+      "custo": 25000,
+      "solicitante": "federacao",
+      "beneficio": "Dados locais para a frente de regulamentação.",
+      "efeitos": {
+        "capital_politico": 3,
+        "conformidade": 1
+      },
+      "efeitos_adiar": {
+        "capital_politico": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "checagem",
+      "titulo": "Campanha contra notícias falsas",
+      "custo": 15000,
+      "solicitante": "influenciador",
+      "beneficio": "Vídeos curtos e cartilha para o WhatsApp.",
+      "efeitos": {
+        "reputacao": 3
+      },
+      "efeitos_adiar": {
+        "reputacao": -2
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "🏛️",
+      "texto": "A associação não faz manifestação político-partidária."
+    },
+    {
+      "icone": "📜",
+      "texto": "Posição sobre lei federal exige diretoria plena."
+    },
+    {
+      "icone": "⏱️",
+      "texto": "Federação pede os dados em 30 dias."
+    }
+  ]
 }

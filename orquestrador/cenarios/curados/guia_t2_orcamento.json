@@ -1,0 +1,258 @@
+{
+  "id": "guia_t2_orcamento",
+  "titulo": "Trimestre 2: manter, ajustar ou rever?",
+  "tema": "orcamento_prioridades",
+  "dificuldade": 2,
+  "associacao": {
+    "nome": "Associação Comercial e Empresarial de Vale Sereno (ACEVS)",
+    "cidade": "Vale Sereno (SP, fictícia, 72 mil habitantes)",
+    "porte": "média",
+    "associados": 380,
+    "situacao_financeira": "Equilibrada, mas sem folga: a reserva cobre 2 meses de despesas."
+  },
+  "texto": "No segundo trimestre, a Associação Comercial e Empresarial de Vale Sereno volta a ter R$ 30 mil livres para projetos. Os resultados da decisão do primeiro trimestre já aparecem: alguns associados elogiam, outros cobram. A prefeitura oferece R$ 5 mil a mais, desde que a associação divulgue uma meta pública para o projeto apoiado. A Black Friday se aproxima, e o comércio dos bairros pede uma campanha conjunta (R$ 9 mil). Os projetos do trimestre anterior pedem continuidade: segunda etapa da digitalização (R$ 12 mil), nova turma de formação em vendas (R$ 10 mil) e manutenção do reforço no atendimento (R$ 8 mil). A diretoria precisa decidir se mantém, ajusta ou revê a decisão anterior, com base nos resultados.",
+  "restricoes": [
+    "Os R$ 5 mil da prefeitura exigem uma meta pública divulgada.",
+    "A reserva de emergência não pode ser usada em projetos.",
+    "A decisão precisa constar na ata e na prestação de contas."
+  ],
+  "em_jogo": "Mostrar resultados, ampliar parcerias e incluir o comércio dos bairros.",
+  "atores": [
+    {
+      "id": "lojista_digital",
+      "nome": "Rafael Tanaka",
+      "tipo": "associado",
+      "papel": "Dono de loja de eletrônicos, líder dos jovens empresários",
+      "persona": "Vende muito pelo Instagram e quer que a associação ajude os outros a vender online. Impaciente com reuniões longas.",
+      "interesses": [
+        "digitalização dos lojistas",
+        "vendas online"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1,
+      "idade": 29,
+      "genero": "m"
+    },
+    {
+      "id": "lojista_tradicional",
+      "nome": "Dona Cida Moraes",
+      "tipo": "associado",
+      "papel": "Dona de loja de roupas há 30 anos, ex-diretora",
+      "persona": "Respeitada no centro. Acredita que o atendimento no balcão é o diferencial e quer formar os vendedores.",
+      "interesses": [
+        "formação em vendas",
+        "tradição do comércio de rua"
+      ],
+      "influencia": 4,
+      "postura_inicial": 1,
+      "idade": 63,
+      "genero": "f"
+    },
+    {
+      "id": "gerente",
+      "nome": "Patrícia Lemos",
+      "tipo": "funcionarios",
+      "papel": "Gerente executiva da associação",
+      "persona": "Organizada e sobrecarregada. Sabe que associado mal atendido deixa de pagar a mensalidade.",
+      "interesses": [
+        "atendimento ao associado",
+        "equipe suficiente"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1,
+      "idade": 41,
+      "genero": "f"
+    },
+    {
+      "id": "tesoureiro",
+      "nome": "Sr. Osvaldo Brito",
+      "tipo": "diretoria",
+      "papel": "Diretor financeiro voluntário",
+      "persona": "Contador aposentado, cauteloso. Quer reserva para imprevistos e números claros.",
+      "interesses": [
+        "caixa equilibrado",
+        "prestação de contas"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0,
+      "idade": 70,
+      "genero": "m"
+    },
+    {
+      "id": "conselho",
+      "nome": "Marina Duarte",
+      "tipo": "conselho",
+      "papel": "Presidente do conselho deliberativo",
+      "persona": "Formal e atenta ao estatuto. Apoia quem decide com transparência.",
+      "interesses": [
+        "governança",
+        "transparência"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0,
+      "idade": 55,
+      "genero": "f"
+    },
+    {
+      "id": "associado_bairro",
+      "nome": "Seu Jorge Batista",
+      "tipo": "associado",
+      "papel": "Dono de mercadinho no bairro Jardim das Flores",
+      "persona": "Paga a mensalidade e sente que a associação só olha para o centro. Pensa em sair.",
+      "interesses": [
+        "atendimento ao associado",
+        "benefícios para os bairros"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1,
+      "idade": 57,
+      "genero": "m"
+    },
+    {
+      "id": "prefeitura",
+      "nome": "Secretário Hélio Matos",
+      "tipo": "poder_publico",
+      "papel": "Secretário municipal de Desenvolvimento Econômico",
+      "persona": "Quer projetos com resultado visível para divulgar. Pode oferecer parceria.",
+      "interesses": [
+        "projetos com vitrine",
+        "emprego"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0,
+      "idade": 48,
+      "genero": "m"
+    },
+    {
+      "id": "parceiro",
+      "nome": "Lúcia Paiva",
+      "tipo": "parceiro",
+      "papel": "Consultora de um programa de apoio a pequenos negócios",
+      "persona": "Técnica. Oferece metodologia e quer metas medidas.",
+      "interesses": [
+        "metas medidas",
+        "capacitação"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1,
+      "idade": 38,
+      "genero": "f"
+    },
+    {
+      "id": "imprensa",
+      "nome": "Gazeta de Vale Sereno",
+      "tipo": "imprensa",
+      "papel": "Jornal e portal local",
+      "persona": "Cobre a economia da cidade e gosta de números e personagens.",
+      "interesses": [
+        "notícia local",
+        "resultados"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0,
+      "idade": null,
+      "genero": null
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado",
+  "narrativa": "Começa o segundo trimestre. Os efeitos da sua primeira decisão já aparecem nos indicadores e nas conversas do comércio. Entram de novo R$ 30 mil. A prefeitura oferece R$ 5 mil a mais se houver um projeto com meta pública, e a Black Friday se aproxima. É hora de decidir se você mantém, ajusta ou revê o que foi feito.",
+  "tags": [
+    "Resultados à vista",
+    "Parceria com a prefeitura",
+    "Black Friday"
+  ],
+  "orcamento": 30000,
+  "periodo": "trimestre",
+  "demandas": [
+    {
+      "id": "digitalizacao",
+      "titulo": "Digitalização: segunda etapa",
+      "custo": 12000,
+      "solicitante": "lojista_digital",
+      "beneficio": "Continuar o apoio e incluir mais 30 lojas, inclusive dos bairros.",
+      "efeitos": {
+        "engajamento": 3.0,
+        "reputacao": 2.0,
+        "saude_financeira": 2.0
+      },
+      "efeitos_adiar": {
+        "engajamento": -2.0,
+        "reputacao": -1.0
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "formacao_vendas",
+      "titulo": "Formação em vendas: nova turma",
+      "custo": 10000,
+      "solicitante": "lojista_tradicional",
+      "beneficio": "Nova turma para vendedores, com foco na Black Friday.",
+      "efeitos": {
+        "engajamento": 3.0,
+        "reputacao": 1.0,
+        "coesao": 1.0
+      },
+      "efeitos_adiar": {
+        "engajamento": -1.0,
+        "coesao": -1.0
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "atendimento",
+      "titulo": "Atendimento: manter o reforço",
+      "custo": 8000,
+      "solicitante": "gerente",
+      "beneficio": "Manter o atendimento reforçado e ligar para quem está atrasado.",
+      "efeitos": {
+        "saude_financeira": 4.0,
+        "engajamento": 2.0
+      },
+      "efeitos_adiar": {
+        "saude_financeira": -3.0,
+        "coesao": -1.0
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "black_friday",
+      "titulo": "Campanha de Black Friday nos bairros",
+      "custo": 9000,
+      "solicitante": "associado_bairro",
+      "beneficio": "Campanha conjunta que inclui o comércio dos bairros.",
+      "efeitos": {
+        "engajamento": 3.0,
+        "reputacao": 3.0,
+        "capital_politico": 1.0
+      },
+      "efeitos_adiar": {
+        "engajamento": -1.0
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "🤝",
+      "texto": "Os R$ 5 mil da prefeitura exigem uma meta pública divulgada."
+    },
+    {
+      "icone": "💰",
+      "texto": "A reserva de emergência não pode ser usada em projetos."
+    },
+    {
+      "icone": "📜",
+      "texto": "A decisão precisa constar na ata e na prestação de contas."
+    }
+  ],
+  "evento": {
+    "titulo": "Prefeitura oferece R$ 5 mil",
+    "texto": "Contrapartida para projeto com meta pública divulgada.",
+    "delta_orcamento": 5000,
+    "fonte": null
+  },
+  "usa_perfil": true,
+  "trimestre": 2,
+  "continua_de": "guia_t1_orcamento"
+}

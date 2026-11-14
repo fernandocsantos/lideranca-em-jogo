@@ -161,5 +161,85 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "A inadimplência das mensalidades saltou para 27% e a reserva cobre só um mês. Parte dos devedores está em dificuldade real; parte usa os serviços e não paga. Uma entidade concorrente oferece mensalidade zero. Mudar o valor da mensalidade exige assembleia. Há R$ 15 mil para reagir, além da folha.",
+  "tags": [
+    "Sobrevivência da entidade",
+    "Valor percebido",
+    "Equipe"
+  ],
+  "orcamento": 15000,
+  "demandas": [
+    {
+      "id": "renegociacao",
+      "titulo": "Campanha de renegociação",
+      "custo": 5000,
+      "solicitante": "dir_servicos",
+      "beneficio": "Desconto de juros e multa para quem voltar a pagar.",
+      "efeitos": {
+        "saude_financeira": 4,
+        "engajamento": 2
+      },
+      "efeitos_adiar": {
+        "saude_financeira": -3
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "planos_porte",
+      "titulo": "Planos de mensalidade por porte",
+      "custo": 6000,
+      "solicitante": "pequeno_inadimplente",
+      "beneficio": "Plano básico mais barato (vai à assembleia).",
+      "efeitos": {
+        "engajamento": 3,
+        "saude_financeira": 1
+      },
+      "efeitos_adiar": {
+        "engajamento": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "cobranca",
+      "titulo": "Sistema de cobrança automatizada",
+      "custo": 8000,
+      "solicitante": "software",
+      "beneficio": "Lembretes e boletos automáticos.",
+      "efeitos": {
+        "saude_financeira": 3
+      },
+      "efeitos_adiar": {
+        "saude_financeira": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "protesto",
+      "titulo": "Protesto dos débitos em cartório",
+      "custo": 3000,
+      "solicitante": "conselheiro_protesto",
+      "beneficio": "Cobrança firme de quem usa e não paga.",
+      "efeitos": {
+        "saude_financeira": 2,
+        "reputacao": -2
+      },
+      "efeitos_adiar": {},
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "📜",
+      "texto": "Mudar a mensalidade exige assembleia (10 dias de antecedência)."
+    },
+    {
+      "icone": "👥",
+      "texto": "Demissões precisam ser comunicadas ao conselho."
+    },
+    {
+      "icone": "💰",
+      "texto": "Reserva de apenas 1 mês."
+    }
+  ]
 }

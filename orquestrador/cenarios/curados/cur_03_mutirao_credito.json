@@ -150,5 +150,74 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "Os juros altos apertaram os pequenos negócios: 38% usaram cheque especial para pagar fornecedores. Uma cooperativa propõe um mutirão de crédito, o Sebrae oferece diagnóstico gratuito e a prefeitura tem um fundo de aval pouco usado. O banco que patrocina o almoço anual quer condições iguais. Há R$ 40 mil para a iniciativa.",
+  "tags": [
+    "Saúde financeira dos associados",
+    "Independência da entidade",
+    "Parcerias"
+  ],
+  "orcamento": 40000,
+  "demandas": [
+    {
+      "id": "mutirao_cooperativa",
+      "titulo": "Mutirão com a cooperativa",
+      "custo": 18000,
+      "solicitante": "cooperativa",
+      "beneficio": "Dois dias de crédito com juros menores no salão da associação.",
+      "efeitos": {
+        "saude_financeira": 2,
+        "engajamento": 2
+      },
+      "efeitos_adiar": {
+        "engajamento": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "diagnostico_sebrae",
+      "titulo": "Diagnóstico do Sebrae primeiro",
+      "custo": 15000,
+      "solicitante": "sebrae",
+      "beneficio": "Consultoria antes de qualquer empréstimo, para não afundar quem já deve.",
+      "efeitos": {
+        "engajamento": 2,
+        "reputacao": 2,
+        "conformidade": 1
+      },
+      "efeitos_adiar": {
+        "reputacao": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "evento_aberto",
+      "titulo": "Evento aberto com o fundo de aval",
+      "custo": 20000,
+      "solicitante": "sec_desenv",
+      "beneficio": "Aberto a todos os empresários, com garantia da prefeitura.",
+      "efeitos": {
+        "capital_politico": 4,
+        "reputacao": 2
+      },
+      "efeitos_adiar": {
+        "capital_politico": -2
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "🔒",
+      "texto": "Dados de associados só com autorização individual (código de conduta)."
+    },
+    {
+      "icone": "🤝",
+      "texto": "O fundo de aval exige evento aberto a não associados."
+    },
+    {
+      "icone": "⏱️",
+      "texto": "O evento precisa acontecer antes das festas (10 dias)."
+    }
+  ]
 }

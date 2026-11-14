@@ -22,7 +22,7 @@ import httpx
 
 from .. import cenarios, config
 from ..llm import Ctx, ErroLLM, obter
-from ..modelos import Cenario, CenarioFiccional, Referencia
+from ..modelos import Ator, Cenario, CenarioFiccional, Referencia
 
 log = logging.getLogger(__name__)
 
@@ -174,7 +174,7 @@ async def ficcionalizar(n: Noticia, ctx: Ctx) -> Cenario | None:
                 id="ger_" + hashlib.sha1(n.url.encode()).hexdigest()[:10], titulo=cf.titulo,
                 tema=(n.temas[0] if n.temas else cf.tema), dificuldade=max(1, min(3, cf.dificuldade)),
                 associacao=cf.associacao, texto=cf.texto, restricoes=cf.restricoes, em_jogo=cf.em_jogo,
-                atores=cf.atores, status="pendente_revisao",
+                atores=[Ator(**a.model_dump()) for a in cf.atores], status="pendente_revisao",
                 inspirado_em=Referencia(titulo=n.titulo, veiculo=n.veiculo, data=n.data.strftime("%Y-%m-%d"),
                                         url=n.url))
         log.warning("Cenário rejeitado pelo validador (%s): %s", tentativa + 1, problemas)

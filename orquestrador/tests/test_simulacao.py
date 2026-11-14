@@ -32,14 +32,14 @@ async def test_pipeline_mirofish_completo():
     assert falso.rodadas_pedidas == 10 + 8  # 8 rodadas noturnas vazias
     assert falso.entity_types_pedidos == ["BusinessOwner", "MediaOutlet"]  # sem Person/Organization
     assert falso.memoria_pedida is False
-    assert "## Decisão anunciada" in falso.ultimo_material
+    assert "## Resumo da decisão" in falso.ultimo_material
     assert "português do Brasil" in falso.ultimo_material
     assert t["mirofish"]["grafo_reutilizado"] is True
     assert len(t["mirofish"]["mapa_agentes"]) == len(c.atores)  # todos os atores casados com agentes
     r = t["resultado"]
     assert set(r["indicadores"]["depois"]) == set(config.INDICADORES)
     assert len(r["reacoes"]) == len(c.atores)
-    assert len(r["devolutiva"]["competencias"]) == 7
+    assert len(t["devolutiva"]["competencias"]) == 7
     assert t["mirofish"]["interacoes"] >= 3 and any("comenta a decisão" in a["texto"] for a in r["acoes"])
     assert {a["autor"] for a in r["acoes"]} <= {a.nome for a in c.atores}
     custo = db.um("SELECT COUNT(*) n FROM uso_tokens WHERE tentativa_id=? AND tarefa='mirofish_simulacao'", (tid,))
@@ -72,7 +72,7 @@ async def test_contingencia_quando_mirofish_fora_do_ar():
     t = db.um("SELECT * FROM tentativas WHERE id=?", (tid,))
     assert t["status"] == "concluida"
     assert t["modo"] == "contingencia" and "contingência" in t["aviso"]
-    assert t["resultado"]["devolutiva"]["perguntas_reflexivas"]
+    assert t["devolutiva"]["perguntas_reflexivas"]
 
 
 async def test_contingencia_quando_mirofish_falha_no_meio():

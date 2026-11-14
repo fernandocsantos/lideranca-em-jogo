@@ -1,0 +1,21 @@
+id: grande
+nome: "Grande, com equipe estruturada"
+descricao: "1.400 associados, 14 funcionários. Orçamento de R$ 120 mil por trimestre."
+orcamento_trimestral: 120000
+equipe: "14 funcionários em atendimento, eventos, comunicação, serviços de crédito e certificação digital."
+associacao:
+  nome: "Associação Comercial e Industrial de Campo Largo do Tietê (ACICLT)"
+  cidade: "Campo Largo do Tietê (SP, fictícia, 210 mil habitantes)"
+  porte: "grande"
+  associados: 1400
+  situacao_financeira: "Boa, com reserva de 6 meses, mas a receita de serviços vem caindo."
+atores:
+  - {id: lojista_digital, nome: "Thiago Moreira", tipo: associado, idade: 35, genero: m, papel: "Sócio de rede de lojas de calçados com loja virtual", persona: "Pragmático, cobra que a associação acompanhe o varejo digital.", interesses: ["digitalização dos lojistas", "dados de vendas"], influencia: 4, postura_inicial: 1}
+  - {id: lojista_tradicional, nome: "Dona Helena Kobayashi", tipo: associado, idade: 67, genero: f, papel: "Dona de loja de tecidos, ex-presidente da associação", persona: "Conhece todo mundo; aposta em formação de vendedores.", interesses: ["formação em vendas"], influencia: 5, postura_inicial: 1}
+  - {id: gerente, nome: "Fernanda Oliveira", tipo: funcionarios, idade: 44, genero: f, papel: "Superintendente da associação", persona: "Gestora experiente; quer melhorar o atendimento para reduzir cancelamentos.", interesses: ["atendimento ao associado", "indicadores"], influencia: 4, postura_inicial: 1}
+  - {id: tesoureiro, nome: "Sr. Raimundo Teixeira", tipo: diretoria, idade: 69, genero: m, papel: "Diretor financeiro voluntário", persona: "Industrial aposentado, exige retorno de cada real investido.", interesses: ["retorno do investimento"], influencia: 4, postura_inicial: 0}
+  - {id: conselho, nome: "Luciana Prado", tipo: conselho, idade: 52, genero: f, papel: "Presidente do conselho deliberativo", persona: "Executiva de banco aposentada, rigorosa com governança.", interesses: ["governança"], influencia: 4, postura_inicial: 0}
+  - {id: associado_bairro, nome: "Seu Benedito Rosa", tipo: associado, idade: 58, genero: m, papel: "Dono de padaria em bairro da periferia", persona: "Sente que a associação é dos grandes.", interesses: ["atendimento aos pequenos"], influencia: 2, postura_inicial: -1}
+  - {id: prefeitura, nome: "Secretária Joana Ribeiro", tipo: poder_publico, idade: 47, genero: f, papel: "Secretária de Desenvolvimento Econômico", persona: "Técnica, quer parcerias com metas.", interesses: ["parcerias com metas"], influencia: 4, postura_inicial: 0}
+  - {id: parceiro, nome: "Eduardo Lima", tipo: parceiro, idade: 40, genero: m, papel: "Gerente regional de um programa de apoio a pequenos negócios", persona: "Busca parceiros com escala.", interesses: ["escala", "metas"], influencia: 3, postura_inicial: 1}
+  - {id: imprensa, nome: "Jornal de Campo Largo", tipo: imprensa, papel: "Maior jornal da região", persona: "Cobra resultados e números.", interesses: ["resultados"], influencia: 4, postura_inicial: 0}

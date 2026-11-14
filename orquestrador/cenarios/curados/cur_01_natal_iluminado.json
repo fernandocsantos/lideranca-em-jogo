@@ -150,5 +150,76 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "Faltam sete semanas para o Natal e a campanha de luzes e sorteios perdeu o patrocinador principal. Sobraram R$ 99 mil dos R$ 180 mil. Os lojistas do centro querem a campanha completa; os dos bairros dizem que pagam a mesma mensalidade e nunca são lembrados. A prefeitura oferece palco e iluminação se houver atrações nos bairros.",
+  "tags": [
+    "Vendas de fim de ano",
+    "Bairros esquecidos",
+    "Parceria com a prefeitura"
+  ],
+  "orcamento": 99000,
+  "demandas": [
+    {
+      "id": "decoracao_centro",
+      "titulo": "Decoração e sorteios no centro",
+      "custo": 70000,
+      "solicitante": "lojista_centro",
+      "beneficio": "Campanha tradicional completa nas ruas centrais.",
+      "efeitos": {
+        "engajamento": 3,
+        "reputacao": 3,
+        "saude_financeira": 1
+      },
+      "efeitos_adiar": {
+        "engajamento": -3,
+        "reputacao": -2
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "atracoes_bairros",
+      "titulo": "Atrações nos bairros com a prefeitura",
+      "custo": 30000,
+      "solicitante": "lojista_bairro",
+      "beneficio": "Palco e iluminação cedidos, com shows nos bairros.",
+      "efeitos": {
+        "engajamento": 3,
+        "capital_politico": 3
+      },
+      "efeitos_adiar": {
+        "engajamento": -2,
+        "capital_politico": -1
+      },
+      "minimo_util": 0.5
+    },
+    {
+      "id": "comunicacao",
+      "titulo": "Campanha nas redes e na rádio",
+      "custo": 15000,
+      "solicitante": "jornal",
+      "beneficio": "Divulgação para atrair consumidores da região.",
+      "efeitos": {
+        "reputacao": 3,
+        "engajamento": 1
+      },
+      "efeitos_adiar": {
+        "reputacao": -1
+      },
+      "minimo_util": 0.5
+    }
+  ],
+  "regras": [
+    {
+      "icone": "📜",
+      "texto": "Despesa acima de R$ 50 mil fora do previsto exige o conselho."
+    },
+    {
+      "icone": "💰",
+      "texto": "A reserva mínima de 3 meses não pode ser usada."
+    },
+    {
+      "icone": "⏱️",
+      "texto": "Fornecedores precisam de resposta em 7 dias."
+    }
+  ]
 }

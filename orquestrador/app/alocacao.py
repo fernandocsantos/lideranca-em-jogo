@@ -1,0 +1,114 @@
+"""Mecânica central: alocação do orçamento do período entre as demandas.
+
+Tudo aqui é determinístico e instantâneo (sem IA): serve para a prévia ao vivo e para o resultado base.
+"""
+from __future__ import annotations
+
+from typing import Any
+
+from . import config
+from .config import INDICADORES
+from .modelos import Cenario
+
+EXPRESSAO = {2: "favoravel", 1: "favoravel", 0: "neutra", -1: "desconfiada", -2: "insatisfeita"}
+
+
+class AlocacaoInvalida(ValueError):
+    pass
+
+
+def normalizar(c: Cenario, alocacao: dict[str, Any]) -> dict[str, int]:
+    """Valida: só demandas do cenário, valores entre 0 e o custo, soma <= disponível."""
+    ids = {d.id: d for d in c.demandas}
+    out: dict[str, int] = {}
+    for did, v in (alocacao or {}).items():
+        if did not in ids:
+            raise AlocacaoInvalida(f"Demanda desconhecida: {did}")
+        try:
+            v = int(round(float(v)))
+        except (TypeError, ValueError) as e:
+            raise AlocacaoInvalida(f"Valor inválido para {did}") from e
+        if v < 0 or v > ids[did].custo:
+            raise AlocacaoInvalida(f"{ids[did].titulo}: o valor deve ficar entre R$ 0 e R$ {ids[did].custo}.")
+        out[did] = v
+    for d in c.demandas:
+        out.setdefault(d.id, 0)
+    if sum(out.values()) > c.disponivel:
+        raise AlocacaoInvalida("A soma passa do orçamento disponível.")
+    return out
+
+
+def utilidade(d, valor: int, regras: dict[str, Any]) -> float:
+    f = valor / d.custo if d.custo else 0.0
+    if f <= 0:
+        return 0.0
+    if f >= 1:
+        return 1.0
+    return f if f >= d.minimo_util else f * float(regras["fator_abaixo_minimo"])
+
+
+def calcular(c: Cenario, alocacao: dict[str, int], escolhas: dict[str, Any] | None = None,
+             regras_ind: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Pontos brutos por indicador, postura prevista de quem pediu e auditoria."""
+    regras_ind = regras_ind or config.indicadores()
+    r = regras_ind["alocacao"]
+    atores = {a.id: a for a in c.atores}
+    pontos = {i: 0.0 for i in INDICADORES}
+    auditoria: list[dict[str, Any]] = []
+    demandas = []
+    for d in c.demandas:
+        v = alocacao.get(d.id, 0)
+        u = utilidade(d, v, r)
+        for ind, p in d.efeitos.items():
+            if u:
+                pontos[ind] += p * u
+                auditoria.append({"regra": "alocacao", "indicador": ind, "pontos": round(p * u, 2),
+                                  "detalhe": f"{d.titulo}: R$ {v} de R$ {d.custo} (efeito {p:+g} × {u:.2f})",
+                                  "evidencia": ""})
+        for ind, p in d.efeitos_adiar.items():
+            if u < 1:
+                pts = p * (1 - u)
+                pontos[ind] += pts
+                auditoria.append({"regra": "adiamento", "indicador": ind, "pontos": round(pts, 2),
+                                  "detalhe": f"{d.titulo} {'adiada' if u == 0 else 'parcial'} "
+                                             f"(efeito {p:+g} × {1 - u:.2f})", "evidencia": ""})
+        sol = atores.get(d.solicitante)
+        base = sol.postura_inicial if sol else 0
+        if u >= r["utilidade_alta"]:
+            post = min(2, base + 1)
+        elif u == 0 and sol and sol.influencia >= 4:
+            post = -2
+        elif u == 0:
+            post = max(-2, base - 2)   # pedido adiado: a insatisfação fica visível
+        elif u < r["utilidade_baixa"]:
+            post = max(-2, base - 1)
+        else:
+            post = base
+        demandas.append({"id": d.id, "valor": v, "custo": d.custo, "fracao": round(v / d.custo, 3) if d.custo else 0,
+                         "utilidade": round(u, 3), "solicitante": d.solicitante,
+                         "postura_prevista": post, "expressao": EXPRESSAO[post]})
+    saldo = c.disponivel - sum(alocacao.values())
+    if c.disponivel and saldo > 0:
+        pts = (saldo / c.disponivel) * 10 * float(r["saude_por_10pct_saldo"])
+        pontos["saude_financeira"] += pts
+        auditoria.append({"regra": "saldo", "indicador": "saude_financeira", "pontos": round(pts, 2),
+                          "detalhe": f"R$ {saldo} guardados ({saldo / c.disponivel:.0%} do disponível)", "evidencia": ""})
+    for chave, efeitos in r.get("bonus_decisao", {}).items():
+        if (escolhas or {}).get(chave):
+            for ind, p in efeitos.items():
+                pontos[ind] += float(p)
+                auditoria.append({"regra": "decisao", "indicador": ind, "pontos": float(p),
+                                  "detalhe": f"Decisão com {chave.replace('_', ' ')}", "evidencia": ""})
+    return {"pontos": pontos, "demandas": demandas, "saldo": saldo, "disponivel": c.disponivel,
+            "auditoria": auditoria}
+
+
+def previa(c: Cenario, alocacao: dict[str, Any], antes: dict[str, float],
+           escolhas: dict[str, Any] | None = None) -> dict[str, Any]:
+    from .indicadores import consolidar
+    aloc = normalizar(c, alocacao)
+    calc = calcular(c, aloc, escolhas)
+    cons = consolidar(antes, calc["pontos"], {i: 0.0 for i in INDICADORES})
+    tend = {i: ("sobe" if v > 0.5 else "desce" if v < -0.5 else "estavel") for i, v in cons["variacao"].items()}
+    return {"saldo": calc["saldo"], "disponivel": calc["disponivel"], "demandas": calc["demandas"],
+            "variacao": cons["variacao"], "tendencia": tend}

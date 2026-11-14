@@ -59,10 +59,12 @@ def _sinais(usuario: str) -> dict:
         reacoes.append({"ator_id": a["id"], "postura_final": pf,
                         "reacao": f"{a['nome']} acompanhou a decisão {'com simpatia' if ajuste > 0 else 'com cautela'}.",
                         "citacao": "Vamos ver se isso sai do papel."})
+    momentos = [{"ator_id": a["id"], "fala": f"Vi a decisão da diretoria. {('Gostei do que foi priorizado.' if i % 2 == 0 else 'Quero saber quando chega a minha vez.')}"}
+                for i, a in enumerate(atores[:4])]
     return {"resumo_narrativo": "Simulação de demonstração: a decisão circulou entre associados, imprensa e "
                                 "poder público. Houve apoio de parte da base e cobranças por detalhes de "
                                 "execução, custo e prazo. (Texto gerado pelo modo demonstração.)",
-            "sinais": sinais, "reacoes": reacoes, "flags": flags}
+            "momentos": momentos, "sinais": sinais, "reacoes": reacoes, "flags": flags}
 
 
 def _devolutiva(usuario: str) -> dict:
