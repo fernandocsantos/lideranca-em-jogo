@@ -157,7 +157,7 @@ async function verificarStatus() {
   try {
     const s = await api("/api/status");
     $("#faixa-status").replaceChildren(s.mirofish ? "" : el("div", { class: "aviso", style: "margin:.5rem .9rem 0" }, icone("info", 18),
-      el("span", {}, "Modo simplificado: o simulador de reações está fora do ar. O jogo continua, com reações simplificadas.")));
+      el("span", {}, "Modo offline: o simulador de agentes está fora do ar. O Legado continua com a simulação em cache ou por regras.")));
   } catch (_) { /* silencioso */ }
 }
 
@@ -177,60 +177,118 @@ function telaEmBreve(nome, aba) {
   tela(el("div", { class: "info" }, icone("info", 18), el("span", {}, `${nome}: disponível em breve.`)));
 }
 
-// ------------------------------------------------------------------ onboarding e posse
-const ONBOARDING = [
-  ["landmark", "Você assumiu a diretoria", "Uma associação comercial fictícia precisa decidir prioridades, orçamento e resultados. Você conduz o mandato."],
-  ["list-checks", "Cada trimestre tem 4 etapas", "Pauta, Mesa do Orçamento, Ata da decisão e Resultado com a reação dos envolvidos."],
-  ["chart-column", "Uma ferramenta preditiva", "Agentes de IA representam associados, diretoria, poder público e imprensa e antecipam riscos antes da decisão real."],
-  ["award", "Certificações de competência", "Reconhecem como você decide: clareza, metas, escuta e revisão com base em resultados. Não existe uma única resposta certa."],
-];
+// ------------------------------------------------------------------ abertura, explicação e perfil
+const MARQUEE = ["PARA NOVAS LIDERANÇAS", "PARA VOLUNTÁRIOS", "PARA DIRETORIAS", "CONHECIMENTO QUE ATRAVESSA MANDATOS"];
 
-function telaOnboarding(n = 0) {
-  topo("Boas-vindas"); abas(null);
-  const [ic, titulo, texto] = ONBOARDING[n];
+function mockupCelular() {
+  // tela demonstrativa fictícia e original do próprio Legado (decorativa: o texto ao lado explica a proposta)
+  const linha = (nome, valor, pct) => el("div", { class: "m-linha" }, el("span", { class: "m-nome" }, nome),
+    el("span", { class: "m-ctrl" }, el("i", {}, "−"), el("b", {}, valor), el("i", {}, "+")), el("span", { class: "m-barra" }, el("span", { style: `width:${pct}%` })));
+  return el("div", { class: "celular", "aria-hidden": "true" },
+    el("div", { class: "tela-cel" },
+      el("div", { class: "m-topo" }, el("span", {}, "Missão 1"), el("span", { class: "m-ico" }, "⚙")),
+      el("div", { class: "m-titulo" }, "O corte de R$ 6.000"),
+      el("div", { class: "m-cartao" }, el("span", { class: "m-etq" }, "SALDO DO TRIMESTRE"), el("span", { class: "m-valor" }, "R$ 24.000"), el("span", { class: "m-sub" }, "100 h da equipe")),
+      linha("Digitalização", "12 mil", 66), linha("Formação online", "6 mil", 75), linha("Atendimento", "6 mil", 75),
+      el("div", { class: "m-botao" }, "SALVAR ALTERNATIVA"),
+      el("div", { class: "m-abas" }, ["Pauta", "Relatos", "Mesa", "Ata", "Resultado"].map((x, k) => el("span", { class: k === 2 ? "on" : "" }, x)))));
+}
+
+function faixaCorrida() {
+  const texto = MARQUEE.join(" • ") + " •";
+  return el("div", { class: "marquee", role: "note", "aria-label": MARQUEE.join(", ") },
+    el("div", { class: "marquee-trilho", "aria-hidden": "true" }, el("span", {}, texto), el("span", {}, texto)));
+}
+
+function telaOnboarding() {
+  topo(PRODUTO); abas(null);
+  const comecar = el("button", { class: "botao principal grande", onclick: () => { SOM.tocar("confirmar"); telaExplicacao(0); } }, "Começar", icone("chevron-right", 20));
+  tela(el("section", { class: "abertura", "aria-labelledby": "abertura-titulo" },
+    el("div", { class: "abertura-grade" },
+      el("div", { class: "abertura-texto" },
+        el("span", { class: "etiqueta-mono clara" }, "Para quem assume o primeiro mandato"),
+        el("h2", { id: "abertura-titulo" }, "Legado"),
+        el("p", { class: "abertura-desc" }, FRASE),
+        el("div", { class: "acoes" }, comecar,
+          estado.cfg.roteiro_demo ? el("button", { class: "botao secundario", onclick: entrarComoVanessa }, icone("play", 18), "Entrar como Vanessa (demonstração)") : ""),
+        el("span", { class: "selo-ficticio" }, SELO)),
+      mockupCelular()),
+    el("p", { class: "abertura-slogan" }, SLOGAN),
+    faixaCorrida()));
+  comecar.focus();
+}
+
+const EXPLICACAO = [
+  ["landmark", "O que é", "Um treinamento em que você decide prioridades, orçamento e resultados de uma associação comercial fictícia."],
+  ["list-checks", "Como funciona", "Cada missão tem 5 etapas: pauta → relatos → mesa de decisões → ata → resultado, com agentes de IA simulando as reações."],
+  ["award", "O que você ganha", "Um plano de decisão exportável, certificações de competência e a experiência de dirigentes seniores da rede."],
+];
+function telaExplicacao(n) {
+  topo(PRODUTO, `${n + 1} de ${EXPLICACAO.length}`); abas(null);
+  const [ic, titulo, texto] = EXPLICACAO[n];
   const fim = () => { localStorage.setItem("lej_onboarding_ok", "1"); telaPosse(); };
-  tela(el("div", { class: "cartao", style: "text-align:center;padding:2rem 1.2rem" },
-    el("div", { style: "display:inline-grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--cacb-primaria-clara);color:var(--cacb-primaria)" }, icone(ic, 36)),
-    el("h2", {}, titulo), el("p", { class: "suave" }, texto),
-    el("p", { class: "pequeno suave", "aria-label": `Tela ${n + 1} de ${ONBOARDING.length}` }, ONBOARDING.map((_, i) => (i === n ? "●" : "○")).join(" ")),
-    el("div", { class: "acoes" },
-      el("button", { class: "botao secundario", onclick: fim }, "Pular"),
-      el("button", { class: "botao", onclick: () => { SOM.tocar("confirmar"); n < ONBOARDING.length - 1 ? telaOnboarding(n + 1) : fim(); } },
-        n < ONBOARDING.length - 1 ? "Próximo" : "Começar"))),
-    el("p", { class: "pequeno suave", style: "text-align:center" }, FRASE));
+  tela(el("div", { class: "cartao cartao-principal explicacao" },
+    el("span", { class: "icone-circular grande" }, icone(ic, 40)),
+    el("span", { class: "etiqueta-mono" }, titulo),
+    el("p", { class: "explicacao-frase" }, texto),
+    n === 1 ? el("ol", { class: "etapas mini", "aria-hidden": "true" }, ["Pauta", "Relatos", "Mesa", "Ata", "Resultado"].map((x, k) => el("li", {}, el("span", { class: "n" }, String(k + 1)), el("span", { class: "rot" }, x)))) : "",
+    el("p", { class: "pequeno suave", "aria-label": `Tela ${n + 1} de ${EXPLICACAO.length}` }, EXPLICACAO.map((_, i) => (i === n ? "●" : "○")).join(" ")),
+    el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: fim }, "Pular"),
+      el("button", { class: "botao principal", onclick: () => { SOM.tocar("transicao"); n < EXPLICACAO.length - 1 ? telaExplicacao(n + 1) : fim(); } }, n < EXPLICACAO.length - 1 ? "Próximo" : "Criar meu perfil"))));
+}
+
+const PAPEIS = ["Associada ou associado", "Voluntária ou voluntário", "Diretora ou diretor", "Conselheira ou conselheiro"];
+const SEGMENTOS = ["Varejo", "Serviços", "Alimentação", "Indústria", "Outro"];
+const PORTES = ["MEI", "Microempresa", "Pequena empresa", "Média empresa"];
+const AVATARES = [{ id: "av1", genero: "f", idade: 38 }, { id: "av2", genero: "m", idade: 45 }, { id: "av3", genero: "f", idade: 58 }, { id: "av4", genero: "m", idade: 30 }];
+
+async function entrarComoVanessa() {
+  try {
+    localStorage.setItem("lej_roteiro", "1");
+    localStorage.setItem("lej_onboarding_ok", "1");
+    localStorage.setItem("lej_jogador", JSON.stringify(VANESSA));
+    const r = await api("/api/sessoes", { method: "POST", body: { apelido: VANESSA.apelido } });
+    estado.token = r.token; estado.apelido = r.apelido; localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
+    SOM.tocar("confirmar");
+    await novaCampanha(estado.cfg.roteiro_demo.perfil);
+  } catch (e) { mostrarErro(main(), e); }
 }
 
 function telaPosse() {
-  topo("Seu perfil", PRODUTO); abas(null);
-  const campo = el("input", { type: "text", id: "apelido", maxlength: 40, autocomplete: "nickname", value: estado.apelido || "" });
+  topo("Seu perfil", PRODUTO, () => telaOnboarding()); abas(null);
+  const p = { papel: [], segmento: [], porte: [], avatar: ["av1"] };
+  const campo = el("input", { type: "text", id: "apelido", maxlength: 40, autocomplete: "nickname", value: estado.apelido && estado.apelido !== "Vanessa" ? estado.apelido : "" });
   const perfis = estado.cfg.perfis || [];
-  const form = el("form", { class: "cartao", onsubmit: async (ev) => {
+  const avatares = el("div", { class: "escolha-avatar", role: "radiogroup", "aria-label": "Avatar" });
+  const renderAv = () => avatares.replaceChildren(...AVATARES.map((a) => el("button", { type: "button", role: "radio", "aria-checked": String(p.avatar[0] === a.id), "aria-label": `Avatar ${a.id.slice(2)}`,
+    onclick: () => { p.avatar = [a.id]; renderAv(); } }, AVATAR.criar({ id: a.id, nome: "Você", tipo: "associado", genero: a.genero, idade: a.idade, expressao: "favoravel", tamanho: 52, semStatus: true }))));
+  renderAv();
+  const form = el("form", { class: "cartao cartao-principal", onsubmit: async (ev) => {
     ev.preventDefault();
     try {
       const r = await api("/api/sessoes", { method: "POST", body: { apelido: campo.value } });
       estado.token = r.token; estado.apelido = r.apelido;
       localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
       localStorage.removeItem("lej_roteiro");
-      localStorage.setItem("lej_jogador", JSON.stringify({ apelido: r.apelido, funcao: "diretora ou diretor em 1º mandato" }));
-      await novaCampanha(form.querySelector("input[name=perfil]:checked")?.value);
+      const papel = (p.papel[0] || "Diretora ou diretor").split(" ou ")[0].toLowerCase();
+      const av = AVATARES.find((a) => a.id === p.avatar[0]) || AVATARES[0];
+      localStorage.setItem("lej_jogador", JSON.stringify({ apelido: r.apelido, funcao: `${papel}${p.segmento[0] ? ` de ${p.segmento[0].toLowerCase()}` : ""}, 1º mandato`,
+        papel: p.papel[0] || "", segmento: p.segmento[0] || "", porte: p.porte[0] || "", avatar: av }));
       SOM.tocar("confirmar");
+      await novaCampanha(form.querySelector("input[name=perfil]:checked")?.value);
     } catch (e) { mostrarErro(form, e); }
   } },
-    el("label", { for: "apelido" }, "Apelido"), campo,
-    el("p", { class: "pequeno suave" }, "Não pedimos nome, e-mail nem dados pessoais."),
+    el("label", { for: "apelido", style: "margin-top:0" }, "Apelido"), campo,
+    el("p", { class: "pequeno suave" }, "Nenhum dado identificável: sem nome, e-mail ou telefone. O perfil fica só neste aparelho."),
+    el("p", { class: "rotulo-secao" }, "Papel"), chips(PAPEIS, p.papel, { multiplo: false }),
+    el("p", { class: "rotulo-secao" }, "Segmento"), chips(SEGMENTOS, p.segmento, { multiplo: false }),
+    el("p", { class: "rotulo-secao" }, "Porte do seu negócio"), chips(PORTES, p.porte, { multiplo: false }),
+    el("p", { class: "rotulo-secao" }, "Avatar"), avatares,
     el("p", { class: "rotulo-secao" }, "Associação do mandato (fictícia)"),
-    perfis.map((p) => el("label", { class: "opcao" }, el("input", { type: "radio", name: "perfil", value: p.id, checked: p.id === estado.cfg.perfil_padrao }),
-      el("span", {}, el("strong", {}, p.nome), el("br"), el("span", { class: "pequeno suave" }, p.descricao)))),
-    el("button", { type: "submit", class: "botao bloco" }, "Tomar posse"));
-  const roteiro = estado.cfg.roteiro_demo ? el("button", { class: "botao secundario bloco", onclick: async () => {
-    try {
-      localStorage.setItem("lej_roteiro", "1");
-      localStorage.setItem("lej_jogador", JSON.stringify(VANESSA));
-      const r = await api("/api/sessoes", { method: "POST", body: { apelido: VANESSA.apelido } });
-      estado.token = r.token; estado.apelido = r.apelido; localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
-      await novaCampanha(estado.cfg.roteiro_demo.perfil);
-    } catch (e) { mostrarErro(form, e); } } }, icone("play", 18), "Entrar como Vanessa (demonstração)") : "";
-  tela(el("p", { class: "suave" }, FRASE), form, roteiro);
+    perfis.map((x) => el("label", { class: "opcao" }, el("input", { type: "radio", name: "perfil", value: x.id, checked: x.id === estado.cfg.perfil_padrao }),
+      el("span", {}, el("strong", {}, x.nome), el("br"), el("span", { class: "pequeno suave" }, x.descricao)))),
+    el("button", { type: "submit", class: "botao principal bloco" }, "Assumir o mandato"));
+  tela(form, estado.cfg.roteiro_demo ? el("button", { class: "botao secundario bloco", onclick: entrarComoVanessa }, icone("play", 18), "Entrar como Vanessa (demonstração)") : "");
 }
 
 // Perfil de quem joga: fica só no aparelho (nada identificável). Vanessa é o perfil de demonstração do pitch.
