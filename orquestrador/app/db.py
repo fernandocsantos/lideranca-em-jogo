@@ -155,7 +155,8 @@ def apagar_sessao(sessao_id: str) -> None:
         c.execute("UPDATE uso_tokens SET sessao_id=NULL WHERE sessao_id=?", (sessao_id,))
         c.execute("DELETE FROM sessoes WHERE id=?", (sessao_id,))
         try:
-            c.execute("DELETE FROM contribuicoes WHERE sessao_id=?", (sessao_id,))
+            c.execute("DELETE FROM vivencias WHERE sessao_id=? AND status!='aprovada'", (sessao_id,))
+            c.execute("UPDATE vivencias SET sessao_id=NULL WHERE sessao_id=?", (sessao_id,))
         except sqlite3.OperationalError:
             pass
         c.commit()

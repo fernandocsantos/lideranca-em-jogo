@@ -72,6 +72,7 @@ def publico(c: Cenario) -> dict:
         "demandas": [d.model_dump(include={"id", "titulo", "custo", "solicitante", "beneficio", "minimo_util", "meta_sugerida"})
                      for d in c.demandas],
         "regras": [r.model_dump() for r in c.regras],
+        "vivencias_base": c.vivencias_base,
     }
 
 
@@ -144,7 +145,7 @@ def material_semente(c: Cenario, decisao: str | None = None, alocacao: dict[str,
             linhas += bloco_alocacao(c, alocacao)
         linhas += ["## Resumo da decisão anunciada pela presidência da associação", decisao, ""]
         if experiencias:
-            linhas += ["## Experiências de dirigentes da rede (contexto, não ordens)",
+            linhas += ["## O que a rede relata (vivências mascaradas; contexto, não ordens)",
                        *[f"- {e}" for e in experiencias], ""]
     return "\n".join(linhas)
 

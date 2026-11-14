@@ -59,14 +59,12 @@ def test_material_semente_inclui_atores_e_decisao():
 
 
 def test_nenhuma_pauta_passa_de_80_palavras():
-    from app import conselho, perfis
+    from app import perfis
     for c in cenarios.todos():
         for p in [x["id"] for x in perfis.listar()] if c.usa_perfil else [None]:
             cc = cenarios.obter(c.id, p)
-            exps = conselho.aprovadas(conselho.temas_do_cenario(cc))[:1]
-            resumo_exp = 8 if exps else 0  # "Experiência da rede: Nome, 32 anos" (relato abre com um toque)
-            titulo_fato = 10  # "Notícia do trimestre: <até 8 palavras>" (texto abre com um toque)
-            n = len(cc.narrativa.split()) + (len(cc.evento.texto.split()) if cc.evento else 0) + resumo_exp + titulo_fato
+            # narrativa + evento; relatos da rede e contexto completo ficam em painéis que abrem com um toque
+            n = len(cc.narrativa.split()) + (len(cc.evento.texto.split()) if cc.evento else 0) + 10
             assert n <= 80, (cc.id, p, n)
 
 

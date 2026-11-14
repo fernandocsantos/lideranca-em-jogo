@@ -12,6 +12,7 @@ from typing import Any
 import httpx
 
 from . import config, settings
+from .mascaramento import EnvioBloqueado, guarda  # noqa: F401  (bloqueio antes de todo envio)
 
 log = logging.getLogger(__name__)
 
@@ -71,6 +72,7 @@ class MiroFish:
 
     # ------------------------------------------------------------------ grafo
     async def gerar_ontologia(self, material_md: str, requisito: str, nome: str) -> dict[str, Any]:
+        guarda(material_md + "\n" + requisito, "MiroFish")
         arquivos = {"files": ("cenario.md", material_md.encode("utf-8"), "text/markdown")}
         dados = {"simulation_requirement": requisito, "project_name": nome,
                  "additional_context": "Cenário fictício de treinamento em português do Brasil."}
@@ -158,6 +160,7 @@ class MiroFish:
         return bool(d.get("env_alive") or d.get("alive") or d.get("status") == "alive")
 
     async def entrevistar(self, simulation_id: str, agent_id: int, pergunta: str) -> str:
+        guarda(pergunta, "MiroFish")
         d = await self._req("POST", "/api/simulation/interview", timeout=90, tentativas=1, json={
             "simulation_id": simulation_id, "agent_id": agent_id, "prompt": pergunta,
             "platform": self.plataforma, "timeout": 60})
@@ -168,6 +171,7 @@ class MiroFish:
         return plat.get("response", "")
 
     async def conversar_relatorio(self, simulation_id: str, mensagem: str, historico: list[dict]) -> str:
+        guarda(mensagem + " ".join(h.get("content", "") for h in historico), "MiroFish")
         d = await self._req("POST", "/api/report/chat", timeout=180, tentativas=1, json={
             "simulation_id": simulation_id, "message": mensagem, "chat_history": historico})
         return d.get("response", "")

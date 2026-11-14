@@ -103,6 +103,7 @@ class Cenario(BaseModel):
     usa_perfil: bool = False        # associação, atores e escala do orçamento vêm do perfil da AC
     trimestre: int = 1
     continua_de: Optional[str] = None  # cenário anterior encadeado (manter/ajustar/rever)
+    vivencias_base: int = 0         # "Construído a partir de N vivências da rede"
 
     @property
     def disponivel(self) -> int:
@@ -184,6 +185,42 @@ class FatoGerado(Estrito):
     tema: str
     efeito_orcamento: int       # R$ para uma AC média (30 mil/trimestre); 0 se não mexe no caixa
     nomes_reais_removidos: list[str]
+
+
+class PersonaSintetica(Estrito):
+    nome: str          # fictício
+    papel: str
+    persona: str
+    interesses: list[str]
+    postura_tipica: str
+
+
+class PersonasGeradas(Estrito):
+    personas: list[PersonaSintetica]
+
+
+class DemandaGerada(Estrito):
+    id: str
+    titulo: str
+    custo: int
+    solicitante: str
+    beneficio: str
+    efeitos: dict[str, float]
+    efeitos_adiar: dict[str, float]
+
+
+class CenarioDeVivencias(Estrito):
+    titulo: str
+    tema: str
+    associacao: Associacao
+    narrativa: str
+    texto: str
+    em_jogo: str
+    tags: list[str]
+    orcamento: int
+    demandas: list[DemandaGerada]
+    regras: list[Regra]
+    atores: list[AtorGerado]
 
 
 class CenarioFiccional(Estrito):

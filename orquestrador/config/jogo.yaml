@@ -65,7 +65,6 @@ roteiro_demo:
         oque: ["lojas vendendo pela internet"]
         prazo: ["o fim do trimestre"]
         revisao: ["30 dias"]
-      conselheiro: "O que costuma fazer diferença numa decisão assim?"
       conversa: {ator: lojista_tradicional, pergunta: "Por que você ficou insatisfeito?"}
     - continuidade: ajustar
       alocacao: {digitalizacao: 10500, formacao_vendas: 5000, atendimento: 8000, black_friday: 9000}

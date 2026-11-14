@@ -18,17 +18,15 @@ def test_selos_por_comportamento_e_certificado():
         camp = cli.post("/api/campanhas", headers=h, json={}).json()
         r = cli.get(f"/api/campanhas/{camp['id']}/selos", headers=h).json()
         assert len(r["selos"]) == 6 and not any(x["ganho"] for x in r["selos"]) and r["novos"] == []
-        # conselheiro -> "Ouviu a experiência"
-        cli.post(f"/api/campanhas/{camp['id']}/conselheiro", headers=h, json={"pergunta": "O que pesa?"})
         # decisão completa com meta; Seu Jorge (associado do bairro) começa desconfiado
         t = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={
             "decisao": "Prioridade: atendimento. Meta: 50 associados recontatados.", "alocacao": {"atendimento": 8000},
-            "escolhas": {"resumo_completo": 1, "meta_mensuravel": 1}}).json()
+            "escolhas": {"resumo_completo": 1, "meta_mensuravel": 1, "considerou_vivencias": 1}}).json()
         cli.post(f"/api/tentativas/{t['tentativa_id']}/conversa", headers=h,
                  json={"interlocutor": "associado_bairro", "mensagem": "Por que você desconfia da diretoria?"})
         r = cli.get(f"/api/campanhas/{camp['id']}/selos", headers=h).json()
         ganhos = {x["id"] for x in r["selos"] if x["ganho"]}
-        assert {"ouviu_experiencia", "decisao_clara", "meta_mensuravel", "ouviu_discordante"} <= ganhos
+        assert {"considerou_vivencia", "decisao_clara", "meta_mensuravel", "ouviu_discordante"} <= ganhos
         assert {x["id"] for x in r["novos"]} == ganhos
         assert cli.get(f"/api/campanhas/{camp['id']}/selos", headers=h).json()["novos"] == []  # só avisa uma vez
         av = cli.post(f"/api/campanhas/{camp['id']}/avancar", headers=h, json={"tentativa_id": t["tentativa_id"]})
