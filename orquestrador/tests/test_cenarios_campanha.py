@@ -56,3 +56,19 @@ def test_material_semente_inclui_atores_e_decisao():
     m = cenarios.material_semente(c, "Vou propor um plano integrado com a PM.")
     assert "FICTÍCIO" in m and "Capitão Ronaldo Peixoto" in m and "plano integrado" in m
     assert "Decisão" not in cenarios.material_semente(c)
+
+
+def test_nenhuma_pauta_passa_de_80_palavras():
+    from app import perfis
+    for c in cenarios.todos():
+        for p in [x["id"] for x in perfis.listar()] if c.usa_perfil else [None]:
+            cc = cenarios.obter(c.id, p)
+            n = len(cc.narrativa.split()) + (len(cc.evento.texto.split()) if cc.evento else 0)
+            assert n <= 80, (cc.id, p, n)
+
+
+def test_textos_gerados_sao_limitados():
+    from app.sinais import limitar_palavras
+    assert limitar_palavras("um dois três", 18) == "um dois três"
+    assert limitar_palavras(" ".join(["palavra"] * 30), 18).endswith("…")
+    assert len(limitar_palavras(" ".join(["palavra"] * 30), 18).split()) == 18

@@ -302,7 +302,7 @@ function telaOrcamento() {
   tela("Dividir o orçamento", cabecalhoTrimestre(), relogio,
     el("div", { class: "cartao" },
       el("p", {}, el("strong", {}, `Disponível neste ${c.periodo}: ${brl(disp)}`),
-        c.evento ? el("span", { class: "pequeno suave" }, ` (${brl(c.orcamento)} ${Number(c.evento.delta_orcamento) < 0 ? "−" : "+"} ${brl(Math.abs(c.evento.delta_orcamento))}: ${c.evento.titulo.toLowerCase()})`) : ""),
+        c.evento ? el("span", { class: "pequeno suave" }, ` (${brl(c.orcamento)} ${Number(c.evento.delta_orcamento) < 0 ? "−" : "+"} ${brl(Math.abs(c.evento.delta_orcamento))}: ${c.evento.titulo.charAt(0).toLowerCase() + c.evento.titulo.slice(1)})`) : ""),
       barra, saldoTxt,
       el("p", { class: "pequeno suave" }, "Os pedidos somam mais do que o disponível. As setas nos indicadores mostram a tendência da sua escolha.")),
     continuidade, cartoes,
@@ -419,7 +419,7 @@ async function telaResultado(tid) {
         ` Os agentes estão reagindo à sua decisão (${tt.progresso || 0}%). ${tt.etapa || ""}`,
         tt.posicao_fila ? ` Posição na fila: ${tt.posicao_fila}.` : ""));
     } else {
-      status.replaceChildren(rr.resumo ? el("div", { class: "cartao" }, el("h2", {}, "O que aconteceu"), el("p", {}, rr.resumo)) : "");
+      status.replaceChildren(rr.resumo ? el("details", { class: "cartao" }, el("summary", {}, "Ler o resumo do que aconteceu"), el("p", {}, rr.resumo)) : "");
       renderIndicadores(rr.indicadores.depois, rr.indicadores.variacao);
       linhaTempo.replaceChildren(rr.momentos?.length ? el("div", {}, el("h2", {}, "Momentos-chave"),
         el("ol", { class: "linha-tempo" }, rr.momentos.map((m) => {
@@ -442,7 +442,7 @@ async function telaResultado(tid) {
 
 function blocoDevolutiva(dev) {
   if (dev.erro) return el("p", { class: "suave" }, dev.erro);
-  return el("div", { class: "cartao" }, el("h2", {}, "Devolutiva"),
+  return el("details", { class: "cartao devolutiva" }, el("summary", {}, el("strong", {}, "Devolutiva: pontos fortes, riscos e perguntas para refletir")),
     lista("Pontos fortes", dev.pontos_fortes), lista("Riscos que ficaram de fora", dev.riscos_ignorados),
     lista("Trade-offs", dev.trade_offs),
     el("h3", {}, "Para refletir"), el("ol", {}, dev.perguntas_reflexivas.map((p) => el("li", {}, p))),

@@ -20,9 +20,9 @@ aconteceu na simulação, e o id do ator que originou o sinal (ou null).
 simulação, uma reação de 1 a 3 frases e uma citação curta em 1ª pessoa, coerentes com a persona e com o que o \
 agente fez na simulação.
 - Marque flags apenas se houver evidência clara na decisão ou na simulação.
-- resumo_narrativo: 60 a 110 palavras, em português do Brasil, em linguagem simples, sem jargão.
-- momentos: de 3 a 5 momentos-chave em ordem cronológica; cada um com o id de um ator e uma fala dele \
-em 1ª pessoa de no máximo 2 frases curtas, fiel ao que aconteceu na simulação.
+- resumo_narrativo: 40 a 75 palavras, em português do Brasil, em linguagem simples, sem jargão.
+- momentos: de 3 a 4 momentos-chave em ordem cronológica; cada um com o id de um ator e uma fala dele \
+em 1ª pessoa de no máximo 2 frases curtas (até 18 palavras no total), fiel ao que aconteceu na simulação.
 - A decisão inclui uma alocação de orçamento por demanda: considere quem foi atendido e quem ficou de fora.
 Indicadores: engajamento, saude_financeira, reputacao, capital_politico, coesao, conformidade."""
 
@@ -62,10 +62,22 @@ def normalizar(ext: ExtracaoSinais, c: Cenario) -> ExtracaoSinais:
     for m in ext.momentos:
         if m.ator_id in ids and m.fala.strip():
             frases = re.split(r"(?<=[.!?])\s+", m.fala.strip())
-            m.fala = " ".join(frases[:2])[:280]
+            m.fala = limitar_palavras(" ".join(frases[:2]), LIMITE_FALA)
             momentos.append(m)
-    ext.momentos = momentos[:5]
+    ext.momentos = momentos[:MAX_MOMENTOS]
+    ext.resumo_narrativo = limitar_palavras(ext.resumo_narrativo, LIMITE_RESUMO)
     return ext
+
+
+# Limites de texto na tela (critério: nenhuma tela com mais de 80 palavras de narrativa).
+LIMITE_FALA = 18
+MAX_MOMENTOS = 4
+LIMITE_RESUMO = 80
+
+
+def limitar_palavras(texto: str, n: int) -> str:
+    p = texto.split()
+    return texto.strip() if len(p) <= n else " ".join(p[:n]).rstrip(",;:") + "…"
 
 
 async def extrair(c: Cenario, decisao: str, relatorio: str, acoes: list[dict], ctx: Ctx) -> ExtracaoSinais:
