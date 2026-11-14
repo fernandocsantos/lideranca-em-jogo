@@ -424,7 +424,7 @@ async def comparar(cid: str, indice: int, s: dict = Depends(sessao_atual)):
 
 
 # ------------------------------------------------------------------ facilitador
-# ------------------------------------------------------------- Sala do Conselho
+# ------------------------------------------------------------- certificações e relatório
 @app.get("/api/campanhas/{cid}/selos")
 async def ver_selos(cid: str, s: dict = Depends(sessao_atual)):
     return selos.atualizar(_campanha_da_sessao(cid, s))
