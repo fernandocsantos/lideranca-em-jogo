@@ -174,6 +174,17 @@ class SimulacaoContingencia(Estrito):
     relatorio: str
 
 
+class FatoGerado(Estrito):
+    """Fato novo do trimestre, ficcionalizado a partir de uma notícia (saída do LLM)."""
+    relevante: bool
+    titulo: str                 # até 8 palavras
+    texto: str                  # até 2 frases
+    recorte: str                # recorte temático usado (ex.: "inadimplência no varejo")
+    tema: str
+    efeito_orcamento: int       # R$ para uma AC média (30 mil/trimestre); 0 se não mexe no caixa
+    nomes_reais_removidos: list[str]
+
+
 class CenarioFiccional(Estrito):
     relevante: bool
     motivo_relevancia: str

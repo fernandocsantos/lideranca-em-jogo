@@ -17,7 +17,7 @@ import asyncio
 
 from . import alocacao as aloc_mod
 from . import campanha as camp
-from . import cenarios, config, conselho, conversa, custos, db, esclarecimento, fila, moderacao, perfis, selos, settings, simulacao
+from . import cenarios, config, conselho, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao
 from .llm import Ctx, ErroLLM
 from .mirofish_client import novo as novo_mirofish
 
@@ -184,6 +184,8 @@ def _estado(c: dict) -> dict:
         cid = c["cenarios"][c["indice_atual"]]
         cen_obj = cenarios.obter(cid, c.get("perfil"))
         atual = cenarios.publico(cen_obj)
+        fato = fatos.para_trimestre(c["indice_atual"])
+        atual["fato_noticia"] = fatos.publico(fato) if fato else None
         # Na pauta, 1 experiência com citação curta (limite de 80 palavras por tela); as demais no conselheiro.
         experiencias = [{**e, "citacao": conselho.frase_citacao(e, max_palavras=12)}
                         for e in conselho.aprovadas(conselho.temas_do_cenario(cen_obj))[:1]]
@@ -514,6 +516,21 @@ async def exportar_csv():
                     *[niv.get(c) for c in comp]])
     return StreamingResponse(iter(["﻿" + buf.getvalue()]), media_type="text/csv; charset=utf-8",
                              headers={"Content-Disposition": 'attachment; filename="desempenho.csv"'})
+
+
+@app.get("/api/facilitador/fatos", dependencies=[Depends(facilitador)])
+async def listar_fatos():
+    return {"fatos": fatos.todos(incluir_pendentes=True)}
+
+
+@app.post("/api/facilitador/fatos/{fid}/status", dependencies=[Depends(facilitador)])
+async def mudar_status_fato(fid: str, dados: StatusCenario):
+    if dados.status not in ("aprovado", "rejeitado", "pendente_revisao"):
+        raise HTTPException(400, "Status inválido.")
+    try:
+        return fatos.definir_status(fid, dados.status)
+    except KeyError as e:
+        raise HTTPException(404, "Fato não encontrado.") from e
 
 
 @app.post("/api/facilitador/noticias/gerar", dependencies=[Depends(facilitador)])

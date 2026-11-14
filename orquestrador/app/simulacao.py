@@ -275,6 +275,10 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
     if not t:
         return
     c = cenarios.obter(t["cenario_id"], perfil_da_campanha(t["campanha_id"]))
+    from . import fatos
+    fato = fatos.para_trimestre(int(t["indice"]))
+    if fato:  # fato novo do trimestre (de notícia aprovada) entra como contexto da simulação
+        c.texto += f"\n\nFato novo do trimestre: {fato['titulo']}. {fato['texto']}"
     ctx = Ctx(t["sessao_id"], t["campanha_id"], tid)
     decisao = decisao_completa(t["decisao"], t["esclarecimentos"])
     aloc = t.get("alocacao") or None

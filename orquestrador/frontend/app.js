@@ -201,6 +201,7 @@ function telaPauta() {
   tela(c.titulo, cabecalhoTrimestre(),
     blocoTrimestreAnterior(c),
     el("div", { class: "cartao narrativa" }, el("p", {}, c.narrativa || c.texto.split(/\n\n/)[0])),
+    blocoFato(c.fato_noticia),
     c.evento ? el("div", { class: "cartao evento" }, el("span", { class: "icone-grande", "aria-hidden": "true" }, Number(c.evento.delta_orcamento) < 0 ? "📉" : "📈"),
       el("div", {}, el("strong", {}, c.evento.titulo), el("div", { class: "pequeno" }, c.evento.texto))) : "",
     el("div", { class: "linha tags", "aria-label": "O que está em jogo" }, c.tags.map((t) => el("span", { class: "etiqueta" }, t))),
@@ -906,11 +907,22 @@ function telaObrigado() {
 function blocoExperiencias() {
   const exps = estado.campanha?.experiencias || [];
   if (!exps.length) return "";
-  return el("section", { class: "cartao experiencia", "aria-label": "Experiência da rede" },
-    el("h2", {}, "Experiência da rede"),
-    exps.map((e) => el("div", { class: "linha exp" },
-      AVATAR.criar({ id: e.id, tipo: "conselheiro", genero: e.avatar?.genero, idade: e.avatar?.idade, expressao: "favoravel", tamanho: 48 }),
-      el("p", {}, e.citacao))));
+  // recolhido: mostra quem fala; o relato abre com um toque (limite de 80 palavras por tela)
+  return exps.map((e) => el("details", { class: "cartao experiencia" },
+    el("summary", {}, AVATAR.criar({ id: e.id, tipo: "conselheiro", genero: e.avatar?.genero, idade: e.avatar?.idade, expressao: "favoravel", tamanho: 44 }),
+      el("span", {}, el("strong", {}, "Experiência da rede: "), `${e.nome.replace(/ \(exemplo fictício\)/, "")}, ${e.anos} anos`)),
+    el("p", {}, e.citacao)));
+}
+
+function blocoFato(f) {
+  if (!f) return "";
+  const data = (f.fonte?.data || "").split("-").reverse().join("/");
+  return el("details", { class: "cartao fato" },
+    el("summary", {}, el("span", { "aria-hidden": "true" }, "📰 "), el("strong", {}, "Notícia do trimestre: "), f.titulo),
+    el("p", {}, f.texto),
+    el("p", { class: "pequeno suave" }, `Recorte: ${f.recorte}. Inspirado em notícia de ${f.fonte?.veiculo || "?"}, ${data} `,
+      f.fonte?.url ? el("a", { href: f.fonte.url, target: "_blank", rel: "noopener" }, "(fonte)") : "",
+      ". Nomes trocados por termos genéricos."));
 }
 
 async function abrirConselheiro() {
@@ -980,8 +992,8 @@ async function telaFacilitador() {
   const carregar = async () => {
     area.replaceChildren(el("p", {}, "Carregando…"));
     try {
-      const [p, c, contribs] = await Promise.all([f("/api/facilitador/partidas"), f("/api/facilitador/cenarios"),
-        f("/api/facilitador/contribuicoes")]);
+      const [p, c, contribs, fts] = await Promise.all([f("/api/facilitador/partidas"), f("/api/facilitador/cenarios"),
+        f("/api/facilitador/contribuicoes"), f("/api/facilitador/fatos")]);
       sessionStorage.setItem("lej_fac", codigo);
       const comparacao = el("div", {});
       area.replaceChildren(
@@ -1002,8 +1014,8 @@ async function telaFacilitador() {
         el("p", {}, el("button", { class: "secundario", onclick: async (ev) => {
           ev.currentTarget.disabled = true;
           const r = await f("/api/facilitador/noticias/gerar?max_cenarios=3", { method: "POST" });
-          alert(r.erro || `${r.gerados.length} cenário(s) gerado(s) a partir de ${r.candidatas} notícia(s) relevante(s).`); carregar();
-        } }, "Gerar cenários a partir de notícias recentes")),
+          alert(r.erro || `${r.gerados.length} fato(s) gerado(s) a partir de ${r.candidatas} notícia(s) relevante(s). Revise e aprove abaixo.`); carregar();
+        } }, "Gerar fatos a partir de notícias recentes")),
         el("table", {}, el("thead", {}, el("tr", {}, ["Cenário", "Tema", "Dif.", "Status", "Ações"].map((h) => el("th", { scope: "col" }, h)))),
           el("tbody", {}, c.cenarios.map((s) => el("tr", {},
             el("td", {}, el("details", {}, el("summary", {}, s.titulo), el("div", { class: "pequeno" }, s.texto),
@@ -1022,6 +1034,14 @@ async function telaFacilitador() {
               s.status === "pendente_revisao" ? [
                 el("button", { onclick: async () => { await f(`/api/facilitador/cenarios/${s.id}/status`, { method: "POST", body: { status: "aprovado" } }); carregar(); } }, "Aprovar"),
                 el("button", { class: "secundario", onclick: async () => { await f(`/api/facilitador/cenarios/${s.id}/status`, { method: "POST", body: { status: "rejeitado" } }); carregar(); } }, "Rejeitar")] : ""))))),
+        el("h2", {}, "Fatos de notícias para os trimestres"),
+        el("p", { class: "suave" }, "Cada fato aprovado vira a 'Notícia do trimestre' (o mais recente no 1º trimestre, o seguinte no 2º)."),
+        fts.fatos.length ? el("ul", { class: "contribuicoes", role: "list" }, fts.fatos.map((x) => el("li", { class: "cartao" },
+          el("strong", {}, x.titulo), " ", el("span", { class: "etiqueta" }, x.status), el("p", {}, x.texto),
+          el("p", { class: "pequeno suave" }, `Original: “${x.fonte.titulo}” — ${x.fonte.veiculo}, ${x.fonte.data}`),
+          x.status !== "aprovado" ? el("button", { onclick: async () => { await f(`/api/facilitador/fatos/${x.id}/status`, { method: "POST", body: { status: "aprovado" } }); carregar(); } }, "Aprovar") : "",
+          x.status !== "rejeitado" ? el("button", { class: "secundario", onclick: async () => { await f(`/api/facilitador/fatos/${x.id}/status`, { method: "POST", body: { status: "rejeitado" } }); carregar(); } }, "Rejeitar") : "")))
+          : el("p", {}, "Nenhum fato gerado ainda."),
         el("h2", {}, "Sala do Conselho: experiências para revisar"),
         contribs.contribuicoes.length ? el("ul", { class: "contribuicoes", role: "list" }, contribs.contribuicoes.map((x) => el("li", { class: "cartao" },
           el("div", { class: "linha" }, AVATAR.criar({ id: x.id, tipo: "conselheiro", genero: x.avatar?.genero, idade: x.avatar?.idade, expressao: "favoravel", tamanho: 48 }),

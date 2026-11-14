@@ -206,3 +206,8 @@ body.alto-contraste .cartao, body.alto-contraste .indicador, body.alto-contraste
 body.alto-contraste .cartao-mini, body.alto-contraste .tema, body.alto-contraste .chip { border-width: 2px; border-color: #000; }
 body.alto-contraste .etiqueta { background: #fff; border-color: #000; color: #000; }
 body.alto-contraste :focus-visible { outline: 4px solid #000; outline-offset: 3px; box-shadow: 0 0 0 7px #ffdd00; }
+.experiencia summary, .fato summary { display: flex; gap: .6rem; align-items: center; cursor: pointer; min-height: 44px; list-style: none; }
+.experiencia summary::-webkit-details-marker, .fato summary::-webkit-details-marker { display: none; }
+.experiencia summary::after, .fato summary::after { content: "▸ ler"; margin-left: auto; color: var(--primaria); font-size: .9rem; }
+.experiencia[open] summary::after, .fato[open] summary::after { content: "▾ fechar"; }
+.fato { border-left: 6px solid #0b5394; }
