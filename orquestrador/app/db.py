@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS uso_tokens (
 CREATE TABLE IF NOT EXISTS grafos_cache (
   chave TEXT PRIMARY KEY, graph_id TEXT NOT NULL, project_id TEXT NOT NULL, criado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS configuracao (
+  chave TEXT PRIMARY KEY, valor TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS llm_cache (
   chave TEXT PRIMARY KEY, tarefa TEXT NOT NULL, resposta TEXT NOT NULL, criado_em TEXT NOT NULL
 );

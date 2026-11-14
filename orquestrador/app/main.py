@@ -39,6 +39,15 @@ app = FastAPI(title="Liderança em Jogo — orquestrador", lifespan=ciclo)
 
 
 @app.middleware("http")
+async def revalidar_estaticos(request: Request, chamar):
+    """Arquivos da interface sempre revalidados (ETag): atualizações aparecem sem limpar cache."""
+    resp = await chamar(request)
+    if request.url.path.startswith("/static/") or request.url.path == "/":
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.middleware("http")
 async def senha_de_acesso(request: Request, chamar):
     """Com ACESSO_SENHA definida, todo o site pede usuário e senha (HTTP Basic).
 
@@ -212,6 +221,13 @@ def _estado(c: dict) -> dict:
         cid = c["cenarios"][c["indice_atual"]]
         cen_obj = cenarios.obter(cid, c.get("perfil"))
         atual = cenarios.publico(cen_obj)
+        anterior = (c["historico"][-1].get("alocacao") if c["historico"] and cen_obj.continua_de else None)
+        base = aloc_mod.anos_anteriores(cen_obj, anterior)
+        nomes_ind = {k: v["nome"] for k, v in config.indicadores()["indicadores"].items()}
+        efeitos = {d.id: [nomes_ind.get(i, i) for i, p in d.efeitos.items() if p > 0] for d in cen_obj.demandas}
+        for d in atual["demandas"]:
+            d["ano_anterior"] = base[d["id"]]
+            d["afeta"] = efeitos.get(d["id"], [])
         fato = fatos.para_trimestre(c["indice_atual"])
         atual["fato_noticia"] = fatos.publico(fato) if fato else None
         # Na pauta, 1 experiência com citação curta (limite de 80 palavras por tela); as demais no conselheiro.
@@ -224,8 +240,21 @@ def _estado(c: dict) -> dict:
         "id": c["id"], "status": c["status"], "indice_atual": c["indice_atual"], "total": len(c["cenarios"]),
         "indicadores": c["indicadores"], "historico": c["historico"], "cenario": atual, "tentativas": tentativas,
         "custo": custos.resumo("campanha_id", c["id"]), "perfil": c.get("perfil"), "selos": c.get("selos") or [],
+        "mandato": _lista_mandato(c),
         "experiencias": experiencias,
     }
+
+
+def _lista_mandato(c: dict) -> list[dict]:
+    """Cenários do mandato com progresso, para o Painel."""
+    temas = {"orcamento_prioridades": "Orçamento e prioridades"}
+    out = []
+    for i, cid in enumerate(c["cenarios"]):
+        cen = cenarios.obter(cid, c.get("perfil"))
+        status = "concluido" if i < c["indice_atual"] else ("atual" if i == c["indice_atual"] and c["status"] == "em_andamento" else "bloqueado")
+        out.append({"indice": i, "id": cid, "titulo": cen.titulo, "tema": temas.get(cen.tema, cen.tema.replace("_", " ").capitalize()),
+                    "status": status, "duracao_min": 10, "demandas": len(cen.demandas)})
+    return out
 
 
 def _resumo_tentativa(t: dict) -> dict:
@@ -484,6 +513,24 @@ async def moderar_contribuicao(cid: str, dados: StatusContribuicao):
     return {"ok": True}
 
 
+class PerfilPadrao(BaseModel):
+    perfil: str
+
+
+@app.get("/api/facilitador/perfil-padrao", dependencies=[Depends(facilitador)])
+async def ver_perfil_padrao():
+    return {"perfis": perfis.listar(), "padrao": perfis.padrao()}
+
+
+@app.post("/api/facilitador/perfil-padrao", dependencies=[Depends(facilitador)])
+async def mudar_perfil_padrao(dados: PerfilPadrao):
+    try:
+        perfis.definir_padrao(dados.perfil)
+    except KeyError as e:
+        raise HTTPException(404, "Perfil não encontrado.") from e
+    return {"padrao": perfis.padrao()}
+
+
 @app.get("/api/perfis")
 async def listar_perfis():
     return {"perfis": perfis.listar(), "padrao": perfis.padrao()}
@@ -571,9 +618,23 @@ async def gerar_de_noticias(max_cenarios: int = 3):
 app.mount("/static", StaticFiles(directory=settings.FRONTEND_DIR), name="static")
 
 
+@app.get("/manifest.webmanifest")
+async def manifesto():
+    return FileResponse(settings.FRONTEND_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/sw.js")
+async def service_worker():
+    # servido na raiz para controlar todo o site; sem cache HTTP para atualizar logo
+    return FileResponse(settings.FRONTEND_DIR / "sw.js", media_type="text/javascript",
+                        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+
+
 @app.get("/")
 @app.get("/facilitador")
-@app.get("/conselho")
+@app.get("/vivencias")
+@app.get("/ensaio")
+@app.get("/relatorio")
 @app.get("/certificado")
 async def spa():
     return FileResponse(settings.FRONTEND_DIR / "index.html")

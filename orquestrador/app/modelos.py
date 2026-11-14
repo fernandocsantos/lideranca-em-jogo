@@ -63,6 +63,7 @@ class Demanda(Estrito):
     efeitos_adiar: dict[str, float] = {}  # pontos por indicador se não financiada
     minimo_util: float = 0.5        # abaixo desta fração o benefício cai pela metade
     meta_sugerida: str = ""         # unidade da meta, ex.: "lojas vendendo pela internet"
+    ano_anterior: Optional[int] = None  # valor executado no período anterior (ponto de partida da Mesa)
 
 
 class Regra(Estrito):

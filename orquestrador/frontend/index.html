@@ -2,34 +2,36 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Liderança em Jogo — formação para associações comerciais</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0067BE">
+  <meta name="description" content="Treinamento gamificado que simula cenários de lideranças de associações comerciais usando uma coleção de agentes de IA para compor uma ferramenta preditiva que reduz os riscos de atuações reais.">
+  <title>Liderança em Jogo</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
-  <header class="topo">
-    <div class="marca"><span aria-hidden="true">◆</span> Liderança em Jogo</div>
-    <nav aria-label="Navegação principal">
-      <a href="/">Jogar</a>
-      <a href="/conselho">Sala do Conselho</a>
-      <a href="/facilitador">Facilitador</a>
-    </nav>
-    <div class="acessibilidade" role="group" aria-label="Acessibilidade">
-      <button type="button" id="fonte-menos" aria-label="Diminuir letra">A−</button>
-      <button type="button" id="fonte-mais" aria-label="Aumentar letra">A+</button>
-      <button type="button" id="contraste" aria-pressed="false">Alto contraste</button>
-    </div>
-  </header>
-  <div id="faixa-status" role="status" aria-live="polite"></div>
-  <section id="indicadores" class="indicadores" aria-label="Indicadores da associação" hidden></section>
-  <main id="conteudo" tabindex="-1"></main>
-  <footer class="rodape">
-    <p>Protótipo de código aberto (AGPL-3.0). Simulações por agentes de IA com o
-      <a href="https://github.com/666ghj/MiroFish">MiroFish</a>. Cenários fictícios; quando inspirados em notícias,
-      a fonte é indicada. Os resultados são exercícios de reflexão, não previsões.</p>
-  </footer>
+  <a class="sr" href="#conteudo">Pular para o conteúdo</a>
+  <div class="app">
+    <header class="barra-topo">
+      <button type="button" class="botao-icone" id="voltar" hidden aria-label="Voltar"></button>
+      <div class="titulo"><h1 id="titulo-tela">Liderança em Jogo</h1><span class="sub" id="subtitulo-tela"></span></div>
+      <div class="controles-topo">
+        <button type="button" class="botao-icone" id="som" aria-label="Som"></button>
+        <button type="button" class="botao-icone" id="preferencias" aria-label="Acessibilidade e som"></button>
+      </div>
+    </header>
+    <div class="marca-faixa" aria-hidden="true"></div>
+    <div id="faixa-status" role="status" aria-live="polite"></div>
+    <main id="conteudo" tabindex="-1"></main>
+  </div>
+  <nav class="abas" id="abas" aria-label="Áreas principais" hidden><div class="dentro" id="abas-dentro"></div></nav>
+  <div id="aviso-curto" class="aviso-curto" role="status" aria-live="polite"></div>
+  <script src="/static/icones.js"></script>
   <script src="/static/avatar.js"></script>
+  <script src="/static/sons.js"></script>
+  <script src="/static/relatorio.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

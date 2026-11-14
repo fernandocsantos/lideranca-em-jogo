@@ -56,8 +56,10 @@ def test_dois_trimestres_do_guia_com_mirofish():
         _instalar_mirofish(falso)
 
         # prévia instantânea (sem IA): soma acima do disponível é recusada
-        assert cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
-                        json={"alocacao": {"digitalizacao": 18000, "formacao_vendas": 14000}}).status_code == 400
+        acima = cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
+                         json={"alocacao": {"digitalizacao": 18000, "formacao_vendas": 14000}}).json()
+        assert acima["excedente"] == 8000 and not acima["fechado"]  # Mesa mostra "Falta cortar R$ 8.000"
+        assert [d["ano_anterior"] for d in cen["demandas"]] == [12000, 10000, 8000]  # soma 30 mil > teto 24 mil
         t0 = time.time()
         pv = cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
                       json={"alocacao": {"formacao_vendas": 14000, "atendimento": 8000}}).json()

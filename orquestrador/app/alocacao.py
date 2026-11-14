@@ -17,7 +17,24 @@ class AlocacaoInvalida(ValueError):
     pass
 
 
-def normalizar(c: Cenario, alocacao: dict[str, Any]) -> dict[str, int]:
+def anos_anteriores(c: Cenario, anterior: dict[str, int] | None = None) -> dict[str, int]:
+    """Ponto de partida da Mesa do Orçamento. Ordem: decisão do trimestre anterior (mesmo id),
+    valor do cenário, ou um padrão que soma ~115% do teto (para obrigar a cortar)."""
+    soma = sum(d.custo for d in c.demandas) or 1
+    fator = min(1.0, 1.15 * c.disponivel / soma)
+    out = {}
+    for d in c.demandas:
+        if anterior is not None and d.id in anterior:
+            v = anterior[d.id]
+        elif d.ano_anterior is not None:
+            v = d.ano_anterior
+        else:
+            v = int(round(d.custo * fator / 500) * 500)
+        out[d.id] = max(0, min(d.custo, int(v)))
+    return out
+
+
+def normalizar(c: Cenario, alocacao: dict[str, Any], permitir_excesso: bool = False) -> dict[str, int]:
     """Valida: só demandas do cenário, valores entre 0 e o custo, soma <= disponível."""
     ids = {d.id: d for d in c.demandas}
     out: dict[str, int] = {}
@@ -33,8 +50,8 @@ def normalizar(c: Cenario, alocacao: dict[str, Any]) -> dict[str, int]:
         out[did] = v
     for d in c.demandas:
         out.setdefault(d.id, 0)
-    if sum(out.values()) > c.disponivel:
-        raise AlocacaoInvalida("A soma passa do orçamento disponível.")
+    if sum(out.values()) > c.disponivel and not permitir_excesso:
+        raise AlocacaoInvalida(f"A soma passa do teto de R$ {c.disponivel}. Falta cortar R$ {sum(out.values()) - c.disponivel}.")
     return out
 
 
@@ -106,12 +123,14 @@ def calcular(c: Cenario, alocacao: dict[str, int], escolhas: dict[str, Any] | No
 def previa(c: Cenario, alocacao: dict[str, Any], antes: dict[str, float],
            escolhas: dict[str, Any] | None = None) -> dict[str, Any]:
     from .indicadores import consolidar
-    aloc = normalizar(c, alocacao)
+    aloc = normalizar(c, alocacao, permitir_excesso=True)
+    excedente = max(0, sum(aloc.values()) - c.disponivel)
     calc = calcular(c, aloc, escolhas)
     cons = consolidar(antes, calc["pontos"], {i: 0.0 for i in INDICADORES})
     tend = {i: ("sobe" if v > 0.5 else "desce" if v < -0.5 else "estavel") for i, v in cons["variacao"].items()}
     return {"saldo": calc["saldo"], "disponivel": calc["disponivel"], "demandas": calc["demandas"],
-            "variacao": cons["variacao"], "tendencia": tend}
+            "variacao": cons["variacao"], "tendencia": tend, "excedente": excedente,
+            "fechado": excedente == 0}
 
 
 def progresso_meta(c: Cenario, aloc: dict[str, int], escolhas: dict[str, Any] | None,
