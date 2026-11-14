@@ -1,6 +1,6 @@
 # Arquitetura e integração com o MiroFish
 
-**Projeto:** Liderança em Jogo — "Formar lideranças para decidir e acompanhar resultados" (desafio CACB, Hackathon Connect 7.0)
+**Projeto:** Legado — "Treinamento gamificado para novas lideranças decidirem sobre prioridades, orçamento e resultados, aprendendo com dirigentes seniores" (desafio CACB, Hackathon Connect 7.0)
 **Público prioritário:** ACIs do interior de São Paulo · **Hospedagem:** local · **LLM:** Anthropic (Claude)
 **Licença:** AGPL-3.0 (mesma do MiroFish)
 

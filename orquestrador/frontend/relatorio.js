@@ -9,6 +9,8 @@ const RELATORIO = (() => {
   const pdfTxt = (s) => String(s ?? "").replace(/[−–—]/g, "-").replace(/→/g, "->").replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, "...").replace(/×/g, "x");
   const dataBR = (iso) => (iso ? iso.split("-").reverse().join("/") : "-");
   let dados = null;
+  let LOGO = null;  // logo em data URL para o cabeçalho do PDF (carregado uma vez; fica em cache offline)
+  fetch("/static/marca/legado-64.png").then((r) => r.blob()).then((b) => { const fr = new FileReader(); fr.onload = () => { LOGO = fr.result; }; fr.readAsDataURL(b); }).catch(() => null);
 
   async function carregar(camp, comApelido) {
     dados = await api(`/api/campanhas/${camp.id}/relatorio?apelido=${comApelido ? 1 : 0}`);
@@ -82,7 +84,9 @@ const RELATORIO = (() => {
       doc.setFillColor(...AMARELO); doc.rect(0, 14, 150, 1.4, "F");
       doc.setFillColor(...VERDE); doc.rect(150, 14, 60, 1.4, "F");
       doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-      doc.text("LEGADO", M, 9); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+      let xm = M;
+      if (LOGO) { doc.setFillColor(255, 255, 255); doc.roundedRect(M, 2.2, 9.6, 9.6, 1.5, 1.5, "F"); doc.addImage(LOGO, "PNG", M + 0.8, 3, 8, 8); xm = M + 12.5; }
+      doc.text("LEGADO", xm, 9); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
       doc.text(pdfTxt(`${d.titulo.replace("— Legado", "").trim()} · ${d.gerado_em}`), 210 - M, 9, { align: "right" });
     };
     const cabecalho = () => { y = 24; };

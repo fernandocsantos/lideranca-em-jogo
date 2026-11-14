@@ -1,9 +1,12 @@
-/* Liderança em Jogo — PWA sem dependências de build. Texto dinâmico sempre via textContent (sem innerHTML).
-   Áreas: Painel (mandato) · Ensaio · Vivências · Relatório · Facilitador.
-   Trimestre: Pauta → Mesa do Orçamento (prévia em código, sem IA) → Decisão (Ata) → Resultado e conversa. */
+/* Legado — PWA sem dependências de build. Texto dinâmico sempre via textContent (sem innerHTML).
+   Áreas: Painel (mandato) · Reunião · Vivências · Plano · Facilitador.
+   Missão: Pauta → Relatos → Mesa de decisões → Ata → Resultado (frontend/missao.js). */
 "use strict";
 
-const FRASE = "Treinamento gamificado que simula cenários de lideranças de associações comerciais usando uma coleção de agentes de IA para compor uma ferramenta preditiva que reduz os riscos de atuações reais.";
+const PRODUTO = "Legado";
+const FRASE = "Treinamento gamificado para novas lideranças decidirem sobre prioridades, orçamento e resultados, aprendendo com dirigentes seniores.";
+const SLOGAN = "Seu mandato passa. O que você ensina continua cuidando de quem empreende.";
+const SELO = "Demonstração com dados fictícios";
 const estado = { cfg: null, token: localStorage.getItem("lej_token"), apelido: localStorage.getItem("lej_apelido"),
   campanhaId: localStorage.getItem("lej_campanha"), campanha: null, timer: null, aloc: {}, base: {}, previa: null,
   reuniaoFim: null, relogio: null, escolhas: {}, relatosAbertos: new Set() };
@@ -41,7 +44,7 @@ function topo(titulo, sub = "", voltar = null) {
   const b = $("#voltar");
   b.hidden = !voltar;
   b.onclick = voltar || null;
-  document.title = `${titulo} — Liderança em Jogo`;
+  document.title = titulo === PRODUTO ? PRODUTO : `${titulo} — ${PRODUTO}`;
 }
 
 function abas(atual) {
@@ -198,7 +201,7 @@ function telaOnboarding(n = 0) {
 }
 
 function telaPosse() {
-  topo("Tomar posse", "Liderança em Jogo"); abas(null);
+  topo("Seu perfil", PRODUTO); abas(null);
   const campo = el("input", { type: "text", id: "apelido", maxlength: 40, autocomplete: "nickname", value: estado.apelido || "" });
   const perfis = estado.cfg.perfis || [];
   const form = el("form", { class: "cartao", onsubmit: async (ev) => {
@@ -320,7 +323,24 @@ async function telaPainel() {
     el("button", { class: "cartao banco-destaque", onclick: () => irPara("vivencias") },
       el("span", { class: "icone-circular" }, icone("library", 24)),
       el("span", {}, el("strong", {}, "Banco de Vivências"), el("span", { class: "pequeno" }, "Compartilhe o que você aprendeu. Tudo é anonimizado antes de ser usado.")),
-      icone("chevron-right", 20)));
+      icone("chevron-right", 20)),
+    el("p", { class: "rodape-painel" }, el("button", { class: "botao fantasma mini-link", onclick: telaSobre }, icone("info", 14), " Sobre o Legado"), " · ", SELO));
+}
+
+// ------------------------------------------------------------------ sobre
+function telaSobre() {
+  topo("Sobre o Legado", "", () => history.length > 1 ? telaPainel() : telaPainel()); abas(null);
+  tela(el("div", { class: "cartao cartao-principal sobre" },
+    el("img", { src: "/static/marca/legado-256.png", alt: "Logo do Legado", width: 96, height: 96 }),
+    el("span", { class: "selo-ficticio" }, SELO),
+    el("h2", {}, PRODUTO), el("p", { class: "destaque-texto" }, FRASE),
+    el("p", {}, "Quem joga: associado ou associada, voluntário ou voluntária que assume o primeiro mandato na diretoria de uma associação comercial."),
+    el("div", { class: "numero-cacb" }, el("span", { class: "grande" }, "≈ 2 milhões"), el("span", {}, "de empreendedores representados pela CACB, em mais de 2.300 associações"),
+      el("span", { class: "pequeno suave" }, "Fonte: balanço institucional da CACB, junho de 2026.")),
+    el("p", { class: "frase-abertura" }, "Esse conhecimento merece atravessar mandatos."),
+    el("p", {}, "No Legado, agentes de IA simulam as consequências e os riscos de cada decisão, com hipóteses explícitas e revisão humana. Os relatos da rede são anonimizados antes de serem usados."),
+    el("p", { class: "aviso-fixo" }, "Simulação para apoio à decisão; não é garantia de resultado."),
+    el("p", { class: "slogan" }, SLOGAN)));
 }
 
 // ------------------------------------------------------------------ recapitulando (antes de cada nova missão; pode ser pulado)
@@ -587,6 +607,7 @@ function iniciarPreferencias() {
   if (p.startsWith("/facilitador")) return telaFacilitador();
   if (p.startsWith("/vivencias")) return irPara("vivencias");
   if (p.startsWith("/ensaio")) return irPara("ensaio");
-  if (p.startsWith("/relatorio") || p.startsWith("/certificado")) return irPara("relatorio");
+  if (p.startsWith("/relatorio") || p.startsWith("/plano") || p.startsWith("/certificado")) return irPara("relatorio");
+  if (p.startsWith("/sobre")) return telaSobre();
   telaPainel();
 })();

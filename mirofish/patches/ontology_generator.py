@@ -3,7 +3,7 @@
 接口1：分析文本内容，生成适合社会模拟的实体和关系类型定义
 """
 
-# PATCH Liderança em Jogo (AGPL-3.0, modificação sobre 666ghj/MiroFish, imagem
+# PATCH Legado (AGPL-3.0, modificação sobre 666ghj/MiroFish, imagem
 # sha256:d236402eb35c5abfd68da63be9d19202d619da8803e173e8e34b97731180944a):
 # desde 13/11/2026 o Zep Cloud recusa (HTTP 400) nomes de tipo de entidade fora de PascalCase estrito
 # (só letras e números). O LLM às vezes gera "Vice_President"; aqui normalizamos o nome da entidade

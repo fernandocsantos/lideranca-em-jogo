@@ -361,3 +361,9 @@ table.desempenho td, table.desempenho th { vertical-align: middle; }
 .recap h3 { font-size: .8rem; font-family: var(--fonte-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--texto-suave); margin: 1rem 0 .3rem; }
 .marca-topo { display: inline-grid; place-items: center; width: 40px; height: 40px; background: #fff; border-radius: 10px; border: 2px solid var(--texto); flex: none; }
 .marca-topo img { width: 30px; height: 30px; display: block; }
+.sobre { text-align: center; }
+.sobre .destaque-texto { font-size: 1.1rem; font-weight: 600; }
+.numero-cacb { display: flex; flex-direction: column; gap: .2rem; border-top: 3px solid var(--texto); border-bottom: 3px solid var(--texto); padding: .9rem 0; margin: 1rem 0; }
+.numero-cacb .grande { font-size: 2.2rem; font-weight: 900; color: var(--cacb-primaria-escura); }
+.slogan { font-weight: 800; font-size: 1.05rem; margin-top: 1rem; }
+.rodape-painel { text-align: center; font-size: .8rem; color: var(--texto-suave); margin-top: 1rem; }

@@ -1,4 +1,4 @@
-# Liderança em Jogo — protótipo local
+# Legado — protótipo local
 #   docker compose up -d   -> orquestrador + MiroFish + proxy LLM (LiteLLM) entre o MiroFish e a Anthropic
 # Abra http://localhost:8000
 

@@ -38,7 +38,7 @@ async def ciclo(app: FastAPI):
     await fila.parar()
 
 
-app = FastAPI(title="Liderança em Jogo — orquestrador", lifespan=ciclo)
+app = FastAPI(title="Legado — orquestrador", lifespan=ciclo)
 
 
 @app.middleware("http")
@@ -70,7 +70,7 @@ async def senha_de_acesso(request: Request, chamar):
             ok = False
     if not ok:
         return Response("Acesso restrito aos participantes do hackathon.", status_code=401,
-                        headers={"WWW-Authenticate": 'Basic realm="Lideranca em Jogo", charset="UTF-8"'},
+                        headers={"WWW-Authenticate": 'Basic realm="Legado", charset="UTF-8"'},
                         media_type="text/plain; charset=utf-8")
     return await chamar(request)
 
@@ -751,5 +751,8 @@ async def service_worker():
 @app.get("/ensaio")
 @app.get("/relatorio")
 @app.get("/certificado")
+@app.get("/sobre")
+@app.get("/reuniao")
+@app.get("/plano")
 async def spa():
     return FileResponse(settings.FRONTEND_DIR / "index.html")
