@@ -8,8 +8,10 @@ import secrets
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
-from fastapi.responses import FileResponse, StreamingResponse
+import base64
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -34,6 +36,31 @@ async def ciclo(app: FastAPI):
 
 
 app = FastAPI(title="Liderança em Jogo — orquestrador", lifespan=ciclo)
+
+
+@app.middleware("http")
+async def senha_de_acesso(request: Request, chamar):
+    """Com ACESSO_SENHA definida, todo o site pede usuário e senha (HTTP Basic).
+
+    Serve para publicar por túnel só para quem recebeu a senha. O túnel entrega HTTPS, então a senha
+    não trafega aberta.
+    """
+    senha = settings.ACESSO_SENHA
+    if not senha:
+        return await chamar(request)
+    cab = request.headers.get("authorization", "")
+    ok = False
+    if cab.lower().startswith("basic "):
+        try:
+            usuario, _, dada = base64.b64decode(cab[6:]).decode("utf-8").partition(":")
+            ok = secrets.compare_digest(usuario, settings.ACESSO_USUARIO) and secrets.compare_digest(dada, senha)
+        except (ValueError, UnicodeDecodeError):
+            ok = False
+    if not ok:
+        return Response("Acesso restrito aos participantes do hackathon.", status_code=401,
+                        headers={"WWW-Authenticate": 'Basic realm="Lideranca em Jogo", charset="UTF-8"'},
+                        media_type="text/plain; charset=utf-8")
+    return await chamar(request)
 
 
 # ------------------------------------------------------------------ autenticação
