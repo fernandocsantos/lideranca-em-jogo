@@ -4,18 +4,18 @@ Leia este arquivo e o [README](../README.md) antes de começar. Estado em **14/1
 
 ## 1. Estado atual
 
-* **Branch:** `feat/rodada3-cacb`, ainda **não mesclado** no `main`. O `main` tem a rodada 2 (versão CACB) e a publicação por túnel.
+* **Repositório:** https://github.com/fernandocsantos/lideranca-em-jogo (público, AGPL-3.0). A rodada 3 foi feita no branch `feat/rodada3-cacb` e **mesclada no `main`** em 14/11/2026. Os commits usam o e-mail privado do GitHub (noreply).
 * **Rodada 3 (pedido do desafio CACB), um commit por etapa:**
 
 | Etapa | Commit | O que entregou |
 |---|---|---|
-| P1 | `eb9e449`, `fc07385` | Identidade CACB (paleta em variáveis CSS, Inter, Lucide, avatares de busto), PWA, barra de abas, Painel, Mesa do Orçamento |
-| P3 | `997e226` | Fim do conselheiro sênior; Banco de Vivências com mascaramento e LGPD |
-| P4 | `c59c013` | Ata Padronizada (7 seções), PDF institucional e CSV |
-| P2 | `da27d7c` | Efeitos sonoros com mudo e volume salvos |
-| P5 | `512bd33` | Modo Ensaio: decisão real mascarada, resultado só no aparelho, exemplo offline |
-| — | `f1f762b`, `da044c6` | Roteiro da demo com as novas etapas da Ata; documentação |
-| — | (este commit) | Correção do Zep (PascalCase), `.gitattributes`, este arquivo |
+| P1 | `ad837fe`, `afad71a` | Identidade CACB (paleta em variáveis CSS, Inter, Lucide, avatares de busto), PWA, barra de abas, Painel, Mesa do Orçamento |
+| P3 | `964e874` | Fim do conselheiro sênior; Banco de Vivências com mascaramento e LGPD |
+| P4 | `e27ac00` | Ata Padronizada (7 seções), PDF institucional e CSV |
+| P2 | `22efc5f` | Efeitos sonoros com mudo e volume salvos |
+| P5 | `eba3bbd` | Modo Ensaio: decisão real mascarada, resultado só no aparelho, exemplo offline |
+| — | `254aee4`, `07dca12` | Roteiro da demo com as novas etapas da Ata; documentação |
+| — | `ec035f1` | Correção do Zep (PascalCase), `.gitattributes`, este arquivo |
 
 * **Testes:** 62 passando (`cd orquestrador && .venv/bin/python -m pytest -q`).
 * **Documentos:** [arquitetura](arquitetura.md), [Banco de Vivências e LGPD](banco-de-vivencias.md), [identidade visual](identidade-visual.md), [diagnóstico da rodada 3](diagnostico-rodada3.md), [testes para o pitch](pitch-testes.md).
@@ -25,7 +25,7 @@ Leia este arquivo e o [README](../README.md) antes de começar. Estado em **14/1
 1. **Refazer o cache da demo** com as chaves reais: jogue o roteiro uma vez com tudo ligado. Os prompts mudaram na rodada 3, então o cache antigo não serve.
 2. **Testar o PWA no Chrome de verdade** (computador e celular): instalar e abrir sem internet. No navegador embutido do app do Claude o service worker não registra; não foi possível confirmar.
 3. **MiroFish ao vivo no Modo Ensaio.** Hoje o ensaio usa simulação direta pelo Claude Opus (`orquestrador/app/ensaio.py`), com aviso na tela. Próximo passo: usar o mesmo pipeline de `simulacao.py`, com as personas do Banco no material-semente.
-4. **Merge** de `feat/rodada3-cacb` no `main` e republicação do túnel. **Só com pedido explícito do Fernando.**
+4. **Republicar o túnel** com a versão atual (`./publicar.sh`). Merge, push e publicação só com pedido explícito do Fernando.
 5. Validação com pessoas reais (ver [pitch-testes.md](pitch-testes.md)): tempo por trimestre, clareza da Ata e voz com pessoas idosas.
 
 ## 3. Problemas conhecidos
@@ -53,7 +53,13 @@ O Git leva o código. **Não** leva:
 * o `.env`: copie à mão por um meio seguro (pendrive, gerenciador de senhas), nunca por e-mail ou chat aberto;
 * o banco e os caches do jogo (volume `lideranca-em-jogo_dados-jogo`) e os projetos do MiroFish (volume `lideranca-em-jogo_mirofish-uploads`).
 
-O repositório não tem remoto configurado. Crie um privado (GitHub ou GitLab) e faça push, ou copie a pasta inteira.
+Clone do GitHub (no Windows, dentro do Ubuntu do WSL):
+
+```bash
+git clone https://github.com/fernandocsantos/lideranca-em-jogo.git ~/Projetos/lideranca-em-jogo
+```
+
+O repositório é **público**: nunca commite o `.env`, bancos (`*.sqlite3`), exportações de volume (`dados-jogo.tgz`) nem material com dado pessoal.
 
 Para levar também o banco e o cache da demo (opcional), na máquina de origem:
 
