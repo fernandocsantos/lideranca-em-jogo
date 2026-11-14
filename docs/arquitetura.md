@@ -1,6 +1,6 @@
 # Arquitetura e integração com o MiroFish
 
-**Projeto:** Liderança em Jogo — jogo sério para lideranças de associações comerciais (protótipo)
+**Projeto:** Liderança em Jogo — "Formar lideranças para decidir e acompanhar resultados" (desafio CACB, Hackathon Connect 7.0)
 **Público prioritário:** ACIs do interior de São Paulo · **Hospedagem:** local · **LLM:** Anthropic (Claude)
 **Licença:** AGPL-3.0 (mesma do MiroFish)
 
@@ -33,20 +33,24 @@
 |---|---|---|
 | Agentes do MiroFish (OASIS, perfis, relatório) | `claude-haiku-5-5` | Alto volume de chamadas; cabe no orçamento de R$ 100/mês |
 | Extração de sinais, devolutiva pedagógica, ficcionalização de notícias, simulação de contingência | `claude-opus-5-5` | Poucas chamadas, exigem julgamento |
-| Moderação, perguntas de esclarecimento, conversa com agentes (contingência) | `claude-haiku-5-5` | Classificação simples / respostas curtas |
+| Moderação, conversa com agentes (persona), Conselheiro sênior | `claude-haiku-5-5` | Respostas curtas, alto volume |
 
 Tudo em `orquestrador/config/llm.yaml`.
 
-## 2. Ciclo de jogo e componentes
+## 2. Ciclo do trimestre e componentes
 
 | Etapa | O que acontece | Módulo |
 |---|---|---|
-| 1. Cenário | Campanha escolhe o próximo cenário (dificuldade crescente, sem repetir tema) | `app/campanha.py`, `app/cenarios.py` |
-| 2. Decisão | Moderação (regras locais + LLM) → avaliação de clareza → até 2 perguntas de esclarecimento | `app/moderacao.py`, `app/esclarecimento.py` |
-| 3. Simulação | Job entra na fila; worker executa o pipeline MiroFish (ou contingência) e publica progresso | `app/fila.py`, `app/simulacao.py`, `app/mirofish_client.py`, `app/contingencia.py` |
-| 4. Resultado | LLM extrai **sinais** estruturados do relatório/ações; **código** converte em variação de indicadores; LLM gera devolutiva pela rubrica | `app/sinais.py`, `app/indicadores.py`, `app/devolutiva.py` |
-| 5. Conversa | Entrevista com agente (MiroFish `/interview`) ou com o Report Agent (`/report/chat`); na contingência, persona via LLM com a memória da simulação | `app/conversa.py` |
-| 6. Continuação | Refazer (nova tentativa a partir do mesmo estado de indicadores) ou avançar (consolida a tentativa escolhida) | `app/campanha.py` |
+| Onboarding | 4 telas puláveis, só na primeira vez | `frontend/app.js` |
+| 1. Pauta | Narrativa de até 80 palavras, evento do período, tags, regras com ícone, fileira de avatares, "Notícia do trimestre" e "Experiência da rede" (recolhidas). No 2º trimestre: meta do trimestre anterior + Manter/Ajustar/Rever | `cenarios.py`, `perfis.py`, `fatos.py`, `conselho.py` |
+| 2. Orçamento | Controles, botões rápidos, saldo, cronômetro; prévia instantânea em código (`POST /previa`) com expressão de quem pediu e tendência dos indicadores | `alocacao.py` |
+| 3. Decisão | Construtor em 3 passos (motivo, comunicação, meta), com botões, voz e texto, e resumo de 5 linhas; moderação local | `frontend/app.js`, `moderacao.py` |
+| 4. Resultado | **Resultado base imediato** (alocação → indicadores, meta prevista); devolutiva em ~20 s (Opus, sem esperar a simulação); a simulação do MiroFish roda na fila e, ao terminar, ajusta os indicadores (±10) e gera os momentos-chave | `simulacao.py`, `indicadores.py`, `devolutiva.py`, `fila.py` |
+| Conversa | Entrevista no MiroFish (com a decisão como contexto) ou persona com memória da simulação; 3 perguntas sugeridas por interlocutor | `conversa.py` |
+| Conselheiro | Agente do orquestrador (Haiku) com as experiências aprovadas; até 3 perguntas por trimestre; não dá a resposta pronta | `conselho.py` |
+| Selos e certificado | 6 selos por comportamento, calculados no servidor; certificado imprimível | `selos.py` |
+
+**Por que o conselheiro não é um agente do MiroFish:** cada experiência nova exigiria reconstruir o grafo e as personas (minutos e custo). As experiências entram no **material-semente de cada tentativa**, então a simulação também as considera.
 
 ## 3. Integração com o MiroFish — endpoints usados
 
@@ -63,7 +67,7 @@ Estudo feito sobre o repositório `666ghj/MiroFish` (branch principal, nov/2026)
 | Simulação | `POST /api/simulation/start` (`simulation_id`, `platform: "reddit"`, `max_rounds`, `enable_graph_memory_update: false`) | Executa com limite de rodadas (padrão 12, teto 20). A gravação da memória no grafo fica desligada (ver achados do teste real). |
 | Progresso | `GET /api/simulation/<id>/run-status` | `current_round`, `total_rounds`, `progress_percent`, `runner_status`. |
 | Reações parciais | `GET /api/simulation/<id>/actions?limit=20&platform=reddit` | Últimas ações (posts/comentários) para mostrar na tela de espera. |
-| Relatório | `POST /api/report/generate` + `POST /api/report/generate/status` + `GET /api/report/by-simulation/<id>` | Relatório do Report Agent (`markdown_content`) — insumo da extração de sinais. |
+| Relatório (opcional) | `POST /api/report/generate` + `POST /api/report/generate/status` + `GET /api/report/by-simulation/<id>` | Desligado por padrão (`gerar_relatorio: false`): leva ~4 min. Os sinais saem direto dos posts e comentários (`/posts`, `/comments`). |
 | Chat com agentes | `POST /api/simulation/interview` (`simulation_id`, `agent_id`, `prompt`, `platform`, `timeout`) | "Entrevista" um agente com memória da simulação. Exige ambiente vivo (`POST /api/simulation/env-status`). |
 | Chat com relatório | `POST /api/report/chat` (`simulation_id`, `message`, `chat_history`) | Conversa com o Report Agent (usa ferramentas de busca no grafo). |
 | Limpeza | `POST /api/simulation/close-env` | Fecha o ambiente após o tempo de conversa (config `mirofish.manter_ambiente_min`). |
@@ -89,7 +93,7 @@ Desligável em `jogo.yaml → mirofish.reutilizar_grafo`.
 
 ### Limites de custo aplicados ao MiroFish
 
-* `max_rounds` (padrão 20, teto 20) no `/start`;
+* `max_rounds` (padrão 4 + 8 rodadas noturnas sem custo, teto 20) no `/start`;
 * ≤ 15 agentes: o material-semente lista exatamente os atores do cenário, `entity_types` filtra os tipos e o orquestrador recusa iniciar se `profiles.count` > limite;
 * Só a plataforma Reddit;
 * Variáveis do MiroFish: `OASIS_DEFAULT_MAX_ROUNDS=20`, `REPORT_AGENT_MAX_TOOL_CALLS=3`, `REPORT_AGENT_MAX_REFLECTION_ROUNDS=1`.
@@ -98,31 +102,39 @@ Desligável em `jogo.yaml → mirofish.reutilizar_grafo`.
 
 O MiroFish usa o SDK da OpenAI com `LLM_BASE_URL`. Ele aponta para um proxy **LiteLLM** (`llm-proxy:4000`), que repassa à Anthropic com `claude-haiku-5-5`. O proxy é necessário: no teste real de 14/11/2026, o endpoint compatível da Anthropic (`/v1/`) recusou `response_format: {"type": "json_object"}` ("Input should be 'json_schema'"), que o MiroFish usa para gerar ontologia, perfis e configuração. O LiteLLM traduz esse pedido e descarta parâmetros recusados (`drop_params`). O MiroFish recebe só a chave interna do proxy (`LITELLM_MASTER_KEY`); a chave da Anthropic fica no proxy e no orquestrador.
 
-## 4. Conversão resultado → indicadores (determinística e auditável)
+## 4. Cálculo dos indicadores (determinístico e auditável)
 
-1. **LLM extrai sinais** (Opus 5.5, saída estruturada em JSON Schema): para cada indicador, uma lista de sinais `{indicador, intensidade ∈ {-3..+3}, evidencia, ator_id}`; para cada ator, `postura_final ∈ {-2..+2}`; e *flags* de uma lista fechada (ex.: `violacao_estatuto`, `risco_lgpd`, `decisao_sem_quorum`).
-2. **Código converte** (`app/indicadores.py`), com pesos em `config/indicadores.yaml`:
-   * cada sinal vale `peso_intensidade[intensidade] × multiplicador_influencia[ator]`;
-   * a mudança de postura de cada ator vira contribuição nos indicadores mapeados ao seu tipo (ex.: associados → engajamento; prefeitura/câmara → capital político; imprensa → reputação);
-   * *flags* aplicam penalidades fixas;
-   * soma por indicador limitada a `±delta_maximo` por rodada; elasticidade perto dos extremos (`ganho × (100−v)/50`, `perda × v/50`, limitadas a [0,5; 1,5]); resultado final limitado a 0–100;
-   * cada passo é registrado em `auditoria` (salvo no banco e visível no resultado em "Como calculamos").
-3. Mesma entrada ⇒ mesma saída (testado em `tests/test_indicadores.py`).
+1. **Base, só com a alocação** (`alocacao.calcular`, regras em `indicadores.yaml → alocacao`):
+   - cada demanda tem `efeitos` (financiada) e `efeitos_adiar` (não financiada), multiplicados pela utilidade da verba (fração financiada; abaixo de `minimo_util`, o benefício cai à metade);
+   - saldo guardado → saúde financeira (1 ponto por 10% do disponível);
+   - decisão guiada → `bonus_decisao` (comunicação, meta mensurável, revisão programada);
+   - postura prevista de quem pediu: financiada → +1; adiada → −2 níveis (−2 direto se a influência for ≥ 4).
+2. **Ajuste pela simulação:** o LLM extrai sinais (intensidade −3..+3, postura final, marcações de uma lista fechada); o código converte os sinais com as regras antigas e **limita o ajuste a ±10 por indicador** (`ajuste_llm_max`).
+3. **Consolidação:** base + ajuste, limitado a ±20 por trimestre, com elasticidade perto de 0 e de 100.
+4. **Meta do jogador** (`alocacao.progresso_meta`): previsto = quantidade × utilidade da verba da demanda ligada à meta × fator de engajamento.
+5. Cada parcela vai para a `auditoria` ("Como calculamos" na tela).
 
-## 5. Geração de cenários a partir de notícias
+## 4a. Material-semente enviado ao MiroFish
 
-`app/news/pipeline.py`: **coletar** (RSS de `config/fontes.yaml`, últimos 90 dias) → **filtrar** (palavras-chave por tema, pontuação mínima) → **resumir e ficcionalizar** (Opus 5.5, saída estruturada) → **validar** (código: nenhum nome próprio detectado na notícia pode aparecer no cenário; checagem de nomes de cidades reais da lista `config/nomes_reais_bloqueados.txt`) → salvar em `cenarios/gerados/` com `status: "pendente_revisao"` e a referência "inspirado em" (título, veículo, data, URL).
+Documento `.md` (`cenarios.material_semente`): contexto da AC (do perfil), situação, pedidos que disputam o orçamento, **regras que a decisão e a simulação devem respeitar**, pessoas (persona, interesses, influência, postura) e, na tentativa, a **tabela da alocação** (demanda | quem pediu | custo | valor aprovado | situação), o resumo da decisão e as **experiências da rede**. O requisito de simulação repete a alocação e lembra que quem foi adiado cobra explicações. O grafo do cenário (sem decisão) fica em cache; a decisão vai no projeto de cada tentativa.
 
-**Proteção contra prompt injection:** o texto da notícia vai dentro de uma tag `<noticia>` declarada como dado não confiável; o prompt de sistema proíbe seguir instruções dali; a saída é forçada a um schema; o validador rejeita saídas fora do formato. A notícia nunca chega aos agentes do MiroFish — só o cenário ficcionalizado.
+## 5. Notícias → fato do trimestre
 
-Biblioteca curada: `cenarios/curados/` (10 cenários revisados, usados offline e quando a coleta falha).
+`app/news/pipeline.py`: coletar (RSS, 90 dias) → filtrar por tema → **fato de até 2 frases** (Opus, saída estruturada: título curto, texto, recorte temático, efeito típico no caixa) → validar em código (nenhum nome próprio da notícia nem da lista de bloqueados; no máximo 2 frases) → `cenarios/fatos/` em revisão. Aprovado, aparece como "Notícia do trimestre" (o mais recente no 1º trimestre, o seguinte no 2º) e entra no material-semente. O orçamento e as demandas vêm do perfil da AC. O texto da notícia vai delimitado como dado não confiável, e o jogador vê veículo, data, link e recorte, nunca o título original.
 
-## 6. Robustez
+## 5a. Sala do Conselho e selos
 
-* **Timeouts e novas tentativas:** cliente MiroFish com `httpx` (timeout por chamada, 3 tentativas com *backoff* exponencial em erros de rede/5xx); SDK Anthropic com `max_retries=3`.
-* **Fila:** `asyncio.Queue` com `jogo.yaml → fila.workers` (padrão 1 — o MiroFish não aguenta várias simulações em paralelo numa máquina comum). A posição na fila aparece para o jogador.
-* **Contingência:** se o *health check* do MiroFish falhar, se qualquer etapa estourar o tempo total (`mirofish.timeout_total_min`) ou se `MIROFISH_DESATIVADO=true`, a tentativa roda em `contingencia.py` (uma chamada ao Opus 5.5 que simula as reações dos atores, com a mesma estrutura de saída). O jogador vê um aviso explícito: "Modo de contingência — simulação simplificada".
-* **Moderação:** regras locais (lista de termos, padrões de *prompt injection* como "ignore as instruções") antes de qualquer LLM; depois classificação com Haiku 5.5.
+* Contribuições (tabela `contribuicoes`): identificação (nome ou anônimo), entidade, anos, avatar, tema, 3 respostas e consentimento. Passam por moderação e ficam **em revisão** até o facilitador aprovar. Há 2 exemplos fictícios aprovados em `config/conselho.yaml`.
+* Selos (`config/selos.yaml`): calculados a partir do que ficou gravado (escolhas da decisão, consultas ao conselheiro, conversas com atores de postura ≤ −1, contribuições da sessão). Cada selo é avisado uma única vez.
+
+## 6. Robustez, cache e demonstração
+
+* **Timeouts, novas tentativas e fila:** como antes. A simulação roda em segundo plano (4 rodadas, sem o Report Agent de 4 min, fim detectado por 45 s sem atividade nova).
+* **Contingência:** MiroFish fora do ar ou estourando o prazo → simulação simplificada pelo Opus, com aviso na tela.
+* **Cache de simulação** (`sim_cache`): pauta + perfil + divisão do orçamento + continuidade + fato. A mesma escolha reaproveita a simulação, mesmo com o MiroFish parado.
+* **Cache de respostas do LLM** (`llm_cache`): mesmo prompt, mesma resposta. Deixa o roteiro reprodutível e sem custo novo.
+* **Sem internet:** o LLM cai nas respostas fixas do modo demonstração, marcadas no texto.
+* **Roteiro da demonstração** (`jogo.yaml → roteiro_demo`): escolhas fixas de 2 trimestres. Testado com o MiroFish desligado: roteiro completo em 23 s de cliques automatizados.
 
 ## 7. Custo
 
@@ -136,6 +148,6 @@ Biblioteca curada: `cenarios/curados/` (10 cenários revisados, usados offline e
 * Texto das decisões fica no SQLite local; botão "Apagar meus dados" remove a sessão inteira.
 * Agentes nunca representam pessoas reais: os cenários são ficcionais e o validador bloqueia nomes vindos das notícias.
 
-## 9. Fora de escopo (v1)
+## 9. Fora de escopo
 
 Login e turmas (decisão do projeto), multijogador em tempo real, app nativo, integração com sistemas das ACs. O **painel do facilitador** da v1 é simples e sem login (protegido por um código no `.env`): lista partidas, compara decisões para o mesmo cenário e exporta CSV; o relatório para PDF usa a impressão do navegador.
