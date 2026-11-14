@@ -160,30 +160,46 @@ def test_spa_e_estaticos_servidos():
         assert cli.get("/facilitador").status_code == 200
 
 
-def test_relatorio_tem_ata_padronizada_com_7_secoes():
+def test_plano_de_decisao_tem_resumo_8_secoes_e_desempenho():
     with TestClient(app) as cli:
         _instalar_mirofish(MiroFishFalso(saudavel=False))
         s = cli.post("/api/sessoes", json={"apelido": "Rui"}).json()
         h = {"X-Sessao": s["token"]}
         camp = cli.post("/api/campanhas", headers=h, json={"perfil": "media"}).json()
-        esc = {"motivos": ["Menor risco financeiro"], "envolvidos": ["tesoureiro"], "cortes_justificativa": ["Pode esperar o próximo trimestre"],
-               "meta": "60 vendedores formados até 90 dias", "responsavel": "Diretoria executiva", "indicador_acompanhamento": "Engajamento dos associados",
-               "revisao_dias": 30, "ano_anterior": {"digitalizacao": 12000, "formacao_vendas": 10000, "atendimento": 8000}}
-        r1 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Prioridade: formação e atendimento; digitalização reduzida.",
-                      "alocacao": {"digitalizacao": 6000, "formacao_vendas": 10000, "atendimento": 8000}, "escolhas": esc}).json()
+        esc = {"motivos": ["Menor risco financeiro"], "consultou_associados": True, "interpretacao": "formato", "considerou_vivencias": 1,
+               "cortes_linhas": {"digitalizacao": {"motivos": ["Falta de horas da equipe"]}, "formacao_vendas": {"motivos": ["Há alternativa mais barata"]},
+                                 "atendimento": {"motivos": ["Menor impacto no curto prazo"]}},
+               "alternativas": [{"rotulo": "A", "total": 24000, "horas": 98, "atendidos": ["Digitalização"]}, {"rotulo": "B", "total": 24000, "horas": 89, "atendidos": []}],
+               "alternativa_escolhida": "A", "motivo_alternativa": ["Atende mais associados"],
+               "meta": "25 lojas vendendo pela internet até 30 dias", "meta_mensuravel": 1, "revisao_programada": 1, "responsavel": "Diretoria executiva",
+               "indicadores_sugeridos": {"digitalizacao": "% de lojistas digitalizados", "formacao_online": "participação na formação"},
+               "revisao_dias": 30, "hipoteses_trocadas": ["receita"],
+               "construtor": {"qtd": "25", "oque": ["lojas vendendo pela internet"], "oqueLivre": "", "prazo": ["30 dias"]},
+               "ano_anterior": {"digitalizacao": 18000, "formacao_vendas": 14000, "formacao_online": 0, "atendimento": 8000}}
+        aloc = {"digitalizacao": 12000, "formacao_online": 6000, "atendimento": 6000}
+        r1 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Prioridade: digitalização, formação online e atendimento.",
+                      "alocacao": aloc, "escolhas": esc}).json()
         _esperar_completo(cli, r1["tentativa_id"], h)
-        r2 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Refeito: atendimento e digitalização.",
-                      "alocacao": {"digitalizacao": 15000, "atendimento": 8000}, "escolhas": esc}).json()
+        r2 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Outro caminho: atendimento e digitalização.",
+                      "alocacao": {"digitalizacao": 15000, "atendimento": 8000}, "escolhas": {}}).json()
         _esperar_completo(cli, r2["tentativa_id"], h)
         cli.post(f"/api/campanhas/{camp['id']}/avancar", headers=h, json={"tentativa_id": r1["tentativa_id"]})
         rel = cli.get(f"/api/campanhas/{camp['id']}/relatorio", headers=h).json()
-        a = rel["atas"][0]
-        for secao in ("contexto", "prioridades", "orcamento", "resultados", "previsao", "indicadores", "competencias"):
-            assert a[secao], secao
-        assert a["consolidada"] and a["orcamento"]["linhas"][0]["variacao"] == -6000 and a["orcamento"]["linhas"][0]["variacao_pct"] == -50.0
-        assert a["orcamento"]["total"] == 24000 == a["orcamento"]["teto"]
-        assert a["resultados"]["revisao"] and a["resultados"]["responsavel"] == "Diretoria executiva"
-        assert a["previsao"]["riscos"] and a["previsao"]["aviso"].startswith("Simulação para apoio")
-        assert rel["consolidado"]["refeitas"][0]["tentativas"] == 2 and rel["consolidado"]["padroes"]
-        assert rel["apelido"] is None
-        assert cli.get(f"/api/campanhas/{camp['id']}/relatorio?apelido=1", headers=h).json()["apelido"] == "Rui"
+        assert rel["titulo"] == "Plano de decisão — Legado" and rel["selo"] == "Demonstração com dados fictícios"
+        assert rel["slogan"].startswith("Seu mandato passa") and len(rel["secoes"]) == 8
+        res = rel["resumo"][0]
+        assert res["carimbo"] in ("SUCESSO", "SUCESSO PARCIAL", "FRACASSO") and "Alternativa A" in res["alternativa"]
+        assert "cortou R$ 22.000" in res["alocou_cortou"] and "acrescentou R$ 6.000" in res["alocou_cortou"] and res["meta"].startswith("25 lojas")
+        m = rel["missoes"][0]
+        assert m["consolidada"] and set(m["secoes"]) == {"contexto", "prioridades", "orcamento", "alternativas", "relatos",
+                                                          "resultados", "aprendizados", "simulacao"}
+        s1 = m["secoes"]
+        assert s1["contexto"]["orcamento_antes"] == 30000 and s1["contexto"]["orcamento_depois"] == 24000 and s1["contexto"]["horas_equipe"] == 100
+        assert s1["orcamento"]["total"] == 24000 and all(x["justificativa"] for x in s1["orcamento"]["linhas"] if x["variacao"] < 0)
+        assert s1["alternativas"]["escolhida"] == "A" and len(s1["alternativas"]["comparadas"]) == 2
+        assert s1["relatos"]["relato"]["autor"] == "Helena" and "online" in s1["relatos"]["relato"]["consulta"]
+        assert {"prioridade": "Digitalização dos lojistas", "indicador": "% de lojistas digitalizados"} in s1["resultados"]["indicadores_sugeridos"]
+        assert s1["resultados"]["revisao"] and s1["aprendizados"]
+        assert any(x["ajustada"] for x in s1["simulacao"]["hipoteses"]) and s1["simulacao"]["revisao_humana"] == "pendente"
+        assert rel["desempenho"]["geral"] in "ABCD" and rel["desempenho"]["criterios"]
+        assert rel["refeitas"][0]["tentativas"] == 2

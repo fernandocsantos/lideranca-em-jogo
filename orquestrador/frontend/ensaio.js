@@ -129,19 +129,24 @@ function resultadoEnsaio(e) {
 }
 
 function pdfEnsaio(e) {
-  const d = { titulo: "Ata do ensaio de decisão", gerado_em: new Date().toLocaleString("pt-BR"), associacao: e.entrada.titulo || "", perfil: "Ensaio de decisão real (mascarado)",
-    apelido: null, frase: FRASE, aviso: e.resultado.aviso, certificacoes: [],
-    atas: [{ trimestre: 1, titulo: e.entrada.titulo || "Ensaio", data: e.criado_em, consolidada: true, modo: "ensaio",
-      contexto: { associacao: "Decisão real ensaiada", perfil: "dados mascarados", associados: "-", fato_novo: e.resultado.resumo, restricoes: [`Teto: ${brl(e.resultado.orcamento.teto)}`] },
-      prioridades: { opcoes: (e.entrada.linhas || []).map((l) => l.nome), escolhida: (e.entrada.linhas || []).slice().sort((a, b) => b.proposto - a.proposto)[0]?.nome || "-", criterios: e.entrada.criterios || [],
-        trade_offs: e.resultado.recomendacoes, envolvidos: e.entrada.stakeholders || [] },
-      orcamento: { linhas: (e.entrada.linhas || []).map((l) => ({ linha: l.nome, ano_anterior: l.ano_anterior, proposto: l.proposto, variacao: l.proposto - l.ano_anterior,
-        variacao_pct: l.ano_anterior ? Math.round(((l.proposto - l.ano_anterior) / l.ano_anterior) * 1000) / 10 : null })), total: e.resultado.orcamento.total, teto: e.resultado.orcamento.teto,
-        saldo: e.resultado.orcamento.saldo, justificativa_cortes: [] },
-      resultados: { meta: e.entrada.meta, responsavel: e.entrada.responsavel, revisao: null, indicador: "", previsao_meta: null },
-      previsao: { reacoes: e.resultado.reacoes.map((x) => ({ nome: x.stakeholder, tipo: "", postura: x.postura, reacao: x.reacao })), riscos: e.resultado.riscos,
-        sinais_alerta: e.resultado.sinais_alerta, o_que_mudaria: e.resultado.o_que_mudaria, aviso: e.resultado.aviso },
-      indicadores: [], competencias: { aprendizados: e.resultado.recomendacoes } }],
-    consolidado: { quadro: [], evolucao: [], nomes_indicadores: {}, padroes: [], refeitas: [] } };
+  const en = e.entrada, r = e.resultado;
+  const linhas = (en.linhas || []).map((l) => ({ linha: l.nome, ano_anterior: l.ano_anterior, planejado: l.proposto, executado: l.proposto, variacao: l.proposto - l.ano_anterior, horas: null,
+    justificativa: "" }));
+  const d = { titulo: "Plano de decisão — Legado", gerado_em: new Date().toLocaleString("pt-BR"), associacao: "", perfil: "Modo Reunião: decisão real anonimizada",
+    apelido: null, selo: e.exemplo ? "Demonstração com dados fictícios" : "Situação real anonimizada", slogan: "Seu mandato passa. O que você ensina continua cuidando de quem empreende.",
+    descricao: "Plano gerado no Modo Reunião. O texto foi anonimizado antes da simulação e nada foi guardado no servidor.",
+    secoes: ["Contexto e restrições", "Prioridades", "Orçamento e horas", "Alternativas comparadas", "Relatos considerados", "Resultados", "Aprendizados para a próxima decisão", "Simulação"],
+    aviso: r.aviso, certificacoes: [], resumo: [], desempenho: null,
+    missoes: [{ missao: 1, rotulo: "Reunião", titulo: en.titulo || "Decisão", data: "", carimbo: null, motivo: r.resumo,
+      secoes: {
+        contexto: { orcamento_antes: r.orcamento.teto, orcamento_depois: r.orcamento.teto, horas_equipe: 0, horas_usadas: 0, fato_novo: en.contexto || "", restricoes: [] },
+        prioridades: { escolhidas: linhas.filter((l) => l.planejado > 0).map((l) => `${l.linha} (R$ ${l.planejado.toLocaleString("pt-BR")})`), adiadas: linhas.filter((l) => !l.planejado).map((l) => l.linha), criterios: en.criterios || [] },
+        orcamento: { linhas, total: r.orcamento.total, teto: r.orcamento.teto, saldo: r.orcamento.saldo },
+        alternativas: { comparadas: [], escolhida: null, motivo: [] },
+        relatos: { relato: null, outros: [] },
+        resultados: { meta: en.meta || "", responsavel: en.responsavel || "", revisao: null, indicadores_sugeridos: [], previsao_meta: null },
+        aprendizados: r.recomendacoes || [],
+        simulacao: { hipoteses: [], riscos: r.riscos, sinais_alerta: r.sinais_alerta, reacoes: r.reacoes.map((x) => ({ nome: x.stakeholder, reacao: x.reacao })),
+          revisao_humana: "pendente", modo: r.motor, aviso: r.aviso } } }] };
   return RELATORIO.pdf(d);
 }
