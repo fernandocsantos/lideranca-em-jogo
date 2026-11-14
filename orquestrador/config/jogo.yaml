@@ -65,6 +65,10 @@ roteiro_demo:
         oque: ["lojas vendendo pela internet"]
         prazo: ["o fim do trimestre"]
         revisao: ["30 dias"]
+        envolvidos: [tesoureiro, conselho]
+        cortes: ["Pode esperar o próximo trimestre"]
+        responsavel: ["Diretoria executiva"]
+        indicador: ["Engajamento dos associados"]
       conversa: {ator: lojista_tradicional, pergunta: "Por que você ficou insatisfeito?"}
     - continuidade: ajustar
       alocacao: {digitalizacao: 10500, formacao_vendas: 5000, atendimento: 8000, black_friday: 9000}
@@ -75,4 +79,8 @@ roteiro_demo:
         oque: ["lojas participando da campanha"]
         prazo: ["60 dias"]
         revisao: ["30 dias"]
+        envolvidos: [parceiro, lojista_digital]
+        cortes: ["Há outra fonte de recurso", "Menor impacto no curto prazo"]
+        responsavel: ["Gerência"]
+        indicador: ["Relação com poder público e parceiros"]
       conversa: {ator: associado_bairro, pergunta: "O que você achou da decisão?"}
