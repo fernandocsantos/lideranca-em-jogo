@@ -65,25 +65,40 @@ def calcular(antes: dict[str, float], extracao: ExtracaoSinais, cenario: Cenario
             auditoria.append({"regra": "flag", "indicador": ind, "pontos": float(pts),
                               "detalhe": f"{f}: {regra.get('descricao', '')}", "evidencia": ""})
 
-    # 4) Limite por rodada + elasticidade + faixa 0..100
+    cons = consolidar(antes, {i: 0.0 for i in INDICADORES}, brutos, regras, limitar_ajuste=False)
+    return {"antes": dict(antes), "depois": cons["depois"], "variacao": cons["variacao"],
+            "auditoria": auditoria + cons["auditoria"], "brutos": brutos, "auditoria_sinais": auditoria}
+
+
+def consolidar(antes: dict[str, float], base: dict[str, float], ajuste: dict[str, float],
+               regras: dict[str, Any] | None = None, limitar_ajuste: bool = True) -> dict[str, Any]:
+    """Soma o resultado base (alocação) com o ajuste da simulação (limitado a ±ajuste_llm_max),
+    aplica o limite por rodada, a elasticidade perto dos extremos e a faixa 0..100."""
+    regras = regras or config.indicadores()
+    lim = regras["limites"]
+    amax = float(regras.get("ajuste_llm_max", 10))
+    dmax = float(lim["delta_maximo_por_rodada"])
     depois: dict[str, float] = {}
     variacao: dict[str, float] = {}
-    dmax = float(lim["delta_maximo_por_rodada"])
+    auditoria: list[dict[str, Any]] = []
     for ind in INDICADORES:
         v = float(antes[ind])
-        d = _limitar(brutos[ind], -dmax, dmax)
+        aj = float(ajuste.get(ind, 0.0))
+        aj_lim = _limitar(aj, -amax, amax) if limitar_ajuste else aj
+        bruto = float(base.get(ind, 0.0)) + aj_lim
+        d = _limitar(bruto, -dmax, dmax)
         if d > 0:
             el = _limitar((100 - v) / 50, lim["elasticidade_min"], lim["elasticidade_max"])
         elif d < 0:
             el = _limitar(v / 50, lim["elasticidade_min"], lim["elasticidade_max"])
         else:
             el = 1.0
-        efetivo = d * el
-        novo = round(_limitar(v + efetivo, lim["minimo"], lim["maximo"]), 1)
+        novo = round(_limitar(v + d * el, lim["minimo"], lim["maximo"]), 1)
         depois[ind] = novo
         variacao[ind] = round(novo - v, 1)
+        extra = f" + ajuste da simulação {aj_lim:+.2f}" + (f" (bruto {aj:+.2f}, limitado a ±{amax:g})"
+                                                           if limitar_ajuste and aj != aj_lim else "")
         auditoria.append({"regra": "consolidacao", "indicador": ind, "pontos": variacao[ind],
-                          "detalhe": f"bruto {brutos[ind]:+.2f} → limitado {d:+.2f} × elasticidade {el:.2f}",
-                          "evidencia": ""})
-
+                          "detalhe": f"base {float(base.get(ind, 0.0)):+.2f}{extra} → limitado {d:+.2f} "
+                                     f"× elasticidade {el:.2f}", "evidencia": ""})
     return {"antes": dict(antes), "depois": depois, "variacao": variacao, "auditoria": auditoria}

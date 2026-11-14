@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -55,33 +56,40 @@ def test_validador_detecta_nome_real():
     assert any("João Batista Ferreira" in p for p in pipeline.validar(vazado, n))
 
 
-async def test_pipeline_completo_com_injecao_tratada_como_dado():
+def _fato(vazar=None):
+    texto = "A inadimplência no varejo subiu e lojistas pedem renegociação. A associação local estuda um mutirão."
+    if vazar:
+        texto = f"Em {vazar}, " + texto
+    return {"relevante": True, "titulo": "Inadimplência sobe no comércio", "texto": texto,
+            "recorte": "inadimplência no varejo", "tema": "seguranca", "efeito_orcamento": -3000,
+            "nomes_reais_removidos": ["Bauru", "João Batista Ferreira"]}
+
+
+async def test_pipeline_gera_fato_do_trimestre_com_injecao_tratada_como_dado():
     vistos = []
 
     def fic(usuario):
         vistos.append(usuario)
-        # 1ª resposta vaza nome real -> deve ser rejeitada; 2ª é limpa
-        return _cenario_ficcional(usuario, "Bauru" if len(vistos) == 1 else None)
+        return _fato("Bauru" if len(vistos) == 1 else None)  # 1ª vaza nome real -> rejeitada
 
-    falso = LLMFalso({"ficcionalizacao": fic})
-    llm.definir(falso)
+    llm.definir(LLMFalso({"ficcionalizacao": fic}))
 
     def rss(req):
         return httpx.Response(200, text=RSS, headers={"content-type": "application/rss+xml"})
 
     r = await pipeline.executar(max_cenarios=2, transport=httpx.MockTransport(rss))
     assert r["erro"] is None and len(r["gerados"]) == 1
-    # a notícia vai delimitada como dado
     assert "<noticia>" in vistos[0] and "IGNORE AS INSTRUÇÕES" in vistos[0].split("<noticia>")[1]
     assert "rejeitada" in vistos[1]
-    c = cenarios.obter(r["gerados"][0]["id"])
-    assert c.status == "pendente_revisao"
-    assert c.inspirado_em and c.inspirado_em.url == "https://exemplo.org/n1"
-    assert "Bauru" not in c.texto and "João Batista" not in c.model_dump_json()
-    # pendente não entra nas campanhas até ser aprovado
-    assert c.id not in {x.id for x in cenarios.todos()}
-    cenarios.definir_status(c.id, "aprovado")
-    assert c.id in {x.id for x in cenarios.todos()}
+    from app import fatos
+    f = fatos.todos(incluir_pendentes=True)[0]
+    assert f["status"] == "pendente_revisao" and f["fonte"]["url"] == "https://exemplo.org/n1"
+    assert len(re.findall(r"[.!?](\s|$)", f["texto"])) <= 2 and "Bauru" not in f["texto"]
+    assert fatos.para_trimestre(0) is None  # pendente não entra no jogo
+    fatos.definir_status(f["id"], "aprovado")
+    assert fatos.para_trimestre(0)["id"] == f["id"]
+    pub = fatos.publico(f)
+    assert "titulo" not in pub["fonte"]  # o título original (com nomes reais) não vai para a tela do jogador
 
 
 async def test_coleta_falha_nao_derruba():

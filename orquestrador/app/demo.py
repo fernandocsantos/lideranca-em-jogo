@@ -59,10 +59,12 @@ def _sinais(usuario: str) -> dict:
         reacoes.append({"ator_id": a["id"], "postura_final": pf,
                         "reacao": f"{a['nome']} acompanhou a decisão {'com simpatia' if ajuste > 0 else 'com cautela'}.",
                         "citacao": "Vamos ver se isso sai do papel."})
+    momentos = [{"ator_id": a["id"], "fala": f"Vi a decisão da diretoria. {('Gostei do que foi priorizado.' if i % 2 == 0 else 'Quero saber quando chega a minha vez.')}"}
+                for i, a in enumerate(atores[:4])]
     return {"resumo_narrativo": "Simulação de demonstração: a decisão circulou entre associados, imprensa e "
                                 "poder público. Houve apoio de parte da base e cobranças por detalhes de "
                                 "execução, custo e prazo. (Texto gerado pelo modo demonstração.)",
-            "sinais": sinais, "reacoes": reacoes, "flags": flags}
+            "momentos": momentos, "sinais": sinais, "reacoes": reacoes, "flags": flags}
 
 
 def _devolutiva(usuario: str) -> dict:
@@ -103,6 +105,16 @@ def _esclarecimento(usuario: str) -> dict:
     return {"simulavel": False, "perguntas": ["Quem será envolvido diretamente na execução dessa decisão?"]}
 
 
+def _conversa(msgs, system=""):
+    if "Conselheiro sênior" in system:
+        m = re.search(r"caso: (.*?) \|", system)
+        caso = m.group(1) if m else "escolher pouco e fazer bem feito"
+        return (f"Um dirigente da rede conta: \"{caso}\" Antes de decidir, pergunte-se: quem fica de fora e "
+                "como você vai explicar a essa pessoa quando chega a vez dela? (resposta do modo demonstração)")
+    return ("Olha, do meu ponto de vista, a decisão tem méritos, mas ainda quero ver "
+            "como vai funcionar na prática. (resposta do modo demonstração)")
+
+
 def llm_demo() -> LLMFalso:
     return LLMFalso({
         "moderacao": lambda u: {"permitido": True, "categoria": "ok", "motivo": ""},
@@ -110,6 +122,5 @@ def llm_demo() -> LLMFalso:
         "sinais": _sinais,
         "devolutiva": _devolutiva,
         "contingencia": _contingencia,
-        "conversa": lambda msgs: "Olha, do meu ponto de vista, a decisão tem méritos, mas ainda quero ver "
-                                 "como vai funcionar na prática. (resposta do modo demonstração)",
+        "conversa": _conversa,
     })

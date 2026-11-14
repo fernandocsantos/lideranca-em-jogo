@@ -174,5 +174,94 @@
     }
   ],
   "inspirado_em": null,
-  "status": "curado"
+  "status": "curado",
+  "narrativa": "O ribeirão transbordou e o centro ficou sob até 1,2 metro de água. São 140 associados atingidos, muitos sem seguro. Lojistas querem reabrir antes do Dia das Crianças, mas a Vigilância exige limpeza. Há acusações contra a prefeitura e contra uma incorporadora associada. A diretoria liberou R$ 150 mil da reserva.",
+  "tags": [
+    "Recuperação dos negócios",
+    "Saúde pública",
+    "Credibilidade na crise"
+  ],
+  "orcamento": 150000,
+  "demandas": [
+    {
+      "id": "fundo_emergencial",
+      "titulo": "Fundo emergencial para os sem seguro",
+      "custo": 80000,
+      "solicitante": "lojista_atingido",
+      "beneficio": "Ajuda direta para limpeza e estoque básico.",
+      "efeitos": {
+        "engajamento": 4,
+        "reputacao": 2,
+        "saude_financeira": -2
+      },
+      "efeitos_adiar": {
+        "engajamento": -3
+      },
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas reabertas"
+    },
+    {
+      "id": "mutirao_limpeza",
+      "titulo": "Mutirão de limpeza com a Defesa Civil",
+      "custo": 30000,
+      "solicitante": "defesa_civil",
+      "beneficio": "Reabertura segura e cadastro dos danos.",
+      "efeitos": {
+        "reputacao": 3,
+        "capital_politico": 2,
+        "conformidade": 2
+      },
+      "efeitos_adiar": {
+        "conformidade": -2
+      },
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas liberadas pela Vigilância"
+    },
+    {
+      "id": "triagem_credito",
+      "titulo": "Triagem do crédito emergencial",
+      "custo": 25000,
+      "solicitante": "banco",
+      "beneficio": "Equipe para orientar e encaminhar pedidos de crédito.",
+      "efeitos": {
+        "saude_financeira": 2,
+        "engajamento": 2
+      },
+      "efeitos_adiar": {
+        "engajamento": -1
+      },
+      "minimo_util": 0.5,
+      "meta_sugerida": "pedidos de crédito encaminhados"
+    },
+    {
+      "id": "doacoes_organizadas",
+      "titulo": "Organizar a campanha de doações",
+      "custo": 20000,
+      "solicitante": "doacoes",
+      "beneficio": "Conta oficial e prestação de contas das doações.",
+      "efeitos": {
+        "reputacao": 3,
+        "conformidade": 1
+      },
+      "efeitos_adiar": {
+        "reputacao": -2
+      },
+      "minimo_util": 0.5,
+      "meta_sugerida": "doações com prestação de contas"
+    }
+  ],
+  "regras": [
+    {
+      "icone": "📜",
+      "texto": "Uso da reserva precisa ser ratificado pelo conselho em 7 dias."
+    },
+    {
+      "icone": "🩺",
+      "texto": "Produtos molhados não podem ser vendidos (Vigilância Sanitária)."
+    },
+    {
+      "icone": "🎤",
+      "texto": "Entrevista à imprensa estadual amanhã."
+    }
+  ]
 }

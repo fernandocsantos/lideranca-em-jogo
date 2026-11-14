@@ -7,7 +7,8 @@ BASE = {"engajamento": 50, "saude_financeira": 50, "reputacao": 50, "capital_pol
 
 
 def _ext(sinais=(), reacoes=(), flags=()):
-    return ExtracaoSinais(resumo_narrativo="x", sinais=list(sinais), reacoes=list(reacoes), flags=list(flags))
+    return ExtracaoSinais(resumo_narrativo="x", momentos=[], sinais=list(sinais), reacoes=list(reacoes),
+                          flags=list(flags))
 
 
 def test_deterministico():
@@ -36,7 +37,7 @@ def test_flags_e_limite_por_rodada():
     c = cenarios.obter("cur_02_lgpd_cadastro")
     sinais = [Sinal(indicador="conformidade", intensidade=-3, evidencia="e", ator_id=None)] * 5
     r = calcular(BASE, _ext(sinais, flags=["risco_lgpd", "conflito_de_interesse"]), c)
-    assert r["variacao"]["conformidade"] == -15.0  # bruto -48, limitado a -15, elasticidade 1.0
+    assert r["variacao"]["conformidade"] == -20.0  # bruto -48, limitado a -20, elasticidade 1.0
 
 
 def test_elasticidade_perto_dos_extremos():

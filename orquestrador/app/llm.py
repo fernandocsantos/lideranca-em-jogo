@@ -1,6 +1,8 @@
 """Camada de acesso à Anthropic (SDK oficial) com registro de tokens e custo por partida."""
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass
 from typing import Any, Callable, TypeVar
@@ -23,6 +25,10 @@ class Ctx:
 
 class ErroLLM(RuntimeError):
     """Falha ao obter resposta utilizável do LLM."""
+
+
+class SemConexaoLLM(ErroLLM):
+    """Sem acesso à Anthropic (internet fora ou serviço indisponível)."""
 
 
 class RecusaLLM(ErroLLM):
@@ -72,7 +78,7 @@ class LLM:
         except anthropic.APIStatusError as e:
             raise ErroLLM(f"Erro do serviço de LLM ({e.status_code}).") from e
         except anthropic.APIConnectionError as e:
-            raise ErroLLM("Sem conexão com a Anthropic.") from e
+            raise SemConexaoLLM("Sem conexão com a Anthropic.") from e
 
         u = resp.usage
         custos.registrar(ctx, tarefa, getattr(resp, "model", modelo), u.input_tokens or 0, u.output_tokens or 0,
@@ -84,15 +90,66 @@ class LLM:
         return resp
 
     async def estruturado(self, tarefa: str, system: str, usuario: str, saida: type[T], ctx: Ctx) -> T:
-        resp = await self._chamar(tarefa, system, [{"role": "user", "content": usuario}], ctx, saida)
+        chave = cache_chave(tarefa, system, usuario, saida.__name__)
+        hit = cache_ler(chave)
+        if hit is not None:
+            return saida.model_validate(json.loads(hit))
+        try:
+            resp = await self._chamar(tarefa, system, [{"role": "user", "content": usuario}], ctx, saida)
+        except SemConexaoLLM:
+            return await self._offline("estruturado", tarefa, system, usuario, saida, ctx)
         out = getattr(resp, "parsed_output", None)
         if out is None:
             raise ErroLLM("O LLM não devolveu JSON válido no formato esperado.")
+        cache_gravar(chave, tarefa, out.model_dump_json())
         return out
 
     async def texto(self, tarefa: str, system: str, messages: list[dict], ctx: Ctx) -> str:
-        resp = await self._chamar(tarefa, system, messages, ctx, None)
-        return "".join(b.text for b in resp.content if b.type == "text").strip()
+        chave = cache_chave(tarefa, system, messages, "texto")
+        hit = cache_ler(chave)
+        if hit is not None:
+            return json.loads(hit)
+        try:
+            resp = await self._chamar(tarefa, system, messages, ctx, None)
+        except SemConexaoLLM:
+            return await self._offline("texto", tarefa, system, messages, None, ctx)
+        out = "".join(b.text for b in resp.content if b.type == "text").strip()
+        cache_gravar(chave, tarefa, json.dumps(out, ensure_ascii=False))
+        return out
+
+    async def _offline(self, tipo, tarefa, system, entrada, saida, ctx):
+        """Sem internet: respostas fixas do modo demonstração (marcadas no texto), se permitido."""
+        if not config.llm().get("demo_sem_internet", True):
+            raise SemConexaoLLM("Sem conexão com a Anthropic.")
+        log.warning("Sem conexão com a Anthropic: usando respostas do modo demonstração (%s)", tarefa)
+        from .demo import llm_demo
+        d = llm_demo()
+        if tipo == "estruturado":
+            return await d.estruturado(tarefa, system, entrada, saida, ctx)
+        return await d.texto(tarefa, system, entrada, ctx)
+
+
+# ------------------------------------------------------------ cache de respostas
+def cache_chave(tarefa: str, system: str, entrada: Any, formato: str) -> str:
+    modelo = config.llm()["tarefas"].get(tarefa, {}).get("modelo", "")
+    bruto = json.dumps([tarefa, modelo, system, entrada, formato], ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha256(bruto.encode()).hexdigest()
+
+
+def cache_ler(chave: str) -> str | None:
+    if not config.llm().get("cache_respostas", True):
+        return None
+    from . import db
+    r = db.um("SELECT resposta FROM llm_cache WHERE chave=?", (chave,))
+    return r["resposta"] if r else None
+
+
+def cache_gravar(chave: str, tarefa: str, resposta: str) -> None:
+    if not config.llm().get("cache_respostas", True):
+        return
+    from . import db
+    db.executar("INSERT OR REPLACE INTO llm_cache (chave, tarefa, resposta, criado_em) VALUES (?,?,?,?)",
+                (chave, tarefa, resposta, db.agora()))
 
 
 class LLMFalso:
@@ -114,7 +171,9 @@ class LLMFalso:
         self.chamadas.append((tarefa, messages[-1]["content"]))
         custos.registrar(ctx, tarefa, "falso", 100, 50, 0)
         f = self.respostas.get(tarefa)
-        return f(messages) if f else "Resposta simulada."
+        if not f:
+            return "Resposta simulada."
+        return f(messages, system) if f.__code__.co_argcount >= 2 else f(messages)
 
 
 _instancia: Any = None

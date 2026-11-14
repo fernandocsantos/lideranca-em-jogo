@@ -1,100 +1,124 @@
 # Liderança em Jogo
 
-Jogo sério (*serious game*) em português do Brasil para a formação de lideranças de **associações comerciais (ACs/ACIs)** — presidentes, diretores, conselheiros e gestores executivos — com foco nas ACIs do interior de São Paulo.
+**Formar lideranças para decidir e acompanhar resultados.** Jogo sério em português do Brasil, feito para o desafio CACB do Hackathon Connect 7.0 ("Varejo e soluções do futuro"). Ele prepara novas lideranças, voluntários e diretores de associações comerciais para decidir **prioridades, orçamento e resultados**.
 
-Você assume a presidência de uma associação fictícia, lê um cenário inspirado em problemas reais do comércio, escreve sua decisão em texto livre e vê como associados, diretoria, prefeitura, imprensa, sindicatos e parceiros reagem. As reações são simuladas por agentes de IA no [MiroFish](https://github.com/666ghj/MiroFish). Depois você conversa com os agentes, recebe uma devolutiva pela rubrica de competências e decide se refaz a decisão ou avança na campanha.
+O jogador preside uma associação fictícia por dois trimestres. Em cada um, lê uma pauta curta, **divide o orçamento** entre pedidos que não cabem juntos, registra a decisão com botões, voz ou texto, e vê o resultado na hora. Em segundo plano, agentes de IA no [MiroFish](https://github.com/666ghj/MiroFish) simulam como associados, diretoria, prefeitura e imprensa reagem. Depois o jogador conversa com essas pessoas, consulta um **conselheiro sênior** que cita experiências reais de dirigentes da rede e acompanha a meta que ele mesmo definiu.
 
-> Protótipo para uso local. Licença **AGPL-3.0**, a mesma do MiroFish (veja [LICENSE](LICENSE)). Se você oferecer o jogo como serviço em rede, precisa disponibilizar o código-fonte, incluindo as suas modificações.
+> Protótipo de uso local. Licença **AGPL-3.0**, a mesma do MiroFish (veja [LICENSE](LICENSE)). Se você oferecer o jogo como serviço em rede, precisa disponibilizar o código-fonte com as suas modificações. Usa só informações públicas ou fictícias.
+
+## Como o desafio aparece no jogo
+
+| Pedido do guia | No jogo |
+|---|---|
+| Decidir prioridades, orçamento e resultados | Orçamento como mecânica central: controles deslizantes, botões "Financiar tudo", "Metade" e "Adiar", saldo em tempo real e prévia instantânea |
+| Diretorias voluntárias, com pouco tempo | Cronômetro de reunião (10 min), pauta com até 80 palavras, um passo por tela |
+| Clareza | "Resumo da decisão" de 5 linhas: prioridade, motivo, **limites que pesaram**, comunicação e meta |
+| Aprendizado com os seniores | Sala do Conselho (relatos por voz), cartão "Experiência da rede" e Conselheiro sênior |
+| Replicação | Perfis de AC em configuração: pequena (sem funcionários, R$ 9 mil), média (caso do guia, R$ 30 mil) e grande (R$ 120 mil) |
+| Pouca familiaridade digital | Botões grandes, voz, letra ajustável, alto contraste, onboarding de 4 telas, sem jargão |
 
 ## Conteúdo
 
 | Pasta/arquivo | O que é |
 |---|---|
-| [docs/arquitetura.md](docs/arquitetura.md) | Arquitetura, endpoints do MiroFish usados em cada etapa, regras de conversão, robustez e custo |
+| [docs/arquitetura.md](docs/arquitetura.md) | Arquitetura, integração com o MiroFish e regras de cálculo |
+| [docs/pitch-testes.md](docs/pitch-testes.md) | Quadro "O que observamos nos testes x o que ainda precisa ser validado" |
 | [docker-compose.yml](docker-compose.yml) | Orquestrador + MiroFish + proxy LLM (LiteLLM) |
-| `orquestrador/app/` | Backend em Python/FastAPI: cenários, sessões, fila, integração com o MiroFish, contingência, indicadores, devolutiva, custos |
-| `orquestrador/frontend/` | SPA sem etapa de build (HTML/CSS/JS), toda em pt-BR, acessível (WCAG AA) |
-| `orquestrador/config/` | **Arquivos editáveis**: `rubrica.yaml`, `indicadores.yaml`, `jogo.yaml`, `llm.yaml`, `fontes.yaml`, `moderacao.yaml`, `nomes_reais_bloqueados.txt` |
-| `orquestrador/cenarios/curados/` | 10 cenários fictícios revisados (uso offline e caso a coleta de notícias falhe) |
-| `orquestrador/cenarios/gerados/` | Cenários gerados de notícias (aguardam aprovação do facilitador) |
-| `orquestrador/app/news/pipeline.py` | Pipeline notícias → cenários fictícios |
-| `orquestrador/tests/` | Testes automatizados (unitários + ponta a ponta) |
+| `orquestrador/app/` | Backend em Python/FastAPI |
+| `orquestrador/frontend/` | SPA sem etapa de build (HTML/CSS/JS), com avatares SVG próprios |
+| `orquestrador/config/` | **Arquivos editáveis** (veja "Configuração") |
+| `orquestrador/cenarios/curados/` | Caso do guia (2 trimestres) e 10 casos fictícios revisados |
+| `orquestrador/cenarios/fatos/` | Fatos de trimestre gerados de notícias (aguardam aprovação) |
+| `orquestrador/tests/` | 53 testes automatizados, incluindo ponta a ponta |
 
-## Instalação (Docker, recomendado)
+## Instalação (Docker)
 
-Pré-requisitos: Docker com Compose, uma chave da **Anthropic** e uma chave do **Zep Cloud** (o plano gratuito atende o protótipo; o MiroFish usa o Zep para o grafo e a memória dos agentes).
+Pré-requisitos: Docker com Compose, uma chave da **Anthropic** e uma chave do **Zep Cloud**. O plano gratuito do Zep atende o protótipo; o MiroFish usa o Zep para o grafo e a memória dos agentes.
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o `.env` e preencha `ANTHROPIC_API_KEY`, `ZEP_API_KEY`, `FACILITADOR_CODIGO` e `LITELLM_MASTER_KEY` (veja abaixo como gerar). Depois:
-
-```bash
-docker compose up -d --build
-```
-
-Abra http://localhost:8000. O painel do facilitador fica em http://localhost:8000/facilitador.
-
-* O MiroFish **não** fica exposto fora da rede do Compose: só o orquestrador fala com ele. A interface própria do MiroFish não é usada.
-* As chaves ficam só no servidor. O navegador nunca as recebe.
-* Os arquivos de `orquestrador/config/` são montados no container: edite e reinicie (`docker compose restart orquestrador`), sem precisar reconstruir a imagem.
-
-### Por que há um proxy LLM (LiteLLM)
-
-O MiroFish usa o SDK da OpenAI. No teste real, o endpoint compatível da Anthropic recusou o pedido de JSON do MiroFish (`response_format: json_object`), e nenhuma chamada dele funcionou. Por isso o Compose sobe um proxy LiteLLM (`llm-proxy`) entre o MiroFish e a Anthropic: ele traduz o pedido de JSON e descarta parâmetros que os modelos Claude recusam. O proxy também desliga o raciocínio adaptativo do Haiku 5.5, porque o MiroFish fixa `max_tokens=4096` e o raciocínio consumia parte desse limite, cortando as respostas em JSON. O MiroFish só conhece a chave interna `LITELLM_MASTER_KEY`, nunca a chave da Anthropic. Gere essa chave interna com:
+Edite o `.env` e preencha `ANTHROPIC_API_KEY`, `ZEP_API_KEY` e `FACILITADOR_CODIGO`. Gere a chave interna do proxy:
 
 ```bash
 echo "LITELLM_MASTER_KEY=sk-$(openssl rand -hex 32)" >> .env
 ```
 
-Enquanto o MiroFish não funcionar, o jogo continua no **modo de contingência**, sempre com aviso ao jogador.
+```bash
+docker compose up -d --build
+```
 
-## Modo demonstração (sem chaves, sem custo)
+Abra http://localhost:8000. Endereços:
+- `/conselho`: Sala do Conselho, para os seniores registrarem experiências.
+- `/facilitador`: painel do facilitador, com o código do `.env`.
+- `/certificado`: certificado da campanha atual.
 
-Para ensaiar a interface e o fluxo, sem chamar a Anthropic nem o MiroFish (as respostas são fixas e não têm valor pedagógico):
+* O MiroFish não fica exposto fora da rede do Compose e a interface própria dele não é usada. As chaves ficam só no servidor.
+* O proxy LiteLLM é necessário: o endpoint compatível da Anthropic recusa o pedido de JSON do MiroFish. O proxy também desliga o raciocínio adaptativo do Haiku, porque o MiroFish limita as respostas a 4.096 tokens. O MiroFish só conhece a chave interna do proxy.
+* Os arquivos de `orquestrador/config/` são montados no container: edite e rode `docker compose restart orquestrador`.
+
+## Roteiro da demonstração (cerca de 5 minutos)
+
+1. Abra http://localhost:8000 e toque em **"▶ Roteiro da demonstração (2 trimestres)"**. Uma faixa verde indica, em cada tela, o próximo toque.
+2. **Trimestre 1** (caso do guia: R$ 30 mil; digitalização R$ 18 mil, formação R$ 14 mil, atendimento R$ 8 mil; a receita cai R$ 6 mil):
+   - Na pauta, toque em **🦉 Consultar o conselheiro** e depois em **Perguntar**. Ele cita a experiência da rede e não dá a resposta pronta. Feche.
+   - Em **Ir para o orçamento**, toque em **Aplicar a divisão do roteiro**: atendimento R$ 8 mil e digitalização R$ 16 mil. Mostre a Dona Cida ficando insatisfeita e as setas nos indicadores.
+   - Em **Registrar a decisão**, toque em **Próximo** três vezes: os botões já vêm marcados. Mostre o **Resumo da decisão** e toque em **Confirmar**.
+   - Mostre o resultado imediato, a meta prevista, os momentos-chave e a devolutiva. Na conversa, toque em **Perguntar**: a Dona Cida explica por que discordou.
+3. Toque em **Ir para o próximo trimestre**. **Trimestre 2**: mostre "Como foi o trimestre passado" (meta prevista x alvo) e toque em **Ajustar** → **Aplicar a divisão do roteiro** → **Registrar** → **Próximo** ×3 → **Confirmar** → **Perguntar** (Seu Jorge) → **Concluir**.
+4. Toque em **🏅 Ver meu certificado**: 5 selos e os resumos de decisão. **Imprimir / salvar em PDF**.
+5. Opcional: mostre a **Sala do Conselho** (`/conselho`), com uma pergunta por tela e o botão de microfone, e o **painel do facilitador**, com a moderação.
+
+**Cache e contingência:** a primeira execução do roteiro grava as simulações e as respostas. Nas seguintes, o jogo reaproveita o cache e roda **mesmo com o MiroFish desligado**, sinalizando o modo simplificado na tela. Testado: roteiro completo em 23 s de cliques automatizados com o MiroFish parado. Sem internet, as respostas vêm do modo demonstração e o texto avisa isso.
+
+Para preparar o cache antes da apresentação, jogue o roteiro uma vez com tudo ligado (cerca de 10 minutos, porque as simulações reais rodam em segundo plano). Para testar a contingência:
+
+```bash
+docker compose stop mirofish
+```
+
+E para religar:
+
+```bash
+docker compose start mirofish
+```
+
+## Modo demonstração sem chaves
+
+Respostas fixas, sem chamar a Anthropic nem o MiroFish. Serve para ensaiar a interface e não tem valor pedagógico:
 
 ```bash
 cd orquestrador && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 ```bash
-cd orquestrador && LLM_FALSO=true MIROFISH_DESATIVADO=true FACILITADOR_CODIGO=demo .venv/bin/uvicorn app.main:app --port 8000
+cd orquestrador && LLM_FALSO=true MIROFISH_DESATIVADO=true FACILITADOR_CODIGO=demo .venv/bin/uvicorn app.main:app --port 8010
 ```
 
-## Desenvolvimento sem Docker
-
-Com o MiroFish rodando em outro lugar:
-
-```bash
-cd orquestrador && ANTHROPIC_API_KEY=... MIROFISH_URL=http://localhost:5001 FACILITADOR_CODIGO=... .venv/bin/uvicorn app.main:app --reload
-```
-
-## Configuração (o que dá para mudar sem programar)
+## Configuração (sem programar)
 
 | Arquivo | Para quê |
 |---|---|
-| `jogo.yaml` | nº de cenários por campanha (5–8), indicadores iniciais, limites de caracteres, rodadas (padrão 12, teto 20), agentes (≤ 15), simulações por jogador/dia, mensagens de conversa, orçamento mensal (R$ 100), timeouts e cache do MiroFish |
-| `indicadores.yaml` | **Regras de conversão** sinais → indicadores: pesos por intensidade, multiplicador por influência do ator, efeito da mudança de postura por tipo de ator, penalidades/bônus por *flag*, limite por rodada e elasticidade |
-| `rubrica.yaml` | Rubrica de 7 competências × 4 níveis e regras da devolutiva |
-| `llm.yaml` | Modelo e esforço por tarefa, preços por milhão de tokens, câmbio, parâmetros da estimativa de custo do MiroFish |
-| `fontes.yaml` | Feeds RSS, janela de recência (90 dias) e palavras-chave por tema |
-| `moderacao.yaml` | Termos bloqueados e padrões de manipulação dos agentes |
-| `nomes_reais_bloqueados.txt` | Nomes que nunca podem aparecer em cenários gerados |
+| `jogo.yaml` | Modo da campanha (demonstração com 2 trimestres ou completa), perfil padrão, minutos de reunião, rodadas (4 por padrão, teto 20), agentes (≤ 15), limites diários, orçamento mensal (R$ 100), parâmetros do MiroFish, **roteiro da demonstração** |
+| `perfis/*.yaml` | **Replicação**: associação, equipe, orçamento por trimestre e personagens de cada perfil de AC. Para outra AC, copie um arquivo e mude os valores; custos e textos se ajustam sozinhos |
+| `indicadores.yaml` | Regras de cálculo: efeito de cada pedido financiado ou adiado, saldo guardado, pontos da decisão guiada, faixa de ajuste da simulação (±10), limites |
+| `rubrica.yaml` | Rubrica de 7 competências × 4 níveis |
+| `conselho.yaml` | Temas e perguntas da Sala do Conselho, mapa tema do cenário → temas da rede, 2 exemplos fictícios |
+| `selos.yaml` | Os 6 selos por comportamento |
+| `llm.yaml` | Modelo e esforço por tarefa, preços, câmbio, cache de respostas, modo sem internet |
+| `fontes.yaml` | Feeds RSS e palavras-chave por tema (notícias → fato do trimestre) |
+| `moderacao.yaml` | Termos bloqueados e padrões de manipulação |
 
-### Como os indicadores são calculados
+### Como o resultado é calculado
 
-O LLM **só extrai sinais** da simulação (indicador, intensidade de −3 a +3, evidência, ator), a postura final de cada ator e *flags* de uma lista fechada. A conta é feita em código, em `app/indicadores.py`, com as regras de `indicadores.yaml`. É determinística (mesma entrada ⇒ mesmo resultado) e auditável: a tela de resultado mostra a tabela "Como calculamos", com cada parcela.
+1. **Na hora, sem IA:** cada pedido tem um efeito por indicador quando financiado e outro quando adiado. Financiar pela metade rende metade; abaixo do mínimo útil, rende menos ainda. O dinheiro guardado melhora a saúde financeira, e motivo, comunicação e meta somam pontos. Quem pediu muda de expressão conforme a verba. É a mesma conta da prévia.
+2. **Depois, com os agentes:** o Claude Opus extrai sinais da simulação, e o código transforma esses sinais em um ajuste **limitado a ±10 pontos por indicador**.
+3. Tudo aparece em "Como calculamos". Mesma entrada, mesmo resultado.
 
-## Notícias → cenários
+## Notícias → fato do trimestre
 
-No painel do facilitador, clique em **"Gerar cenários a partir de notícias recentes"**. Ou rode pela linha de comando:
-
-```bash
-docker compose exec orquestrador python -m app.news.pipeline
-```
-
-As etapas são: coletar (RSS) → filtrar (últimos 90 dias e temas do comércio) → ficcionalizar (Claude Opus 5.5, com saída estruturada) → validar (em código: nenhum nome próprio da notícia nem da lista de bloqueados pode aparecer) → salvar como **pendente de revisão**. O cenário só entra nas campanhas depois que o facilitador o aprova. A fonte original aparece como "Inspirado em". O texto da notícia é tratado como dado não confiável, e tentativas de *prompt injection* são ignoradas (há teste cobrindo isso).
+No painel do facilitador, toque em **"Gerar fatos a partir de notícias recentes"**. O pipeline coleta feeds RSS (últimos 90 dias), filtra por tema e escreve um **fato de até 2 frases** com fonte, data e recorte temático. O código valida o resultado (nenhum nome real, no máximo 2 frases), e o fato fica em revisão. Depois de aprovado, vira a "Notícia do trimestre" e entra na simulação. O orçamento e os pedidos continuam vindo do perfil da AC. O texto da notícia é tratado como dado, nunca como instrução, e o jogador não vê o título original da notícia.
 
 ## Testes
 
@@ -102,44 +126,27 @@ As etapas são: coletar (RSS) → filtrar (últimos 90 dias e temas do comércio
 cd orquestrador && .venv/bin/python -m pytest -q
 ```
 
-São 37 testes: conversão de indicadores, moderação, seleção de campanha, validade dos 10 cenários curados, pipeline de notícias (incluindo vazamento de nome real e injeção), cliente do MiroFish (novas tentativas e erros) e pipeline de simulação (cache de grafo, reuso recusado, MiroFish fora do ar, falha no meio, excesso de agentes). Inclui dois testes **ponta a ponta** pela API HTTP: um ciclo completo com um MiroFish simulado (cenário → esclarecimento → simulação → resultado → conversa → refazer/comparar → avançar → painel → apagar dados) e um ciclo inteiro em contingência. Nos testes, o MiroFish e o LLM são substituídos por versões simuladas; nada é cobrado.
+São 53 testes: alocação e prévia, perfis, limite de 80 palavras por pauta, decisão guiada, meta, selos, Sala do Conselho e conselheiro, notícias (injeção e nomes reais), cliente do MiroFish, pipeline de simulação (cache de grafo, cache de simulação, MiroFish fora do ar, falha no meio, excesso de agentes, sem internet) e **dois trimestres ponta a ponta** pela API, com o MiroFish simulado.
 
-## Estimativa de custo por partida
+## Custo e tempo (medidos com chaves reais em 14/11/2026)
 
-Modelos usados (decisão "misto"): **Claude Haiku 5.5** para os agentes do MiroFish (alto volume), para a moderação, os esclarecimentos e a conversa; **Claude Opus 5.5** para a extração de sinais, a devolutiva, a ficcionalização e a contingência. Preços em `llm.yaml` (Opus US$ 4/20 e Haiku US$ 0,10/0,50 por milhão de tokens de entrada/saída), câmbio de R$ 5,50.
-
-| Item (por tentativa) | US$ | R$ |
-|---|---|---|
-| MiroFish: 12 agentes × 12 rodadas (estimativa) | 0,07 | 0,36 |
-| MiroFish: 15 agentes × 20 rodadas (teto) | 0,12 | 0,64 |
-| Extração de sinais (Opus) | 0,14 | 0,76 |
-| Devolutiva (Opus) | 0,09 | 0,52 |
-| Moderação + esclarecimento + ~6 mensagens de conversa (Haiku) | < 0,01 | 0,02 |
-| **Tentativa com MiroFish (padrão)** | **≈ 0,30** | **≈ 1,65** |
-| Tentativa em contingência (Opus simula) | ≈ 0,40 | ≈ 2,20 |
-| Cenário gerado de notícia (Opus) | ≈ 0,11 | ≈ 0,60 |
-
-**Medido no teste real:** tentativa com MiroFish (6 rodadas) **R$ 1,34**; contingência R$ 1,30 a 1,70. Extração de sinais US$ 0,14, devolutiva US$ 0,06 a 0,08, contingência US$ 0,08 a 0,10 (menos que o estimado acima).
-
-**Partida (campanha de 6 cenários, ~1,5 tentativa por cenário) ≈ US$ 2,70 ≈ R$ 15.** Com o orçamento de **R$ 100/mês**, dá para jogar cerca de **6 campanhas completas (~60 simulações)** por mês. O orquestrador bloqueia novas simulações quando o gasto do mês chega ao orçamento.
-
-Atenção: o MiroFish não informa quantos tokens consome. A linha "MiroFish" é uma estimativa (`llm.yaml → mirofish_estimativa`), e o consumo real pode ser 2 a 3 vezes maior. Depois das primeiras partidas reais, compare com o painel da Anthropic e ajuste `tokens_entrada_por_acao`. O consumo das chamadas do próprio orquestrador é medido de verdade, a partir do `usage` de cada resposta.
-
-## Tempo de um ciclo (medido em 14/11/2026, com chaves reais)
-
-| Modo | Tempo medido |
+| Medida | Valor |
 |---|---|
-| MiroFish, cenário com grafo em cache, 6 rodadas (43 interações dos agentes) | **8,8 min**: personas ~1,5 min · simulação ~2 min + 90 s de confirmação · relatório ~4 min · sinais e devolutiva ~1 min |
-| MiroFish, primeira vez no cenário | +2 min (grafo no Zep) |
-| Contingência (MiroFish fora do ar) | 2 a 3,5 min |
-| Conversa com agente (entrevista no MiroFish) / com o relatório | 3 a 6 s por mensagem |
+| Trimestre com MiroFish (Haiku nos agentes; Opus em sinais e devolutiva) | **US$ 0,19 a 0,21 ≈ R$ 1,10** |
+| Replay do roteiro (cache) | ≈ R$ 0,00 |
+| Simulação do MiroFish em segundo plano | 3,7 min (grafo em cache) a 5 min (grafo novo), 4 rodadas, 20 a 23 agentes, 38 interações |
+| Resultado e prévia para o jogador | Na hora; devolutiva em cerca de 20 s |
+| Conversa (entrevista no MiroFish ou persona) | 3 a 12 s por mensagem |
 
-Sugestão para o critério de aceite: **X = 15 minutos** com o MiroFish (12 rodadas e primeira vez no cenário ficam por volta de 12 min) e **5 minutos** em contingência. Se o MiroFish passar de 25 min, o jogo cai automaticamente na contingência.
+Com R$ 100 por mês, cabem cerca de **45 campanhas de 2 trimestres** (~R$ 2,20 cada). O consumo do MiroFish ainda é estimado (ele não informa os tokens); compare com o painel da Anthropic.
 
 ## Privacidade (LGPD)
 
-Não há login: o jogador usa um apelido, e a sessão é um token aleatório guardado no navegador. Não coletamos nome, e-mail nem IP. As decisões ficam no SQLite local, e o botão **"Apagar meus dados"** remove tudo. As entradas passam por moderação (regras locais + Haiku), que barra conteúdo ofensivo, dados pessoais (CPF, e-mail, telefone) e tentativas de manipular os agentes. Os cenários são ficcionais, e os agentes não representam pessoas reais.
+- **Jogadores:** só apelido, sem e-mail ou IP. O botão "Apagar meus dados" remove a sessão e as contribuições ligadas a ela.
+- **Seniores:** escolhem entre nome e anonimato, avatar em vez de foto, e dão consentimento explícito. A contribuição fica em revisão até um facilitador aprovar.
+- **Voz:** usa o reconhecimento do próprio navegador (no Chrome, passa por servidores do Google), e a tela avisa isso.
+- **Moderação:** barra conteúdo ofensivo, dados pessoais e tentativas de manipular os agentes.
 
-## Fora do escopo desta versão
+## Fora do escopo
 
-Login e turmas, multijogador em tempo real, aplicativo nativo e integração com sistemas das associações. O painel do facilitador é simples, sem login: protegido por código, ele lista partidas, aprova cenários, compara decisões para o mesmo cenário, exporta CSV e imprime/salva em PDF pelo navegador.
+Login e turmas, multijogador em tempo real e app nativo. O painel do facilitador é protegido só por código.

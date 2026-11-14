@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 orquestrador/dados/
 orquestrador/cenarios/gerados/*.json
+.claude/
+orquestrador/cenarios/fatos/*.json

@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import logging
 import re
 import unicodedata
 from typing import Any
 
+from . import alocacao as alocacao_mod
 from . import cenarios, config, custos, db, devolutiva, indicadores, settings, sinais
 from .contingencia import simular as simular_contingencia
 from .esclarecimento import decisao_completa
@@ -17,9 +19,9 @@ from .modelos import Cenario
 
 log = logging.getLogger(__name__)
 
-AVISO_CONTINGENCIA = ("Modo de contingência: o simulador multiagente (MiroFish) não está disponível agora. "
-                      "Esta rodada usou uma simulação simplificada feita diretamente por um modelo de linguagem — "
-                      "os resultados são mais esquemáticos.")
+AVISO_CONTINGENCIA = ("Modo simplificado (contingência): o simulador de reações está fora do ar agora. "
+                      "Usamos uma simulação mais simples, feita por inteligência artificial; as reações ficam "
+                      "mais esquemáticas.")
 
 
 def _progresso(tid: str, etapa: str, pct: int, parciais: list[dict] | None = None) -> None:
@@ -96,15 +98,16 @@ async def _grafo_base(mf: MiroFish, c: Cenario, tid: str) -> str:
 
 
 async def executar_mirofish(mf: MiroFish, c: Cenario, decisao: str, rodadas: int, tid: str,
-                            ctx: Ctx) -> tuple[str, list[dict], dict]:
+                            ctx: Ctx, alocacao: dict[str, int] | None = None,
+                            experiencias: list[str] | None = None) -> tuple[str, list[dict], dict]:
     cfg = config.jogo()
     prazo = cfg["mirofish"]["timeout_total_min"] * 60
     info: dict[str, Any] = {}
 
     # 1) Grafo (com cache por cenário)
     _progresso(tid, "Construindo o grafo de conhecimento do cenário", 3)
-    requisito = cenarios.requisito_simulacao(c, decisao)
-    material = cenarios.material_semente(c, decisao)
+    requisito = cenarios.requisito_simulacao(c, decisao, alocacao)
+    material = cenarios.material_semente(c, decisao, alocacao, experiencias)
     sim_id = None
     if cfg["mirofish"].get("reutilizar_grafo", True):
         graph_id = await _grafo_base(mf, c, tid)
@@ -201,7 +204,10 @@ async def executar_mirofish(mf: MiroFish, c: Cenario, decisao: str, rodadas: int
     info["interacoes"] = len(acoes)
     db.atualizar("tentativas", tid, {"mirofish": info})
 
-    # 4) Relatório
+    # 4) Relatório (opcional: o Report Agent leva ~4 min; sem ele, os sinais saem direto das interações)
+    if not cfg["mirofish"].get("gerar_relatorio", False):
+        texto = "\n".join(f"- {a['autor']} ({a['tipo']}): {a['texto']}" for a in acoes[-150:])
+        return f"Interações registradas na simulação:\n{texto}", acoes[-200:], info
     _progresso(tid, "Gerando o relatório da simulação", 82, acoes[-6:])
     g = await mf.gerar_relatorio(sim_id)
     await mf.aguardar(lambda: mf.status_relatorio(sim_id, g.get("task_id")),
@@ -219,64 +225,167 @@ def _item_legivel(i: dict, nomes: dict[int, str]) -> dict:
             "texto": str(i.get("content") or "")[:400], "quando": i.get("created_at")}
 
 
+def chave_simulacao(t: dict, aloc: dict | None, escolhas: dict, fato: dict | None) -> str:
+    """Mesma pauta + mesmo perfil + mesma divisão do orçamento + mesma escolha de continuidade = mesma simulação."""
+    bruto = json.dumps([t["cenario_id"], perfil_da_campanha(t["campanha_id"]), sorted((aloc or {}).items()),
+                        escolhas.get("continuidade"), (fato or {}).get("id"),
+                        None if aloc else t["decisao"]], ensure_ascii=False)
+    return hashlib.sha256(bruto.encode()).hexdigest()
+
+
+def cache_simulacao(chave: str) -> dict | None:
+    if not config.jogo()["simulacao"].get("cache_simulacoes", True):
+        return None
+    r = db.um("SELECT dados FROM sim_cache WHERE chave=?", (chave,))
+    if not r:
+        return None
+    return r["dados"] if isinstance(r["dados"], dict) else json.loads(r["dados"])
+
+
+def gravar_simulacao(chave: str, dados: dict) -> None:
+    if config.jogo()["simulacao"].get("cache_simulacoes", True):
+        db.executar("INSERT OR REPLACE INTO sim_cache (chave, dados, criado_em) VALUES (?,?,?)",
+                    (chave, json.dumps(dados, ensure_ascii=False), db.agora()))
+
+
+def perfil_da_campanha(campanha_id: str) -> str | None:
+    r = db.um("SELECT perfil FROM campanhas WHERE id=?", (campanha_id,))
+    return r["perfil"] if r else None
+
+
+def reacoes_previstas(c: Cenario, demandas_calc: list[dict]) -> list[dict]:
+    """Postura de cada ator antes da simulação: quem pediu reage à alocação; os demais ficam como estavam."""
+    por_sol = {d["solicitante"]: d for d in demandas_calc}
+    out = []
+    for a in c.atores:
+        d = por_sol.get(a.id)
+        out.append({"ator_id": a.id, "nome": a.nome, "tipo": a.tipo, "postura_inicial": a.postura_inicial,
+                    "postura_final": d["postura_prevista"] if d else a.postura_inicial,
+                    "reacao": "", "citacao": "", "prevista": True})
+    return out
+
+
+def resultado_base(c: Cenario, aloc: dict[str, int], escolhas: dict, antes: dict) -> dict:
+    """Resultado imediato, só com a alocação (sem IA). A simulação depois só ajusta (±ajuste_llm_max)."""
+    calc = alocacao_mod.calcular(c, aloc, escolhas)
+    cons = indicadores.consolidar(antes, calc["pontos"], {i: 0.0 for i in config.INDICADORES})
+    cons["auditoria"] = calc["auditoria"] + cons["auditoria"]
+    return {"fase": "base", "resumo": "", "momentos": [], "reacoes": reacoes_previstas(c, calc["demandas"]),
+            "meta": alocacao_mod.progresso_meta(c, aloc, escolhas, cons["depois"]),
+            "sinais": [], "flags": [], "indicadores": cons, "pontos_base": calc["pontos"],
+            "demandas": calc["demandas"], "saldo": calc["saldo"], "disponivel": calc["disponivel"],
+            "relatorio": "", "acoes": []}
+
+
+async def gerar_devolutiva(tid: str) -> None:
+    """Devolutiva logo após a decisão (não espera a simulação dos agentes)."""
+    t = db.um("SELECT * FROM tentativas WHERE id=?", (tid,))
+    if not t:
+        return
+    c = cenarios.obter(t["cenario_id"], perfil_da_campanha(t["campanha_id"]))
+    ctx = Ctx(t["sessao_id"], t["campanha_id"], tid)
+    try:
+        dev = await devolutiva.gerar(c, decisao_completa(t["decisao"], t["esclarecimentos"]), None,
+                                     (t["resultado"] or {}).get("indicadores", {}).get("variacao", {}), ctx,
+                                     alocacao=t["alocacao"] or {})
+        db.atualizar("tentativas", tid, {"devolutiva": dev})
+    except Exception as e:  # noqa: BLE001
+        log.exception("Devolutiva da tentativa %s falhou", tid)
+        db.atualizar("tentativas", tid, {"devolutiva": {"erro": f"Devolutiva indisponível: {e}"}})
+
+
 async def processar(tid: str, mf: MiroFish | None = None) -> None:
     t = db.um("SELECT * FROM tentativas WHERE id=?", (tid,))
     if not t:
         return
-    c = cenarios.obter(t["cenario_id"])
+    c = cenarios.obter(t["cenario_id"], perfil_da_campanha(t["campanha_id"]))
+    from . import fatos
+    fato = fatos.para_trimestre(int(t["indice"]))
+    if fato:  # fato novo do trimestre (de notícia aprovada) entra como contexto da simulação
+        c.texto += f"\n\nFato novo do trimestre: {fato['titulo']}. {fato['texto']}"
     ctx = Ctx(t["sessao_id"], t["campanha_id"], tid)
     decisao = decisao_completa(t["decisao"], t["esclarecimentos"])
+    aloc = t.get("alocacao") or None
+    escolhas = t.get("escolhas") or {}
+    experiencias = escolhas.get("experiencias_citadas") or None
+    if not experiencias:
+        from . import conselho
+        experiencias = [conselho.frase_citacao(e) for e in conselho.aprovadas(conselho.temas_do_cenario(c))[:2]] or None
     rodadas = int(t["rodadas"] or config.jogo()["simulacao"]["rodadas_padrao"])
     db.atualizar("tentativas", tid, {"status": "executando"})
     mf = mf or novo()
     modo, aviso = "mirofish", None
+    chave_sim = chave_simulacao(t, aloc, escolhas, fato)
+    gravada = cache_simulacao(chave_sim)
     try:
         relatorio, acoes = "", []
-        usar_mf = not settings.MIROFISH_DESATIVADO and await mf.saudavel()
+        usar_mf = gravada is None and not settings.MIROFISH_DESATIVADO and await mf.saudavel()
+        if gravada is not None:
+            relatorio, acoes, modo = gravada["relatorio"], gravada["acoes"], gravada["modo"]
+            aviso = ("Reações reaproveitadas de uma simulação já feita com esta mesma divisão do orçamento "
+                     "(demonstração).") + (" " + AVISO_CONTINGENCIA if modo == "contingencia" else "")
+            _progresso(tid, "Reações gravadas (demonstração)", 80, acoes[-6:])
         if usar_mf:
             try:
                 prazo = config.jogo()["mirofish"]["timeout_total_min"] * 60
                 relatorio, acoes, _ = await asyncio.wait_for(
-                    executar_mirofish(mf, c, decisao, rodadas, tid, ctx), timeout=prazo)
+                    executar_mirofish(mf, c, decisao, rodadas, tid, ctx, aloc, experiencias), timeout=prazo)
             except (ErroMiroFish, asyncio.TimeoutError) as e:
                 log.warning("MiroFish falhou na tentativa %s: %s", tid, e)
                 usar_mf = False
                 aviso = AVISO_CONTINGENCIA + f" (Motivo técnico: {str(e)[:160]})"
-        if not usar_mf:
+        if not usar_mf and gravada is None:
             modo = "contingencia"
             aviso = aviso or AVISO_CONTINGENCIA
             db.atualizar("tentativas", tid, {"modo": modo, "aviso": aviso})
             _progresso(tid, "Simulação simplificada (contingência)", 40)
-            relatorio, acoes = await simular_contingencia(c, decisao, rodadas, ctx)
+            texto_dec = decisao
+            if aloc and c.demandas:
+                texto_dec += "\n" + "\n".join(cenarios.bloco_alocacao(c, aloc))
+            relatorio, acoes = await simular_contingencia(c, texto_dec, rodadas, ctx)
             _progresso(tid, "Simulação simplificada (contingência)", 75, [
                 {"rodada": a["round_num"], "autor": a["agent_name"], "tipo": a["action_type"],
                  "texto": a["content"]} for a in acoes[-6:]])
             acoes = [{"rodada": a["round_num"], "autor": a["agent_name"], "ator_id": a["ator_id"],
                       "tipo": a["action_type"], "texto": a["content"]} for a in acoes]
         db.atualizar("tentativas", tid, {"modo": modo, "aviso": aviso})
+        if gravada is None and acoes:
+            gravar_simulacao(chave_sim, {"relatorio": relatorio, "acoes": acoes, "modo": modo})
 
-        _progresso(tid, "Analisando os sinais da simulação", 88)
-        ext = await sinais.extrair(c, decisao, relatorio, acoes, ctx)
-        calc = indicadores.calcular(t["indicadores_antes"], ext, c)
-
-        _progresso(tid, "Preparando a devolutiva", 94)
-        dev = await devolutiva.gerar(c, decisao, ext, calc["variacao"], ctx)
+        _progresso(tid, "Analisando as reações", 88)
+        texto_ext = decisao
+        if aloc and c.demandas:
+            texto_ext += "\n" + "\n".join(cenarios.bloco_alocacao(c, aloc))
+        ext = await sinais.extrair(c, texto_ext, relatorio, acoes, ctx)
+        sinais_calc = indicadores.calcular(t["indicadores_antes"], ext, c)
+        anterior = db.um("SELECT resultado FROM tentativas WHERE id=?", (tid,))["resultado"] or {}
+        base_pts = anterior.get("pontos_base") or {i: 0.0 for i in config.INDICADORES}
+        final = indicadores.consolidar(t["indicadores_antes"], base_pts, sinais_calc["brutos"])
+        final["auditoria"] = ((anterior.get("indicadores") or {}).get("auditoria", [])[:-6]
+                              + sinais_calc["auditoria_sinais"] + final["auditoria"])
 
         nomes = {a.id: a for a in c.atores}
         resultado = {
+            **anterior,
+            "fase": "completo",
+            "meta": alocacao_mod.progresso_meta(c, aloc or {}, escolhas, final["depois"]) if aloc else None,
             "resumo": ext.resumo_narrativo,
+            "momentos": [{"ator_id": m.ator_id, "nome": nomes[m.ator_id].nome, "tipo": nomes[m.ator_id].tipo,
+                          "fala": m.fala} for m in ext.momentos],
             "reacoes": [{"ator_id": r.ator_id, "nome": nomes[r.ator_id].nome, "tipo": nomes[r.ator_id].tipo,
                          "postura_inicial": nomes[r.ator_id].postura_inicial, "postura_final": r.postura_final,
                          "reacao": r.reacao, "citacao": r.citacao} for r in ext.reacoes],
             "sinais": [s.model_dump() for s in ext.sinais],
             "flags": ext.flags,
-            "indicadores": calc,
-            "devolutiva": dev,
+            "indicadores": final,
             "relatorio": relatorio[:20000],
             "acoes": acoes[:200],
         }
         db.atualizar("tentativas", tid, {"status": "concluida", "etapa": "Concluída", "progresso": 100,
-                                         "resultado": resultado, "indicadores_depois": calc["depois"]})
+                                         "fase": "completo", "resultado": resultado,
+                                         "indicadores_depois": final["depois"]})
+        if not aloc:  # fluxo antigo (sem orçamento): a devolutiva é gerada aqui, depois da simulação
+            await gerar_devolutiva(tid)
     except Exception as e:  # noqa: BLE001 — o job nunca pode ficar pendurado
         log.exception("Tentativa %s falhou", tid)
         db.atualizar("tentativas", tid, {"status": "erro", "erro": f"Não foi possível concluir a simulação: {e}",

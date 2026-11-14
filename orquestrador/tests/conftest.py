@@ -20,6 +20,8 @@ def ambiente(tmp_path, monkeypatch):
     # banco e cenários isolados por teste
     db._conn = None
     db.conectar(str(tmp_path / "teste.sqlite3"))
+    from app import conselho
+    conselho.preparar()
     cen = tmp_path / "cenarios"
     shutil.copytree(RAIZ / "cenarios" / "curados", cen / "curados")
     (cen / "gerados").mkdir()
@@ -28,6 +30,8 @@ def ambiente(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "FACILITADOR_CODIGO", "segredo-teste")
     monkeypatch.setattr(mirofish_client, "_dormir", _sem_espera)
     monkeypatch.setitem(config.jogo()["mirofish"], "estabilidade_s", 0)
+    monkeypatch.setitem(config.jogo()["simulacao"], "cache_simulacoes", False)  # testes dedicados ligam
+    monkeypatch.setitem(config.llm(), "cache_respostas", False)
     llm.definir(llm_demo())
     mirofish_client.definir_fabrica(None)
     yield

@@ -11,6 +11,8 @@ def selecionar(n: int, semente: int | None = None, disponiveis: list[Cenario] | 
     """Escolhe n cenários: ordena por dificuldade e evita repetir tema enquanto houver opção."""
     rnd = random.Random(semente)
     pool = list(disponiveis if disponiveis is not None else cenarios.todos())
+    if n <= 0 or not pool:
+        return []
     rnd.shuffle(pool)
     if len(pool) < n:
         n = len(pool)
@@ -28,14 +30,24 @@ def selecionar(n: int, semente: int | None = None, disponiveis: list[Cenario] | 
     return [c.id for c in escolhidos]
 
 
-def criar(sessao_id: str, semente: int | None = None) -> dict:
+def criar(sessao_id: str, semente: int | None = None, perfil: str | None = None,
+          modo: str | None = None) -> dict:
+    """Modo "demonstracao": os trimestres encadeados do caso do guia. Modo "completa": eles e mais
+    casos da biblioteca, com dificuldade crescente (total entre 5 e 8)."""
+    from . import perfis
     cfg = config.jogo()["campanha"]
-    n = max(5, min(8, int(cfg["numero_cenarios"])))
-    ids = selecionar(n, semente)
+    modo = modo or cfg.get("modo", "demonstracao")
+    inicio = list(cfg.get("trimestres_iniciais", ["guia_t1_orcamento", "guia_t2_orcamento"]))
+    if modo == "completa":
+        n = max(5, min(8, int(cfg["numero_cenarios"])))
+        resto = [c for c in cenarios.todos() if c.id not in inicio and not c.usa_perfil]
+        ids = inicio + selecionar(max(0, n - len(inicio)), semente, resto)
+    else:
+        ids = inicio
     camp = {
         "id": db.novo_id("camp"), "sessao_id": sessao_id, "cenarios": ids, "indice_atual": 0,
         "indicadores": dict(cfg["indicadores_iniciais"]), "historico": [], "status": "em_andamento",
-        "criado_em": db.agora(),
+        "criado_em": db.agora(), "perfil": perfis.obter(perfil)["id"], "selos": [],
     }
     db.inserir("campanhas", camp)
     return camp
@@ -50,6 +62,10 @@ def avancar(campanha: dict, tentativa: dict) -> dict:
     historico = campanha["historico"] + [{
         "indice": campanha["indice_atual"], "cenario_id": tentativa["cenario_id"], "tentativa_id": tentativa["id"],
         "antes": tentativa["indicadores_antes"], "depois": tentativa["indicadores_depois"],
+        "alocacao": tentativa.get("alocacao"), "escolhas": tentativa.get("escolhas"),
+        "fracoes": {d["id"]: d["fracao"] for d in (tentativa.get("resultado") or {}).get("demandas", [])},
+        "meta": (tentativa.get("resultado") or {}).get("meta"),
+        "resumo": tentativa.get("decisao"),
     }]
     novo_indice = campanha["indice_atual"] + 1
     status = "concluida" if novo_indice >= len(campanha["cenarios"]) else "em_andamento"

@@ -41,12 +41,25 @@ CREATE TABLE IF NOT EXISTS uso_tokens (
 CREATE TABLE IF NOT EXISTS grafos_cache (
   chave TEXT PRIMARY KEY, graph_id TEXT NOT NULL, project_id TEXT NOT NULL, criado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS llm_cache (
+  chave TEXT PRIMARY KEY, tarefa TEXT NOT NULL, resposta TEXT NOT NULL, criado_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sim_cache (
+  chave TEXT PRIMARY KEY, dados TEXT NOT NULL, criado_em TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_tent_camp ON tentativas(campanha_id);
 CREATE INDEX IF NOT EXISTS idx_uso_sessao ON uso_tokens(sessao_id);
 """
 
 JSON_COLS = {"cenarios", "indicadores", "historico", "esclarecimentos", "parciais", "resultado",
-             "indicadores_antes", "indicadores_depois", "mirofish"}
+             "indicadores_antes", "indicadores_depois", "mirofish", "alocacao", "escolhas", "devolutiva",
+             "selos", "dados", "avatar", "respostas"}
+
+# Colunas acrescentadas depois da primeira versão (migração simples e idempotente).
+MIGRACOES = {
+    "campanhas": {"perfil": "TEXT", "selos": "TEXT DEFAULT '[]'"},
+    "tentativas": {"alocacao": "TEXT", "escolhas": "TEXT", "devolutiva": "TEXT", "fase": "TEXT"},
+}
 
 
 def agora() -> str:
@@ -68,6 +81,11 @@ def conectar(caminho: str | None = None) -> sqlite3.Connection:
         _conn = sqlite3.connect(caminho, check_same_thread=False)
         _conn.row_factory = sqlite3.Row
         _conn.executescript(SCHEMA)
+        for tabela, cols in MIGRACOES.items():
+            existentes = {r[1] for r in _conn.execute(f"PRAGMA table_info({tabela})")}
+            for col, tipo in cols.items():
+                if col not in existentes:
+                    _conn.execute(f"ALTER TABLE {tabela} ADD COLUMN {col} {tipo}")
         _conn.commit()
         return _conn
 
@@ -133,4 +151,8 @@ def apagar_sessao(sessao_id: str) -> None:
         c.execute("DELETE FROM campanhas WHERE sessao_id=?", (sessao_id,))
         c.execute("UPDATE uso_tokens SET sessao_id=NULL WHERE sessao_id=?", (sessao_id,))
         c.execute("DELETE FROM sessoes WHERE id=?", (sessao_id,))
+        try:
+            c.execute("DELETE FROM contribuicoes WHERE sessao_id=?", (sessao_id,))
+        except sqlite3.OperationalError:
+            pass
         c.commit()
