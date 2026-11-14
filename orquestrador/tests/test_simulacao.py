@@ -71,7 +71,7 @@ async def test_contingencia_quando_mirofish_fora_do_ar():
     await simulacao.processar(tid, _mf(MiroFishFalso(saudavel=False)))
     t = db.um("SELECT * FROM tentativas WHERE id=?", (tid,))
     assert t["status"] == "concluida"
-    assert t["modo"] == "contingencia" and "contingência" in t["aviso"]
+    assert t["modo"] == "contingencia" and "Modo offline" in t["aviso"]
     assert t["devolutiva"]["perguntas_reflexivas"]
 
 

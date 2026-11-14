@@ -133,7 +133,7 @@ def test_ciclo_em_contingencia_com_mirofish_fora():
                      json={"decisao": DECISAO, "alocacao": {"atendimento": 8000}}).json()
         t = _esperar_completo(cli, r["tentativa_id"], h)
         assert t["status"] == "concluida" and t["modo"] == "contingencia"
-        assert "contingência" in t["aviso"]
+        assert "Modo offline" in t["aviso"]
         ator = camp["cenario"]["atores"][1]["id"]
         c = cli.post(f"/api/tentativas/{t['id']}/conversa", headers=h,
                      json={"interlocutor": ator, "mensagem": "O que achou da decisão?"}).json()
