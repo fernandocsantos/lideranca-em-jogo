@@ -90,9 +90,9 @@ def test_fluxo_completo_e_payload_do_mirofish_sem_dados_pessoais():
         for o in ORIGINAIS + ["José Pereira", "josep@uol.com.br", "98888-7777"]:
             assert o not in falso.ultimo_material, o
         assert mascaramento.detectar(falso.ultimo_material) == []
-        # selo "Contribuiu com a rede"
+        # certificação "Deixou seu legado"
         selos = cli.get(f"/api/campanhas/{camp['id']}/selos", headers=h).json()
-        assert any(x["id"] == "contribuiu_rede" and x["ganho"] for x in selos["selos"])
+        assert any(x["id"] == "deixou_legado" and x["ganho"] for x in selos["selos"])
         # titular exclui com o código
         assert cli.post("/api/vivencias/excluir", json={"codigo": r["codigo_exclusao"]}).json()["ok"]
         assert not db.um("SELECT id FROM vivencias WHERE id=?", (r["id"],))

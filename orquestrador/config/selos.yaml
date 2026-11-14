@@ -1,8 +1,11 @@
-# Certificações de competência (por comportamento, nunca por "resposta certa").
+# Certificações por competência (por comportamento, nunca por "resposta certa").
 selos:
-  decisao_clara:         {nome: "Decisão clara",                  descricao: "Ata completa: critério, envolvidos, comunicação e meta."}
-  considerou_vivencia:   {nome: "Considerou a vivência da rede",  descricao: "Abriu os relatos 'O que a rede relata' antes de decidir."}
-  meta_mensuravel:       {nome: "Meta mensurável",                descricao: "Definiu quantidade, o quê e prazo."}
-  revisou_resultados:    {nome: "Revisou com base em resultados", descricao: "Ajustou ou reviu a decisão depois de ver os resultados."}
-  ouviu_discordante:     {nome: "Ouviu quem discordava",          descricao: "Conversou com alguém insatisfeito ou desconfiado."}
-  contribuiu_rede:       {nome: "Contribuiu com a rede",          descricao: "Registrou uma vivência no Banco de Vivências."}
+  decisao_clara:          {nome: "Decisão clara",                  descricao: "Ata completa: justificativa, meta, revisão e cada corte justificado."}
+  meta_mensuravel:        {nome: "Meta mensurável",                descricao: "Definiu quantidade, o quê e prazo."}
+  orcamento_equilibrado:  {nome: "Orçamento equilibrado",          descricao: "Fechou dentro do teto e das horas da equipe."}
+  ouviu_rede:             {nome: "Ouviu a rede",                   descricao: "Interpretou bem o relato de uma dirigente da rede."}
+  consultou_associados:   {nome: "Consultou os associados",        descricao: "Investiu horas da equipe para ouvir os associados antes de decidir."}
+  comparou_alternativas:  {nome: "Comparou alternativas",          descricao: "Salvou e comparou alternativas antes de escolher uma."}
+  previsao_certeira:      {nome: "Previsão certeira",              descricao: "A simulação confirmou o que você esperava que acontecesse."}
+  revisou_resultados:     {nome: "Revisou com base em resultados", descricao: "Experimentou outro caminho ou ajustou a decisão depois de ver os resultados."}
+  deixou_legado:          {nome: "Deixou seu legado",              descricao: "Registrou uma vivência no Banco de Vivências."}

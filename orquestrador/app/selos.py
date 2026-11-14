@@ -10,34 +10,38 @@ def definicoes() -> dict[str, dict[str, Any]]:
     return config.carregar("selos")["selos"]
 
 
-def _postura(resultado: dict, ator_id: str) -> int:
-    """Postura mais crítica que o jogador viu desse ator (prévia da alocação ou fim da simulação)."""
-    vistas = [int(r.get(k, 0)) for r in resultado.get("reacoes", []) if r["ator_id"] == ator_id
-              for k in ("postura_inicial", "postura_final")]  # a pauta já mostra a postura inicial
-    vistas += [int(d.get("postura_prevista", 0)) for d in resultado.get("demandas", []) if d.get("solicitante") == ator_id]
-    return min(vistas) if vistas else 0
-
-
 def avaliar(campanha: dict) -> set[str]:
     ganhos: set[str] = set()
     ts = db.varios("SELECT * FROM tentativas WHERE campanha_id=?", (campanha["id"],))
+    por_missao: dict[int, int] = {}
     for t in ts:
         e = t.get("escolhas") or {}
-        if e.get("resumo_completo"):
-            ganhos.add("decisao_clara")
+        av = (t.get("resultado") or {}).get("avaliacao") or {}
+        por_missao[int(t["indice"])] = por_missao.get(int(t["indice"]), 0) + 1
         if e.get("meta_mensuravel"):
             ganhos.add("meta_mensuravel")
-        if e.get("considerou_vivencias"):
-            ganhos.add("considerou_vivencia")
+        if e.get("consultou_associados"):
+            ganhos.add("consultou_associados")
+        if len(e.get("alternativas") or []) >= 2 and e.get("alternativa_escolhida"):
+            ganhos.add("comparou_alternativas")
         if e.get("continuidade") in ("ajustar", "rever"):
             ganhos.add("revisou_resultados")
-        res = t.get("resultado") or {}
-        for m in db.varios("SELECT DISTINCT interlocutor FROM mensagens WHERE tentativa_id=? AND papel='jogador'", (t["id"],)):
-            if m["interlocutor"] != "relatorio" and _postura(res, m["interlocutor"]) <= -1:
-                ganhos.add("ouviu_discordante")
+        if av:
+            if not av.get("faltas") and e.get("meta_mensuravel"):
+                ganhos.add("decisao_clara")
+            if (av.get("regra") or {}).get("limites") and t.get("alocacao"):
+                ganhos.add("orcamento_equilibrado")
+            crit = {c["id"]: c["conceito"] for c in (av.get("desempenho") or {}).get("criterios", [])}
+            if crit.get("relato") in ("A", "B"):
+                ganhos.add("ouviu_rede")
+            exps = av.get("expectativas") or []
+            if exps and all(x["confirmada"] for x in exps):
+                ganhos.add("previsao_certeira")
+    if any(n >= 2 for n in por_missao.values()):
+        ganhos.add("revisou_resultados")  # experimentou outro caminho
     try:
         if db.um("SELECT COUNT(*) n FROM vivencias WHERE sessao_id=?", (campanha["sessao_id"],))["n"]:
-            ganhos.add("contribuiu_rede")
+            ganhos.add("deixou_legado")
     except Exception:  # noqa: BLE001 — tabela do Banco de Vivências ainda não criada
         pass
     return ganhos

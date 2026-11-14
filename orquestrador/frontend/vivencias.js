@@ -12,14 +12,14 @@ async function telaVivencias() {
   if (!viv.cfg) viv.cfg = await api("/api/vivencias/config");
   const pub = await api("/api/vivencias/publicas").catch(() => ({ vivencias: [] }));
   const codigo = el("input", { type: "text", id: "cod-exc", maxlength: 40, placeholder: "Ex.: 1A2B-3C4D-5E6F" });
-  tela(
-    el("div", { class: "cartao cartao-destaque" }, el("h2", { style: "margin-top:0" }, "Compartilhe uma vivência"),
+  tela(seloAnon(),
+    el("div", { class: "cartao cartao-principal" }, el("h2", { style: "margin-top:0" }, "Compartilhe uma vivência"),
       el("p", { class: "suave" }, "Relatos de associados, voluntários, lideranças, gestores e parceiros viram situações-problema e perfis sintéticos para formar novas lideranças."),
       el("ul", { class: "regras" },
         el("li", {}, icone("lock", 18), el("span", {}, "Não pedimos nome, CPF/CNPJ, contato, nome da entidade nem cidade exata.")),
         el("li", {}, icone("shield-check", 18), el("span", {}, "Antes de salvar, o texto é mascarado e você confere. Guardamos só a versão mascarada, nunca o original nem o áudio.")),
         el("li", {}, icone("eye", 18), el("span", {}, "Uma curadoria revisa antes de qualquer uso."))),
-      el("div", { class: "acoes" }, el("button", { class: "botao bloco", onclick: () => { Object.assign(viv, { perfil: {}, tipo: "", tema: "", respostas: {}, mascaradas: null, subst: {} }); passoViv(1); } },
+      el("div", { class: "acoes" }, el("button", { class: "botao principal bloco grande", onclick: iniciarContribuicao },
         icone("plus", 18), "Registrar uma vivência"))),
     el("p", { class: "rotulo-secao" }, `O que a rede relata (${pub.vivencias.length})`),
     pub.vivencias.map((v) => el("div", { class: "relato" }, el("div", {}, v.trecho), el("div", { class: "quem" }, `${v.tema} · ${v.perfil}${v.ficticia ? " · exemplo fictício" : ""}`))),
@@ -30,18 +30,28 @@ async function telaVivencias() {
         catch (e) { mostrarErro(main(), e); } } }, "Excluir"))));
 }
 
+function seloAnon() {
+  return el("div", { class: "selo-anon", role: "note" }, icone("shield-check", 18), el("span", {}, "Tudo o que você escrever será anonimizado antes de ser usado"));
+}
+function telaViv(...conteudo) { tela(seloAnon(), ...conteudo); }
+async function iniciarContribuicao() {
+  if (!viv.cfg) viv.cfg = await api("/api/vivencias/config");
+  Object.assign(viv, { perfil: {}, tipo: "", tema: "", respostas: {}, mascaradas: null, subst: {} });
+  passoViv(1);
+}
+
 function passoViv(n) {
   const k = viv.cfg;
   const tipo = k.tipos[viv.tipo];
   const perguntas = tipo ? tipo.perguntas : [];
   const total = 2 + (perguntas.length || 3) + 2;
   topo("Registrar vivência", `Passo ${n} de ${total}`, () => (n > 1 ? passoViv(n - 1) : telaVivencias())); abas(null);
-  const avancar = (ok, rotulo = "Continuar") => el("div", { class: "acoes" }, el("button", { class: "botao bloco", onclick: () => {
+  const avancar = (ok, rotulo = "Continuar") => el("div", { class: "acoes" }, el("button", { class: "botao principal bloco grande", onclick: () => {
     if (!ok()) return avisoCurto("Complete este passo para continuar."); SOM.tocar("confirmar"); passoViv(n + 1); } }, rotulo, icone("chevron-right", 18)));
   if (n === 1) {
     const apelido = el("input", { type: "text", id: "viv-apelido", maxlength: 30, value: localStorage.getItem("lej_viv_apelido") || "" });
     apelido.addEventListener("input", () => localStorage.setItem("lej_viv_apelido", apelido.value));
-    return tela(el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "Seu perfil (em faixas amplas)"),
+    return telaViv(el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "Seu perfil (em faixas amplas)"),
       Object.entries(k.perfil).map(([campo, opcoes]) => {
         const sel = viv.perfil[campo] ? [viv.perfil[campo]] : [];
         return el("div", {}, el("p", { class: "rotulo-secao" }, NOMES_PERFIL[campo]), chips(opcoes, sel, { multiplo: false, aoMudar: () => { viv.perfil[campo] = sel[0]; } }));
@@ -50,7 +60,7 @@ function passoViv(n) {
       avancar(() => Object.keys(k.perfil).every((c) => viv.perfil[c])));
   }
   if (n === 2) {
-    return tela(el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "O que você quer registrar?"),
+    return telaViv(el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "O que você quer registrar?"),
       Object.entries(k.tipos).map(([id, t]) => el("label", { class: "opcao" }, el("input", { type: "radio", name: "tipo", value: id, checked: viv.tipo === id, onchange: () => { viv.tipo = id; } }),
         el("span", {}, el("strong", {}, t.nome), el("br"), el("span", { class: "pequeno suave" }, t.perguntas.map((q) => q.texto).join(" · "))))),
       el("p", { class: "rotulo-secao" }, "Tema"),
@@ -63,11 +73,11 @@ function passoViv(n) {
     const area = el("textarea", { id: `viv-${q.id}`, rows: 6, maxlength: 2000 });
     area.value = viv.respostas[q.id] || "";
     area.addEventListener("input", () => { viv.respostas[q.id] = area.value; viv.mascaradas = null; });
-    return tela(el("div", { class: "cartao" }, el("p", { class: "rotulo-secao", style: "margin-top:0" }, tipo.nome),
+    return telaViv(el("div", { class: "cartao" }, el("p", { class: "rotulo-secao", style: "margin-top:0" }, tipo.nome),
       el("h2", {}, q.texto), el("p", { class: "pequeno suave" }, "Fale ou escreva. Evite nomes e detalhes que identifiquem pessoas, empresas ou a cidade; o sistema também mascara automaticamente."),
       botaoVoz(area), el("label", { for: `viv-${q.id}` }, "Resposta"), area, avisoVoz()),
       el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: () => passoViv(n + 1) }, "Pular"),
-        el("button", { class: "botao", onclick: () => { SOM.tocar("confirmar"); passoViv(n + 1); } }, "Continuar", icone("chevron-right", 18))));
+        el("button", { class: "botao principal grande", onclick: () => { SOM.tocar("confirmar"); passoViv(n + 1); } }, "Continuar", icone("chevron-right", 18))));
   }
   if (idxPerg === perguntas.length) return conferirViv(n, perguntas);
   return consentirViv(perguntas);
@@ -81,23 +91,26 @@ async function conferirViv(n, perguntas) {
     viv.mascaradas = r.respostas; viv.subst = r.substituicoes;
   }
   const resumo = Object.entries(viv.subst).map(([t, q]) => `${q} ${NOMES_SUBST[t] || t}`).join(", ");
-  tela(el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "Confira a versão mascarada"),
+  telaViv(el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "Confira: original × anonimizado"),
     el("div", { class: resumo ? "info" : "aviso" }, icone("shield-check", 18), el("span", {}, resumo ? `Trocamos: ${resumo}.` : "Não encontramos dados pessoais. Confira mesmo assim.")),
     el("p", { class: "pequeno suave" }, "Só este texto será guardado. Você pode editar para tirar qualquer detalhe que ainda identifique alguém."),
     perguntas.filter((q) => viv.mascaradas[q.id] !== undefined).map((q) => {
-      const a = el("textarea", { id: `m-${q.id}`, rows: 4 });
+      const a = el("textarea", { id: `m-${q.id}`, rows: 5 });
       a.value = viv.mascaradas[q.id];
       a.addEventListener("input", () => { viv.mascaradas[q.id] = a.value; });
-      return el("div", {}, el("label", { for: `m-${q.id}` }, q.texto), a);
+      return el("div", { class: "previa-anon" }, el("p", { class: "rotulo-secao" }, q.texto),
+        el("div", { class: "lado-a-lado" },
+          el("div", {}, el("span", { class: "etiqueta-mono" }, "Original (não é guardado)"), el("p", { class: "texto-original" }, viv.respostas[q.id] || "")),
+          el("div", {}, el("label", { for: `m-${q.id}`, class: "etiqueta-mono" }, "Anonimizado (o que será guardado)"), a)));
     })),
-    el("div", { class: "acoes" }, el("button", { class: "botao bloco", onclick: () => { SOM.tocar("confirmar"); passoViv(n + 1); } }, "Está correto", icone("chevron-right", 18))));
+    el("div", { class: "acoes" }, el("button", { class: "botao principal bloco grande", onclick: () => { SOM.tocar("confirmar"); passoViv(n + 1); } }, "Está correto", icone("chevron-right", 18))));
 }
 
 function consentirViv() {
   const c = viv.cfg.consentimento;
   const marcas = { finalidade: false, retencao: false, compartilhamento: false };
   const caixa = (id, texto) => el("label", { class: "opcao" }, el("input", { type: "checkbox", onchange: (ev) => { marcas[id] = ev.target.checked; } }), el("span", { class: "pequeno" }, texto));
-  const enviar = el("button", { class: "botao bloco" }, icone("file-check", 18), "Enviar vivência mascarada");
+  const enviar = el("button", { class: "botao principal bloco grande" }, icone("file-check", 18), "Enviar vivência mascarada");
   const quadro = el("div", { class: "cartao" }, el("h2", { style: "margin-top:0" }, "Consentimento (LGPD)"),
     caixa("finalidade", `Concordo com a finalidade: ${c.finalidade}`),
     caixa("retencao", `A versão mascarada fica guardada por até ${c.retencao_meses} meses. ${c.base_legal}`),
@@ -108,7 +121,7 @@ function consentirViv() {
       const r = await api("/api/vivencias", { method: "POST", body: { perfil: viv.perfil, tipo: viv.tipo, tema: viv.tema, respostas: viv.mascaradas, consentimento: marcas } });
       SOM.tocar("fechado");
       topo("Vivência enviada"); abas("vivencias");
-      tela(el("div", { class: "cartao cartao-destaque" }, el("h2", { style: "margin-top:0" }, "Obrigado pela contribuição"),
+      telaViv(el("div", { class: "cartao cartao-destaque" }, el("h2", { style: "margin-top:0" }, "Obrigado pela contribuição"),
         el("p", {}, "Ela fica em revisão até a curadoria aprovar."),
         r.risco.nivel !== "baixo" ? el("div", { class: "aviso" }, icone("triangle-alert", 18), el("span", {}, `A curadoria vai olhar com atenção: ${r.risco.motivos.join("; ")}.`)) : "",
         el("p", { class: "rotulo-secao" }, "Seu código de exclusão"),
@@ -119,7 +132,7 @@ function consentirViv() {
       verificarSelos();
     } catch (e) { mostrarErro(quadro, e); }
   });
-  tela(quadro);
+  telaViv(quadro);
 }
 
 async function secoesFacilitadorExtras(f, recarregar) {

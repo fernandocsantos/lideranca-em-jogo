@@ -45,12 +45,18 @@ const SOM = (() => {
     certificacao: () => { [392, 493.88, 587.33, 783.99].forEach((f, i) => nota(f, i * 0.07, 0.5, { tipo: "sine", ganho: 0.45 })); nota(1567.98, 0.32, 0.4, { tipo: "sine", ganho: 0.18 }); },
   };
 
+  const ultimo = {};
   function tocar(nome) {
     if (!ligado() || document.hidden) return;
+    const agora = performance.now();
+    if (nome !== "passo" && agora - (ultimo[nome] || 0) < 120) return;
+    ultimo[nome] = agora;
     try { SONS[nome]?.(); } catch (_) { /* áudio indisponível: segue em silêncio */ }
   }
   function alternar() { localStorage.setItem("lej_som", ligado() ? "0" : "1"); }
   function definirVolume(v) { localStorage.setItem("lej_volume", String(Math.max(0, Math.min(1, v)))); }
 
+  // botões principais: clique discreto (o próprio botão já mostra a ação na tela)
+  document.addEventListener("click", (ev) => { if (ev.target.closest?.(".botao.principal:not(:disabled)")) tocar("confirmar"); }, true);
   return { tocar, ligado, alternar, volume, definirVolume, nomes: Object.keys(SONS) };
 })();

@@ -540,8 +540,8 @@ async function verificarSelos() {
 }
 function mostrarCertificacao(s) {
   SOM.tocar("certificacao");
-  const caixa = el("div", { class: "selo-conquista", role: "status" }, el("div", { class: "selo" }, icone("award", 30)),
-    el("div", { class: "pequeno suave" }, "Certificação de competência"), el("strong", {}, s.nome));
+  const caixa = el("div", { class: "selo-conquista adesivo-recompensa", role: "status" }, el("div", { class: "selo" }, icone("award", 30)),
+    el("div", { class: "rotulo-mono" }, "Certificação de competência"), el("strong", {}, s.nome));
   document.body.append(caixa);
   setTimeout(() => caixa.classList.add("saindo"), 2600);
   setTimeout(() => caixa.remove(), 3000);
@@ -570,7 +570,7 @@ async function telaFacilitador() {
   let codigo = sessionStorage.getItem("lej_fac") || "";
   const f = (c, o = {}) => api(c, { ...o, headers: { "X-Facilitador": codigo } });
   const area = el("div", {});
-  const campo = el("input", { type: "password", id: "codigo", autocomplete: "off" });
+  const campo = el("input", { type: "password", id: "codigo", autocomplete: "off", inputmode: "numeric" });
   const carregar = async () => {
     area.replaceChildren(el("p", { class: "suave" }, "Carregando…"));
     try {
@@ -621,7 +621,8 @@ async function telaFacilitador() {
     } catch (e) { area.replaceChildren(); mostrarErro(area, e); }
   };
   tela(el("form", { class: "cartao", onsubmit: (ev) => { ev.preventDefault(); codigo = campo.value; carregar(); } },
-    el("label", { for: "codigo", style: "margin-top:0" }, "Código do facilitador"), campo, el("button", { type: "submit", class: "botao bloco", style: "margin-top:.6rem" }, "Entrar")), area);
+    el("label", { for: "codigo", style: "margin-top:0" }, "PIN do facilitador"), campo,
+    el("p", { class: "pequeno suave" }, "Acesso controlado: curadoria das vivências, revisão humana das simulações e dados da turma."), el("button", { type: "submit", class: "botao bloco", style: "margin-top:.6rem" }, "Entrar")), area);
   if (codigo) carregar();
 }
 

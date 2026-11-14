@@ -496,9 +496,9 @@ async function telaResultado(tid) {
       el("button", { class: "botao principal", onclick: async () => {
         try {
           estado.campanha = await api(`/api/campanhas/${camp.id}/avancar`, { method: "POST", body: { tentativa_id: t.id } });
-          SOM.tocar("confirmar");
-          if (estado.campanha.status === "concluida") return typeof telaFimJornada === "function" ? telaFimJornada() : irPara("relatorio");
-          typeof telaRecapitulando === "function" ? telaRecapitulando() : iniciarTrimestre();
+          await carimboMissaoCumprida();
+          if (estado.campanha.status === "concluida") return telaFimJornada();
+          telaRecapitulando();
         } catch (e) { mostrarErro(main(), e); } } }, camp.indice_atual + 1 >= camp.total ? "Concluir o mandato" : "Próxima missão", icone("chevron-right", 18))),
     blocoTentativas(camp, t));
   verificarSelos();
@@ -524,6 +524,35 @@ async function telaResultado(tid) {
       try { const tt = await api(`/api/tentativas/${tid}`); Object.assign(t, tt); if (atualizar(tt)) { clearInterval(estado.timer); verificarSelos(); } } catch (_) {}
     }, 3000);
   }
+}
+
+// recompensa: carimbo "MISSÃO CUMPRIDA" com animação curta e som (o texto também fica na tela)
+function carimboMissaoCumprida() {
+  return new Promise((resolve) => {
+    SOM.tocar("missao_cumprida");
+    const caixa = el("div", { class: "carimbo-missao", role: "status" }, el("div", { class: "carimbo grande" }, "MISSÃO CUMPRIDA"));
+    document.body.append(caixa);
+    const fim = () => { caixa.remove(); resolve(); };
+    caixa.addEventListener("click", fim);
+    setTimeout(fim, matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 1500);
+  });
+}
+
+// ------------------------------------------------------------------ fim da jornada: "Deixe seu legado"
+async function telaFimJornada() {
+  topo("Mandato concluído", PRODUTO, telaPainel); abas(null);
+  let rel = null, sel = { selos: [] };
+  try { [rel, sel] = await Promise.all([api(`/api/campanhas/${estado.campanhaId}/relatorio`), api(`/api/campanhas/${estado.campanhaId}/selos`)]); } catch (_) {}
+  const geral = rel?.carimbo_geral;
+  tela(el("div", { class: "cartao cartao-principal fim-jornada" },
+    el("span", { class: "etiqueta-mono" }, "Fechamento do mandato"),
+    geral ? el("div", { class: `carimbo-resultado ${CARIMBO_CLASSE[geral]}` }, el("div", { class: "carimbo" }, geral),
+      el("p", { class: "motivo" }, `Média das ${rel.missoes.length} missões${rel.desempenho?.geral ? ` · desempenho acadêmico ${rel.desempenho.geral}` : ""}`)) : "",
+    el("h2", {}, "Certificações de competência"), credenciais(sel.selos.filter((x) => x.ganho).length ? sel.selos : sel.selos),
+    el("p", { class: "slogan" }, SLOGAN),
+    el("button", { class: "botao principal bloco grande", onclick: () => { SOM.tocar("transicao"); iniciarContribuicao(); } }, icone("library", 20), "Deixe seu legado: compartilhe o que você aprendeu"),
+    el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: () => irPara("relatorio") }, icone("download", 18), "Baixar o Plano de decisão"),
+      el("button", { class: "botao fantasma", onclick: telaPainel }, "Voltar ao Painel"))));
 }
 
 function carimbo(av) {

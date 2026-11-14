@@ -139,6 +139,17 @@ def desempenho_consolidado(missoes: list[dict]) -> dict[str, Any]:
     return {"criterios": out, "geral": _letra(sum(gerais) / len(gerais)) if gerais else None}
 
 
+def carimbo_geral(missoes: list[dict]) -> str | None:
+    """Média dos carimbos das missões consolidadas: SUCESSO = 2, PARCIAL = 1, FRACASSO = 0.
+    Média >= 1,5 → SUCESSO; >= 0,75 → SUCESSO PARCIAL; abaixo → FRACASSO."""
+    pts = {"SUCESSO": 2, "SUCESSO PARCIAL": 1, "FRACASSO": 0}
+    vals = [pts[m["carimbo"]] for m in missoes if m.get("carimbo") in pts]
+    if not vals:
+        return None
+    media = sum(vals) / len(vals)
+    return "SUCESSO" if media >= 1.5 else "SUCESSO PARCIAL" if media >= 0.75 else "FRACASSO"
+
+
 def montar(campanha: dict, incluir_apelido: str | None = None) -> dict[str, Any]:
     tentativas = db.varios("SELECT * FROM tentativas WHERE campanha_id=? AND resultado IS NOT NULL ORDER BY criado_em", (campanha["id"],))
     consolidadas = {h["tentativa_id"] for h in campanha["historico"]}
@@ -167,7 +178,7 @@ def montar(campanha: dict, incluir_apelido: str | None = None) -> dict[str, Any]
             "associacao": missoes[0]["secoes"]["contexto"]["associacao"] if missoes else "", "status": campanha["status"],
             "selo": SELO, "slogan": SLOGAN, "descricao": DESCRICAO, "secoes": SECOES,
             "resumo": [_resumo(m) for m in missoes], "missoes": missoes,
-            "desempenho": desempenho_consolidado(missoes),
+            "desempenho": desempenho_consolidado(missoes), "carimbo_geral": carimbo_geral(missoes),
             "certificacoes": [x for x in sel["selos"] if x["ganho"]],
             "evolucao": evolucao, "nomes_indicadores": {k: v["nome"] for k, v in config.indicadores()["indicadores"].items()},
             "refeitas": refeitas, "aviso": AVISO}
