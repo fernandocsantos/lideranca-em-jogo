@@ -75,10 +75,19 @@ def resumo(filtro: str, valor: str) -> dict[str, Any]:
     }
 
 
+def simulacoes_hoje_total() -> int:
+    hoje = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    r = db.um("SELECT COUNT(*) AS n FROM tentativas WHERE criado_em >= ?", (hoje,))
+    return r["n"] if r else 0
+
+
 def pode_simular(sessao_id: str) -> tuple[bool, str]:
     lim = config.jogo()["limites"]
     if simulacoes_hoje(sessao_id) >= lim["simulacoes_por_dia"]:
         return False, f"Você atingiu o limite de {lim['simulacoes_por_dia']} simulações por dia. Volte amanhã."
+    total = lim.get("simulacoes_por_dia_total")
+    if total and simulacoes_hoje_total() >= int(total):
+        return False, "O jogo atingiu o limite de simulações de hoje para todos os participantes. Volte amanhã."
     return True, ""
 
 

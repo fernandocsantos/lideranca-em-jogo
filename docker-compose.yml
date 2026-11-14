@@ -55,6 +55,17 @@ services:
       - "4000"
     restart: unless-stopped
 
+  # Túnel público (opcional): só sobe com `./publicar.sh` (perfil "publico").
+  # Endereço https://<aleatório>.trycloudflare.com, sem conta na Cloudflare. Muda se o túnel reiniciar.
+  tunel:
+    profiles: ["publico"]
+    image: cloudflare/cloudflared:latest
+    container_name: lej-tunel
+    command: ["tunnel", "--no-autoupdate", "--url", "http://orquestrador:8000"]
+    depends_on:
+      - orquestrador
+    restart: unless-stopped
+
 volumes:
   dados-jogo:
   mirofish-uploads:

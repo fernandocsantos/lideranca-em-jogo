@@ -58,6 +58,32 @@ Abra http://localhost:8000. Endereços:
 * O proxy LiteLLM é necessário: o endpoint compatível da Anthropic recusa o pedido de JSON do MiroFish. O proxy também desliga o raciocínio adaptativo do Haiku, porque o MiroFish limita as respostas a 4.096 tokens. O MiroFish só conhece a chave interna do proxy.
 * Os arquivos de `orquestrador/config/` são montados no container: edite e rode `docker compose restart orquestrador`.
 
+## Publicar para colegas (túnel com senha)
+
+Abre um endereço `https://….trycloudflare.com` que aponta para o jogo rodando na sua máquina, sem conta na Cloudflare e sem instalar nada além do Docker:
+
+```bash
+./publicar.sh
+```
+
+* Na primeira vez, o script cria uma senha (`ACESSO_SENHA` no `.env`, usuário `hackathon`). Todo o site passa a pedir usuário e senha, inclusive em `localhost`. Compartilhe o endereço e a senha só com os colegas.
+* O script se recusa a publicar se o `FACILITADOR_CODIGO` ainda for o do exemplo.
+* O HTTPS do túnel é o que libera o microfone (voz) no navegador.
+* Limites de custo: 4 simulações por jogador por dia, 60 no site inteiro e R$ 100 por mês (`jogo.yaml`). Defina também um teto mensal no Console da Anthropic.
+* O endereço muda quando o túnel reinicia (por exemplo, depois de reiniciar o computador). Para ver o atual:
+
+```bash
+./publicar.sh endereco
+```
+
+Para tirar do ar (o jogo continua local):
+
+```bash
+./publicar.sh parar
+```
+
+Para voltar a usar sem senha em casa, apague as linhas `ACESSO_` do `.env` e rode `docker compose up -d orquestrador`.
+
 ## Roteiro da demonstração (cerca de 5 minutos)
 
 1. Abra http://localhost:8000 e toque em **"▶ Roteiro da demonstração (2 trimestres)"**. Uma faixa verde indica, em cada tela, o próximo toque.

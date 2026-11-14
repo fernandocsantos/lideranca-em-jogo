@@ -24,7 +24,8 @@ simulacao:
   cache_simulacoes: true      # mesma pauta + mesma divisão do orçamento reaproveita a simulação (demonstração)
 
 limites:
-  simulacoes_por_dia: 10      # por jogador (MiroFish + contingência)
+  simulacoes_por_dia: 4       # por jogador (MiroFish + contingência)
+  simulacoes_por_dia_total: 60  # teto do site inteiro (cada aba anônima conta como um jogador novo)
   mensagens_conversa_por_tentativa: 20
   orcamento_mensal_brl: 100
 
