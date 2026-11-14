@@ -1,0 +1,59 @@
+# Checagem antes e depois (apoia o teste citado no pitch): no máximo 3 perguntas, pulável.
+# "antes" e "depois" são casos equivalentes, com a mesma estrutura e a mesma pontuação (0 a 1 por pergunta).
+# Tipos: "interpretacao" (uma opção adequada) e "justificativa" (chips; pontua a fração de boas justificativas, até 2).
+antes:
+  - id: interpretacao
+    tipo: interpretacao
+    contexto: "A associação investiu R$ 6 mil num curso de vendas às 15 h. Das 40 vagas, 9 foram ocupadas."
+    pergunta: "Qual é a melhor leitura desse resultado?"
+    opcoes:
+      - {id: a, texto: "O horário provavelmente não coube na rotina dos lojistas", adequada: true}
+      - {id: b, texto: "Os lojistas não se interessam por vendas"}
+      - {id: c, texto: "O curso estava caro demais"}
+      - {id: d, texto: "Basta repetir o curso que a procura aumenta"}
+  - id: justificativa
+    tipo: justificativa
+    contexto: "O orçamento caiu 20%. Você decidiu manter o atendimento ao associado e cortar metade do evento anual."
+    pergunta: "Como você justificaria essa priorização para a diretoria? Escolha até 2."
+    opcoes:
+      - {id: a, texto: "O atendimento evita cancelamentos e protege a receita", boa: true}
+      - {id: b, texto: "O evento pode voltar quando a receita se recuperar", boa: true}
+      - {id: c, texto: "Eu gosto mais do atendimento"}
+      - {id: d, texto: "Sempre foi assim"}
+  - id: meta
+    tipo: interpretacao
+    contexto: "A meta era 30 lojas vendendo pela internet em 90 dias. Em 60 dias, 12 lojas já vendem."
+    pergunta: "O que esse resultado indica?"
+    opcoes:
+      - {id: a, texto: "Está um pouco atrás do ritmo; vale revisar o apoio na data marcada", adequada: true}
+      - {id: b, texto: "A meta já fracassou e o projeto deve ser encerrado"}
+      - {id: c, texto: "Está tudo certo; não é preciso acompanhar"}
+      - {id: d, texto: "Não dá para concluir nada sem saber o nome das lojas"}
+depois:
+  - id: interpretacao
+    tipo: interpretacao
+    contexto: "A associação montou plantões de atendimento às 10 h para orientar sobre crédito. Em um mês, 5 associados apareceram."
+    pergunta: "Qual é a melhor leitura desse resultado?"
+    opcoes:
+      - {id: a, texto: "O horário provavelmente não coube na rotina dos associados", adequada: true}
+      - {id: b, texto: "Os associados não precisam de crédito"}
+      - {id: c, texto: "O plantão deveria ser pago"}
+      - {id: d, texto: "Basta divulgar mais o mesmo horário"}
+  - id: justificativa
+    tipo: justificativa
+    contexto: "A receita caiu 15%. Você decidiu manter a campanha dos bairros e adiar a reforma da sede."
+    pergunta: "Como você justificaria essa priorização para a diretoria? Escolha até 2."
+    opcoes:
+      - {id: a, texto: "A campanha atende mais associados e traz receita no curto prazo", boa: true}
+      - {id: b, texto: "A reforma pode esperar sem prejuízo aos serviços", boa: true}
+      - {id: c, texto: "A campanha é mais bonita"}
+      - {id: d, texto: "Foi o que a maioria pediu no corredor"}
+  - id: meta
+    tipo: interpretacao
+    contexto: "A meta era formar 60 vendedores em 90 dias. Em 45 dias, 35 já concluíram o curso."
+    pergunta: "O que esse resultado indica?"
+    opcoes:
+      - {id: a, texto: "Está no ritmo ou um pouco acima; manter e revisar na data marcada", adequada: true}
+      - {id: b, texto: "A meta era fácil demais e não vale nada"}
+      - {id: c, texto: "É preciso dobrar a verba imediatamente"}
+      - {id: d, texto: "Não dá para concluir nada antes do fim do prazo"}
