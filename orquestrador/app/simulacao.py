@@ -18,9 +18,9 @@ from .modelos import Cenario
 
 log = logging.getLogger(__name__)
 
-AVISO_CONTINGENCIA = ("Modo de contingência: o simulador multiagente (MiroFish) não está disponível agora. "
-                      "Esta rodada usou uma simulação simplificada feita diretamente por um modelo de linguagem — "
-                      "os resultados são mais esquemáticos.")
+AVISO_CONTINGENCIA = ("Modo simplificado (contingência): o simulador de reações está fora do ar agora. "
+                      "Usamos uma simulação mais simples, feita por inteligência artificial; as reações ficam "
+                      "mais esquemáticas.")
 
 
 def _progresso(tid: str, etapa: str, pct: int, parciais: list[dict] | None = None) -> None:

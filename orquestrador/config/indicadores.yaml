@@ -5,9 +5,9 @@ indicadores:
   engajamento:      {nome: "Engajamento dos associados", descricao: "Participação, adesão e permanência dos associados."}
   saude_financeira: {nome: "Saúde financeira",           descricao: "Caixa, receitas, inadimplência e sustentabilidade."}
   reputacao:        {nome: "Reputação pública",          descricao: "Imagem na imprensa, nas redes e na comunidade."}
-  capital_politico: {nome: "Capital político/relacional", descricao: "Relação com prefeitura, câmara, federação e parceiros."}
-  coesao:           {nome: "Coesão da diretoria",        descricao: "Alinhamento entre diretoria, conselho e equipe."}
-  conformidade:     {nome: "Conformidade",               descricao: "Estatuto, LGPD e legislação."}
+  capital_politico: {nome: "Relação com poder público e parceiros", descricao: "Prefeitura, câmara, federação e parceiros."}
+  coesao:           {nome: "União da diretoria",         descricao: "Alinhamento entre diretoria, conselho e equipe."}
+  conformidade:     {nome: "Regras e transparência",     descricao: "Estatuto, LGPD, leis e prestação de contas."}
 
 # Pontos por sinal conforme a intensidade extraída (-3..+3)
 peso_intensidade:

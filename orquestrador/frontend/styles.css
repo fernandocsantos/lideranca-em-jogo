@@ -6,7 +6,7 @@
 }
 * { box-sizing: border-box; }
 html { font-size: 100%; }
-body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.55;
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.6;
   color: var(--texto); background: var(--fundo); }
 a { color: var(--primaria); }
 :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
@@ -73,7 +73,7 @@ details summary { cursor: pointer; font-weight: 600; }
 @media print { .topo, nav, button, .rodape, #faixa-status { display: none !important; } body { background: #fff; } }
 
 /* ---------- versão CACB: orçamento, avatares e menos texto ---------- */
-body { font-size: var(--fonte, 1.0625rem); }
+
 button.grande, .botao.grande { font-size: 1.15rem; padding: .8rem 1.4rem; min-height: 52px; }
 .destaque { font-size: 1.2rem; }
 .faixa { max-width: 980px; margin: .75rem auto; }
@@ -193,3 +193,16 @@ button.link { background: none; border: 0; color: var(--primaria); text-decorati
 .resumo-cert { white-space: pre-wrap; font-family: inherit; background: #f8fafc; padding: .6rem; border-radius: 6px; }
 body.modo-botoes .livre { opacity: .85; }
 @media print { #indicadores, .faixa, #selos-toast { display: none !important; } .certificado { border-width: 4px; } }
+/* acessibilidade */
+html { font-size: var(--fonte, 1.0625rem); }
+body { font-size: 1rem; }
+.acessibilidade { display: flex; gap: .3rem; }
+.acessibilidade button { background: transparent; border: 2px solid #fff; color: #fff; padding: .3rem .6rem; min-height: 40px; margin: 0; font-size: .95rem; }
+.acessibilidade button[aria-pressed=true] { background: #fff; color: var(--primaria-escura); }
+body.alto-contraste { --fundo: #ffffff; --superficie: #ffffff; --texto: #000000; --suave: #1f1f1f; --borda: #000000;
+  --primaria: #00316b; --primaria-escura: #001a3d; --positivo: #0b4a1f; --negativo: #7a0000; --aviso-fundo: #fff2b3; --aviso-borda: #000; }
+body.alto-contraste a { text-decoration: underline; }
+body.alto-contraste .cartao, body.alto-contraste .indicador, body.alto-contraste .ator, body.alto-contraste .balao,
+body.alto-contraste .cartao-mini, body.alto-contraste .tema, body.alto-contraste .chip { border-width: 2px; border-color: #000; }
+body.alto-contraste .etiqueta { background: #fff; border-color: #000; color: #000; }
+body.alto-contraste :focus-visible { outline: 4px solid #000; outline-offset: 3px; box-shadow: 0 0 0 7px #ffdd00; }

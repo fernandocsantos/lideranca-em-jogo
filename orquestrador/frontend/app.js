@@ -100,7 +100,7 @@ async function verificarStatus() {
   try {
     const s = await api("/api/status");
     $("#faixa-status").replaceChildren(s.mirofish ? "" : el("div", { class: "aviso faixa" },
-      "Simulador de agentes indisponível: o jogo segue em modo de contingência (simulação simplificada)."));
+      "Modo simplificado: o simulador de reações está fora do ar. O jogo continua normalmente, com reações mais simples."));
   } catch (_) { /* silencioso */ }
 }
 
@@ -562,7 +562,7 @@ async function telaResultado(tid) {
     el("details", { class: "cartao" }, el("summary", {}, "Resumo da decisão"), el("p", {}, t.decisao)),
     el("h2", {}, "Indicadores"), barras,
     el("details", { class: "cartao pequeno" }, el("summary", {}, "Como calculamos"),
-      el("p", {}, "O resultado base sai da sua divisão do orçamento, por regras fixas e públicas. A simulação dos agentes só ajusta até ±10 pontos."),
+      el("p", {}, "O resultado sai primeiro da sua divisão do orçamento, por regras fixas e públicas. Depois, as reações simuladas das pessoas ajustam no máximo 10 pontos para cima ou para baixo."),
       el("ul", {}, ind.auditoria.slice(0, 40).map((a) => el("li", {}, `${nomeInd[a.indicador] || a.indicador}: ${a.pontos > 0 ? "+" : ""}${a.pontos} — ${a.detalhe}`)))),
     el("h2", {}, "O que você financiou"), demandas,
     r.meta !== undefined ? cartaoMeta(r.meta) : "",
@@ -585,7 +585,7 @@ async function telaResultado(tid) {
     const rr = tt.resultado;
     if (rr.fase !== "completo") {
       status.replaceChildren(el("div", { class: "aviso suave-aviso" }, el("span", { class: "girando", "aria-hidden": "true" }, "⏳"),
-        ` Os agentes estão reagindo à sua decisão (${tt.progresso || 0}%). ${tt.etapa || ""}`,
+        ` As pessoas da cidade estão reagindo à sua decisão (${tt.progresso || 0}%). Enquanto isso, veja a devolutiva e converse.`,
         tt.posicao_fila ? ` Posição na fila: ${tt.posicao_fila}.` : ""));
     } else {
       status.replaceChildren(rr.resumo ? el("details", { class: "cartao" }, el("summary", {}, "Ler o resumo do que aconteceu"), el("p", {}, rr.resumo)) : "");
@@ -613,7 +613,7 @@ function blocoDevolutiva(dev) {
   if (dev.erro) return el("p", { class: "suave" }, dev.erro);
   return el("details", { class: "cartao devolutiva" }, el("summary", {}, el("strong", {}, "Devolutiva: pontos fortes, riscos e perguntas para refletir")),
     lista("Pontos fortes", dev.pontos_fortes), lista("Riscos que ficaram de fora", dev.riscos_ignorados),
-    lista("Trade-offs", dev.trade_offs),
+    lista("O que ganhou e o que custou", dev.trade_offs),
     el("h3", {}, "Para refletir"), el("ol", {}, dev.perguntas_reflexivas.map((p) => el("li", {}, p))),
     el("details", {}, el("summary", {}, "Competências (rubrica)"),
       el("table", {}, el("tbody", {}, dev.competencias.map((c) => el("tr", {}, el("th", { scope: "row" }, c.nome),
@@ -641,7 +641,7 @@ function telaEspera(tid) {
 async function painelConversa(t) {
   const cen = estado.campanha.cenario;
   const sel = el("select", { id: "interlocutor" },
-    el("option", { value: "relatorio" }, "Analista da simulação"),
+    el("option", { value: "relatorio" }, "Analista (resumo do que aconteceu)"),
     cen.atores.map((a) => el("option", { value: a.id }, `${a.nome} — ${TIPOS[a.tipo] || a.tipo}`)));
   const log = el("div", { class: "chat", role: "log", "aria-live": "polite", "aria-label": "Conversa" });
   const campo = el("input", { type: "text", id: "msg", maxlength: 800, placeholder: "Escreva sua pergunta" });
@@ -735,6 +735,22 @@ function telaOnboarding(n, depois) {
       el("label", { for: "teste-mic" }, "Teste do microfone"), el("div", { class: "linha" }, teste, botaoVoz(teste)), avisoVoz()];
   }
   tela(n === 1 ? "Boas-vindas" : "Como funciona", el("div", { class: "cartao passo" }, pontos, corpo, nav, el("p", {}, pular)));
+}
+
+function iniciarAcessibilidade() {
+  const raiz = document.documentElement;
+  const aplicar = () => {
+    const f = Number(localStorage.getItem("lej_fonte") || 1.0625);
+    raiz.style.setProperty("--fonte", `${f}rem`);
+    const ac = localStorage.getItem("lej_contraste") === "1";
+    document.body.classList.toggle("alto-contraste", ac);
+    $("#contraste")?.setAttribute("aria-pressed", String(ac));
+  };
+  const mudar = (d) => { const f = Math.min(1.6, Math.max(0.9, Number(localStorage.getItem("lej_fonte") || 1.0625) + d)); localStorage.setItem("lej_fonte", f.toFixed(4)); aplicar(); };
+  $("#fonte-menos")?.addEventListener("click", () => mudar(-0.125));
+  $("#fonte-mais")?.addEventListener("click", () => mudar(0.125));
+  $("#contraste")?.addEventListener("click", () => { localStorage.setItem("lej_contraste", localStorage.getItem("lej_contraste") === "1" ? "0" : "1"); aplicar(); });
+  aplicar();
 }
 
 function aplicarModo() {
@@ -1030,6 +1046,7 @@ async function telaFacilitador() {
 (async function iniciar() {
   try { estado.cfg = await api("/api/config"); } catch (e) { tela("Serviço indisponível", el("p", {}, e.message)); return; }
   verificarStatus();
+  iniciarAcessibilidade();
   aplicarModo();
   if (location.pathname.startsWith("/facilitador")) return telaFacilitador();
   if (location.pathname.startsWith("/conselho")) return telaConselho(1);
