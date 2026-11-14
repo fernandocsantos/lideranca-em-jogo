@@ -1,0 +1,165 @@
+{
+  "id": "cur_04_horario_comercio",
+  "titulo": "A lei do horário estendido",
+  "tema": "legislacao_municipal",
+  "dificuldade": 2,
+  "associacao": {
+    "nome": "Associação Comercial e Industrial de Monte Alegre da Serra (ACIMAS)",
+    "cidade": "Monte Alegre da Serra (SP, fictícia, 120 mil habitantes)",
+    "porte": "grande",
+    "associados": 980,
+    "situacao_financeira": "Estável, mas com queda de 8% nas mensalidades no ano."
+  },
+  "texto": "Um vereador apresentou na Câmara de Monte Alegre da Serra um projeto de lei que libera o funcionamento do comércio aos domingos e feriados em toda a cidade e estende o horário de sábado até as 20h. O projeto foi elogiado pelo shopping, que tem 140 lojas e é associado, e pela rede de atacarejo recém-instalada na cidade, que não é associada. A votação em primeiro turno está marcada para daqui a 18 dias.\n\nO sindicato dos comerciários anunciou que é contra e já marcou um ato na praça central. Ele lembra que a convenção coletiva vigente só permite trabalho em domingos mediante acordo com compensação, e diz que o projeto \"atropela\" a negociação. O sindicato patronal do comércio, que negocia a convenção, está incomodado porque não foi consultado pelo vereador e quer que a associação \"não se meta\" na questão trabalhista.\n\nEntre os associados, a divisão é clara. Lojas de rua de pequeno porte, a maioria familiar, dizem que não têm gente nem dinheiro para abrir aos domingos e temem perder clientes para o shopping. O shopping e as redes dizem que a cidade perde consumidores para a capital nos fins de semana. Uma enquete informal no grupo da associação teve 61% contra e 39% a favor, com 210 participantes.\n\nO prefeito ainda não se manifestou; seu líder na Câmara disse que \"vai ouvir as entidades\". A imprensa regional quer saber a posição oficial da associação. O estatuto prevê que posicionamentos públicos sobre legislação sejam aprovados pela diretoria, e a presidência pode convocar assembleia geral extraordinária com 10 dias de antecedência, exigindo quórum de 10% dos associados em primeira chamada.\n\nA diretoria espera sua proposta: a associação deve se posicionar? Como, com quem e com que conteúdo?",
+  "restricoes": [
+    "Votação em primeiro turno em 18 dias.",
+    "Assembleia extraordinária exige 10 dias de antecedência e quórum de 10% em primeira chamada.",
+    "Questões trabalhistas são negociadas pelo sindicato patronal, não pela associação."
+  ],
+  "em_jogo": "A representatividade da associação diante de interesses opostos entre seus próprios associados, a relação com sindicatos e Câmara e o risco de perder associados de um dos lados.",
+  "atores": [
+    {
+      "id": "vereador",
+      "nome": "Vereador Murilo Tavares",
+      "tipo": "poder_publico",
+      "papel": "Autor do projeto",
+      "persona": "Ambicioso, busca vitrine; aceita emendas se ganhar crédito.",
+      "interesses": [
+        "aprovar o projeto",
+        "visibilidade"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "lider_prefeito",
+      "nome": "Vereadora Ana Beatriz Coutinho",
+      "tipo": "poder_publico",
+      "papel": "Líder do prefeito na Câmara",
+      "persona": "Mediadora, ouve entidades antes de orientar a bancada.",
+      "interesses": [
+        "evitar desgaste do prefeito",
+        "consenso"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "shopping",
+      "nome": "Shopping Serra Plaza (fictício)",
+      "tipo": "associado",
+      "papel": "Maior associado",
+      "persona": "Organizado, com assessoria jurídica; ameaça reduzir participação se a associação for contra.",
+      "interesses": [
+        "abrir domingos",
+        "atrair público regional"
+      ],
+      "influencia": 5,
+      "postura_inicial": 1
+    },
+    {
+      "id": "lojista_rua",
+      "nome": "Antônio Barreto",
+      "tipo": "associado",
+      "papel": "Dono de loja de tecidos no centro, líder informal das lojas de rua",
+      "persona": "Combativo, emotivo; mobiliza os pequenos.",
+      "interesses": [
+        "proteger lojas familiares",
+        "não abrir domingos"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "atacarejo",
+      "nome": "Atacarejo Bom Preço (fictício)",
+      "tipo": "entidade_concorrente",
+      "papel": "Rede não associada",
+      "persona": "Indiferente à associação, mas faz lobby direto.",
+      "interesses": [
+        "liberação total"
+      ],
+      "influencia": 3,
+      "postura_inicial": -1
+    },
+    {
+      "id": "sind_comerciarios",
+      "nome": "Sindicato dos Comerciários",
+      "tipo": "sindicato",
+      "papel": "Representa os trabalhadores",
+      "persona": "Mobilizado, quer apoio público contra o projeto.",
+      "interesses": [
+        "direitos trabalhistas",
+        "negociação coletiva"
+      ],
+      "influencia": 4,
+      "postura_inicial": -1
+    },
+    {
+      "id": "sind_patronal",
+      "nome": "Sindicato do Comércio Varejista regional",
+      "tipo": "sindicato",
+      "papel": "Negocia a convenção coletiva",
+      "persona": "Zeloso de sua competência; desconfia de invasão de espaço.",
+      "interesses": [
+        "prerrogativa negocial"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "diretor_jovem",
+      "nome": "Bruna Esteves",
+      "tipo": "diretoria",
+      "papel": "Diretora de jovens empreendedores",
+      "persona": "Pró-inovação, favorável à flexibilização com regras.",
+      "interesses": [
+        "modernização",
+        "novos negócios"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "conselho",
+      "nome": "Conselho deliberativo",
+      "tipo": "conselho",
+      "papel": "Instância de governança",
+      "persona": "Prefere posições institucionais equilibradas.",
+      "interesses": [
+        "unidade",
+        "estatuto"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "imprensa",
+      "nome": "Diário da Serra",
+      "tipo": "imprensa",
+      "papel": "Jornal regional",
+      "persona": "Quer posição clara e personagens.",
+      "interesses": [
+        "posição oficial",
+        "conflito"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "consumidores",
+      "nome": "Consumidores",
+      "tipo": "consumidores",
+      "papel": "Moradores",
+      "persona": "Querem conveniência, mas simpatizam com os comerciários.",
+      "interesses": [
+        "conveniência",
+        "preços"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

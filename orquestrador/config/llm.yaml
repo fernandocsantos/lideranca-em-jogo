@@ -1,0 +1,30 @@
+# Modelos e preços usados pelo orquestrador (Anthropic, SDK oficial).
+# Decisão do projeto: "misto" — Opus 5.5 para julgamento, Haiku 5.5 para volume.
+tarefas:
+  sinais:          {modelo: claude-opus-5-5,  esforco: medium, max_tokens: 8000}
+  devolutiva:      {modelo: claude-opus-5-5,  esforco: medium, max_tokens: 8000}
+  ficcionalizacao: {modelo: claude-opus-5-5,  esforco: medium, max_tokens: 8000}
+  contingencia:    {modelo: claude-opus-5-5,  esforco: medium, max_tokens: 12000}
+  moderacao:       {modelo: claude-haiku-5-5, esforco: low,    max_tokens: 1500}
+  esclarecimento:  {modelo: claude-haiku-5-5, esforco: low,    max_tokens: 2000}
+  conversa:        {modelo: claude-haiku-5-5, esforco: low,    max_tokens: 2000}
+
+# Fallback do lado do servidor quando o modelo recusar por política
+# (só para modelos que suportam; Haiku 5.5 não tem).
+fallback_servidor:
+  ativo: true
+  modelos_suportados: [claude-opus-5-5, claude-sonnet-5-5, claude-fable-5-2]
+
+# Preço em US$ por milhão de tokens (tabela de nov/2026). Atualize se mudar.
+precos_usd_por_mtok:
+  claude-opus-5-5:  {entrada: 4.00, saida: 20.00, cache_leitura: 0.20}
+  claude-haiku-5-5: {entrada: 0.10, saida: 0.50,  cache_leitura: 0.01}
+
+cambio_usd_brl: 5.50
+
+# Estimativa do consumo do MiroFish (não exposto pela API dele).
+mirofish_estimativa:
+  modelo: claude-haiku-5-5
+  tokens_entrada_por_acao: 2500
+  tokens_saida_por_acao: 150
+  tokens_fixos_preparacao: 120000   # ontologia + perfis + config + relatório

@@ -1,0 +1,46 @@
+campanha:
+  numero_cenarios: 6          # entre 5 e 8
+  indicadores_iniciais:
+    engajamento: 55
+    saude_financeira: 50
+    reputacao: 55
+    capital_politico: 50
+    coesao: 60
+    conformidade: 70
+
+decisao:
+  max_caracteres: 1500
+  min_caracteres: 80
+  max_perguntas_esclarecimento: 2
+
+simulacao:
+  max_rodadas: 20             # teto rígido: o jogador/facilitador não passa disso
+  rodadas_padrao: 12
+  max_agentes: 15
+
+limites:
+  simulacoes_por_dia: 10      # por jogador (MiroFish + contingência)
+  mensagens_conversa_por_tentativa: 20
+  orcamento_mensal_brl: 100
+
+fila:
+  workers: 1
+
+mirofish:
+  url: http://mirofish:5001
+  timeout_chamada_s: 60
+  timeout_total_min: 25
+  intervalo_polling_s: 3
+  reutilizar_grafo: true
+  plataforma: reddit
+  manter_ambiente_min: 30
+  idioma: pt
+  rodadas_noturnas: 8             # o MiroFish começa à 0h simulada e os agentes só agem a partir das ~8h;
+                                  # essas rodadas vazias não chamam o LLM (custo zero) e passam na hora
+  estabilidade_s: 90              # simulação concluída quando a atividade fica parada por este tempo
+  memoria_no_grafo: false        # true travou o OASIS no teste real; ver docs/arquitetura.md
+  tipos_genericos_excluidos: [Person, Organization]
+
+facilitador:
+  # Código definido em FACILITADOR_CODIGO no .env
+  habilitado: true

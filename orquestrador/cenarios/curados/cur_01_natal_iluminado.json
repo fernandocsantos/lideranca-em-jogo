@@ -1,0 +1,154 @@
+{
+  "id": "cur_01_natal_iluminado",
+  "titulo": "Natal Iluminado sem patrocinador",
+  "tema": "eventos_sazonais",
+  "dificuldade": 1,
+  "associacao": {
+    "nome": "Associação Comercial e Industrial de Vale do Jacaré (ACIVJ)",
+    "cidade": "Vale do Jacaré (SP, fictícia, 68 mil habitantes)",
+    "porte": "média",
+    "associados": 420,
+    "situacao_financeira": "Equilibrada, com reserva equivalente a 4 meses de despesas fixas."
+  },
+  "texto": "Faltam sete semanas para o Natal e a campanha \"Natal Iluminado\", que há nove anos decora o centro de Vale do Jacaré e sorteia prêmios entre consumidores, acaba de perder seu principal patrocinador. A rede regional de supermercados que bancava 45% do orçamento comunicou, por e-mail, que vai concentrar a verba em ações próprias neste ano.\n\nO orçamento da campanha é de R$ 180 mil. Sem o patrocínio, faltam R$ 81 mil. A tesouraria informa que a reserva da associação cobre a diferença, mas isso deixaria o caixa abaixo do mínimo de três meses de despesas fixas definido pelo conselho no início do ano.\n\nO varejo do centro depende muito do fim de ano: para muitas lojas, dezembro representa até 30% do faturamento anual. Os lojistas do bairro Jardim Primavera, porém, reclamam há anos que a campanha só beneficia o centro e que pagam a mesma mensalidade. A Secretaria Municipal de Cultura sinalizou, informalmente, que poderia ceder a estrutura de palco e iluminação da praça, desde que a associação inclua atrações em outros bairros. Uma agência de eventos ofereceu um pacote \"enxuto\" de R$ 120 mil, sem a decoração das ruas laterais.\n\nA imprensa local já perguntou se a campanha será cancelada. Nas redes, um perfil de humor da cidade publicou uma montagem da árvore de Natal apagada. O estatuto exige aprovação do conselho para despesas não previstas acima de R$ 50 mil, e a próxima reunião ordinária é só daqui a 20 dias — mas uma reunião extraordinária pode ser convocada com 5 dias de antecedência.\n\nA presidência precisa decidir, nesta semana, o que fazer com a campanha: o formato, como cobrir o orçamento, quem envolver e como comunicar. O que você decide?",
+  "restricoes": [
+    "Prazo: definição em até 7 dias para dar tempo de contratar fornecedores.",
+    "Despesas não previstas acima de R$ 50 mil exigem aprovação do conselho (reunião extraordinária com 5 dias de antecedência).",
+    "Reserva mínima de 3 meses de despesas fixas definida pelo conselho."
+  ],
+  "em_jogo": "O faturamento de fim de ano do varejo, a percepção de que a associação entrega resultados e a relação com os bairros que se sentem esquecidos.",
+  "atores": [
+    {
+      "id": "lojista_centro",
+      "nome": "Marta Quevedo",
+      "tipo": "associado",
+      "papel": "Dona de loja de calçados no centro, 20 anos de associação",
+      "persona": "Pragmática, ansiosa com as vendas de dezembro; fala muito no grupo de WhatsApp dos associados.",
+      "interesses": [
+        "campanha forte no centro",
+        "não aumentar mensalidade"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "lojista_bairro",
+      "nome": "Ivo Sandrini",
+      "tipo": "associado",
+      "papel": "Dono de mercadinho e papelaria no Jardim Primavera",
+      "persona": "Sente-se desprezado pela associação; pensa em sair; é ouvido pelos comerciantes de bairro.",
+      "interesses": [
+        "incluir os bairros",
+        "contrapartida pela mensalidade"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1
+    },
+    {
+      "id": "tesoureira",
+      "nome": "Regina Afonso",
+      "tipo": "diretoria",
+      "papel": "Diretora financeira da associação",
+      "persona": "Cautelosa, defende a regra da reserva mínima; não quer ser responsabilizada pelo caixa.",
+      "interesses": [
+        "preservar a reserva",
+        "seguir o estatuto"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "conselheiro",
+      "nome": "Dr. Heitor Lisboa",
+      "tipo": "conselho",
+      "papel": "Presidente do conselho deliberativo",
+      "persona": "Formalista, valoriza o rito; apoia quem respeita o conselho.",
+      "interesses": [
+        "respeito ao estatuto",
+        "imagem da entidade"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "sec_cultura",
+      "nome": "Paula Mendes",
+      "tipo": "poder_publico",
+      "papel": "Secretária municipal de Cultura",
+      "persona": "Quer visibilidade para a prefeitura e eventos descentralizados; ano pré-eleitoral.",
+      "interesses": [
+        "eventos nos bairros",
+        "marca da prefeitura"
+      ],
+      "influencia": 4,
+      "postura_inicial": 1
+    },
+    {
+      "id": "supermercado",
+      "nome": "Rede SuperVale (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Ex-patrocinadora principal",
+      "persona": "Corporativa, quer retorno de marca; não fecha a porta para cotas menores.",
+      "interesses": [
+        "exposição de marca",
+        "custo baixo"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "jornal",
+      "nome": "Gazeta do Jacaré",
+      "tipo": "imprensa",
+      "papel": "Jornal e portal local",
+      "persona": "Gosta de polêmica, mas valoriza informação em primeira mão.",
+      "interesses": [
+        "notícia exclusiva",
+        "conflitos"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "agencia",
+      "nome": "Brilho Eventos (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Agência de eventos",
+      "persona": "Comercial, quer fechar contrato rápido.",
+      "interesses": [
+        "contrato",
+        "prazo"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "consumidores",
+      "nome": "Moradores e consumidores",
+      "tipo": "consumidores",
+      "papel": "Público da campanha",
+      "persona": "Esperam a decoração e os sorteios; reagem a símbolos (árvore apagada).",
+      "interesses": [
+        "tradição de Natal",
+        "prêmios"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "gerente_executivo",
+      "nome": "Sandro Pires",
+      "tipo": "funcionarios",
+      "papel": "Gerente executivo da associação",
+      "persona": "Competente e sobrecarregado; teme decisões de última hora.",
+      "interesses": [
+        "prazo viável",
+        "clareza de papéis"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

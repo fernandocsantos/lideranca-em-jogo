@@ -1,0 +1,63 @@
+# Rubrica de competências de liderança associativa.
+# 4 níveis. O LLM atribui nível + evidência; a devolutiva destaca trade-offs, não "a" resposta certa.
+niveis:
+  1: {nome: "Inicial",           resumo: "A competência quase não aparece na decisão."}
+  2: {nome: "Em desenvolvimento", resumo: "Aparece de forma parcial ou reativa."}
+  3: {nome: "Proficiente",       resumo: "Aparece de forma consistente e adequada ao contexto."}
+  4: {nome: "Referência",        resumo: "Aparece de forma exemplar, antecipando efeitos de segunda ordem."}
+
+competencias:
+  visao_estrategica:
+    nome: "Visão estratégica"
+    niveis:
+      1: "Responde só ao problema imediato, sem ligar a decisão à missão ou ao futuro da associação."
+      2: "Menciona objetivos de longo prazo, mas a decisão não os sustenta de forma concreta."
+      3: "Conecta a decisão à missão, a metas e a cenários prováveis, com prioridades claras."
+      4: "Usa o problema como alavanca para posicionar a associação, antecipando efeitos de segunda ordem e alternativas."
+  escuta_representatividade:
+    nome: "Escuta e representatividade dos associados"
+    niveis:
+      1: "Decide sem considerar a base nem a diversidade de portes e setores."
+      2: "Considera associados de forma genérica ou só os mais influentes."
+      3: "Prevê escuta ativa (pesquisa, reunião, núcleos setoriais) e pondera interesses diferentes."
+      4: "Cria mecanismos de participação que dão voz a quem costuma ficar de fora e os integra à decisão."
+  negociacao_articulacao:
+    nome: "Negociação e articulação institucional"
+    niveis:
+      1: "Ignora atores externos ou entra em confronto sem estratégia."
+      2: "Procura atores externos, mas sem pauta, contrapartidas ou plano B."
+      3: "Mapeia interesses, constrói alianças e define o que pode ceder e o que é inegociável."
+      4: "Articula coalizões amplas, cria soluções de ganho mútuo e preserva relações de longo prazo."
+  comunicacao:
+    nome: "Comunicação"
+    niveis:
+      1: "Não prevê comunicação ou comunica de forma confusa/contraditória."
+      2: "Prevê comunicação, mas sem público, canal ou momento definidos."
+      3: "Define mensagens, públicos, canais e porta-voz, com coerência interna e externa."
+      4: "Comunica com transparência e empatia, antecipa ruídos e usa a comunicação para mobilizar."
+  gestao_recursos:
+    nome: "Gestão de recursos"
+    niveis:
+      1: "Ignora custos, caixa ou capacidade da equipe."
+      2: "Cita recursos, mas sem estimativa, fonte ou controle."
+      3: "Dimensiona custo, fonte e responsáveis, respeitando o orçamento aprovado."
+      4: "Otimiza recursos, busca fontes alternativas sustentáveis e define indicadores de acompanhamento."
+  etica_governanca:
+    nome: "Ética e governança"
+    niveis:
+      1: "Desconsidera estatuto, conflitos de interesse ou legislação (incl. LGPD)."
+      2: "Reconhece regras, mas as contorna ou trata como formalidade."
+      3: "Segue o estatuto e as instâncias (diretoria, conselho, assembleia) e documenta a decisão."
+      4: "Fortalece a governança: transparência ativa, prestação de contas e prevenção de conflitos."
+  gestao_crise:
+    nome: "Gestão de crise"
+    niveis:
+      1: "Reage tarde, nega o problema ou improvisa."
+      2: "Reage, mas sem priorização, sem responsáveis ou sem acompanhamento."
+      3: "Age com rapidez, prioriza danos, define comitê/responsáveis e monitora."
+      4: "Contém o dano, protege os mais vulneráveis e transforma a crise em aprendizado institucional."
+
+devolutiva:
+  max_pontos_fortes: 3
+  max_riscos: 3
+  perguntas_reflexivas: 2

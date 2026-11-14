@@ -1,0 +1,32 @@
+# Nomes que nunca podem aparecer em cenários gerados (um por linha, sem acento ou com).
+# Cidades do interior de SP com notícias frequentes — os cenários usam cidades fictícias.
+Campinas
+Ribeirão Preto
+Sorocaba
+São José dos Campos
+Bauru
+Piracicaba
+Jundiaí
+Franca
+Marília
+Presidente Prudente
+São José do Rio Preto
+Araraquara
+São Carlos
+Limeira
+Americana
+Araçatuba
+Taubaté
+Botucatu
+Itu
+Indaiatuba
+Rio Claro
+Jaú
+Assis
+Ourinhos
+Barretos
+Catanduva
+Bragança Paulista
+Atibaia
+Guaratinguetá
+Registro

@@ -1,0 +1,154 @@
+{
+  "id": "cur_02_lgpd_cadastro",
+  "titulo": "O cadastro que todo mundo quer",
+  "tema": "governanca_dados",
+  "dificuldade": 1,
+  "associacao": {
+    "nome": "Associação Comercial de Santa Clara do Oeste (ACSCO)",
+    "cidade": "Santa Clara do Oeste (SP, fictícia, 41 mil habitantes)",
+    "porte": "pequena",
+    "associados": 260,
+    "situacao_financeira": "Apertada: receitas cobrem as despesas, sem reserva."
+  },
+  "texto": "A associação mantém, há seis anos, o \"Clube de Vantagens Santa Clara\": consumidores se cadastram no balcão das lojas ou no site e ganham descontos nos associados. O cadastro tem 14 mil pessoas, com nome, CPF, telefone, data de nascimento e histórico de compras em 30 lojas participantes.\n\nEsta semana, uma fintech de crédito da capital procurou a associação com uma proposta: pagaria R$ 6 mil por mês, por dois anos, para \"acessar a base\" e oferecer cartões e empréstimos aos consumidores, com uma comissão adicional por contrato fechado. O valor praticamente resolveria o aperto do caixa, que hoje impede até a contratação de uma estagiária de comunicação.\n\nO vice-presidente, que trouxe a proposta, está entusiasmado e diz que \"todo mundo faz isso\". A analista administrativa que cuida do clube lembra que o formulário de adesão diz apenas que os dados serão usados \"para ofertas das lojas participantes\" e que nunca houve consentimento para compartilhamento com terceiros. Um associado advogado comentou no grupo que isso \"pode dar problema com a LGPD\", mas sem detalhar. Dois lojistas participantes disseram que não querem seus clientes recebendo ligações de banco.\n\nAo mesmo tempo, a fintech oferece uma alternativa: em vez de receber a base, poderia patrocinar o próprio clube, com espaço publicitário no aplicativo, e os consumidores interessados se cadastrariam voluntariamente. O valor seria menor: R$ 2.500 por mês.\n\nO contrato precisa ser respondido em 15 dias. A diretoria está dividida. O estatuto permite que a diretoria assine contratos de até 24 meses sem assembleia, mas exige parecer do conselho fiscal para receitas recorrentes acima de R$ 50 mil no total. A associação não tem encarregado de dados (DPO) nomeado.\n\nQual é a sua decisão sobre a proposta e sobre a gestão desses dados?",
+  "restricoes": [
+    "Prazo de 15 dias para responder à fintech.",
+    "Receitas recorrentes acima de R$ 50 mil no total exigem parecer do conselho fiscal.",
+    "Os consumidores consentiram apenas com 'ofertas das lojas participantes'.",
+    "Não há encarregado de dados (DPO) nomeado."
+  ],
+  "em_jogo": "O caixa da associação, a confiança de 14 mil consumidores e dos lojistas e o risco jurídico e reputacional de uso indevido de dados pessoais.",
+  "atores": [
+    {
+      "id": "vice",
+      "nome": "Fábio Nogueira",
+      "tipo": "diretoria",
+      "papel": "Vice-presidente",
+      "persona": "Empreendedor, impaciente, vê a proposta como solução e quer protagonismo.",
+      "interesses": [
+        "receita nova",
+        "ser reconhecido"
+      ],
+      "influencia": 4,
+      "postura_inicial": 1
+    },
+    {
+      "id": "analista",
+      "nome": "Juliana Ramos",
+      "tipo": "funcionarios",
+      "papel": "Analista administrativa responsável pelo clube",
+      "persona": "Cuidadosa, conhece os formulários e teme ser responsabilizada.",
+      "interesses": [
+        "cumprir a lei",
+        "clareza"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "advogado_associado",
+      "nome": "Dr. Caio Bernardes",
+      "tipo": "associado",
+      "papel": "Advogado associado",
+      "persona": "Técnico, gosta de ser consultado; critica decisões amadoras.",
+      "interesses": [
+        "segurança jurídica",
+        "ser ouvido"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "lojista_farmacia",
+      "nome": "Sônia Takeda",
+      "tipo": "associado",
+      "papel": "Dona de farmácia participante do clube",
+      "persona": "Protetora dos clientes; ameaça sair do clube se houver ligações de banco.",
+      "interesses": [
+        "confiança dos clientes",
+        "privacidade"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "lojista_moda",
+      "nome": "Rogério Lins",
+      "tipo": "associado",
+      "papel": "Dono de loja de roupas",
+      "persona": "Quer mais vendas e acha que crédito fácil ajuda o consumo.",
+      "interesses": [
+        "crédito ao consumidor",
+        "vendas"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "fintech",
+      "nome": "CrediFácil (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Fintech interessada",
+      "persona": "Agressiva comercialmente, mas aceita negociar formato.",
+      "interesses": [
+        "acesso a clientes",
+        "escala"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "conselho_fiscal",
+      "nome": "Edna Carvalho",
+      "tipo": "conselho",
+      "papel": "Presidente do conselho fiscal",
+      "persona": "Rigorosa, contadora aposentada.",
+      "interesses": [
+        "contas em ordem",
+        "regras"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "procon",
+      "nome": "Procon municipal",
+      "tipo": "poder_publico",
+      "papel": "Órgão de defesa do consumidor",
+      "persona": "Atento a reclamações de assédio comercial.",
+      "interesses": [
+        "direitos do consumidor"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "radio",
+      "nome": "Rádio Clara FM",
+      "tipo": "imprensa",
+      "papel": "Rádio local",
+      "persona": "Programa matinal de reclamações populares.",
+      "interesses": [
+        "audiência",
+        "denúncias"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "consumidores",
+      "nome": "Consumidores cadastrados",
+      "tipo": "consumidores",
+      "papel": "14 mil participantes do clube",
+      "persona": "Gostam dos descontos; detestam ligações de telemarketing.",
+      "interesses": [
+        "descontos",
+        "privacidade"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

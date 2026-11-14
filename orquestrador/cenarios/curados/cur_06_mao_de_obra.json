@@ -1,0 +1,163 @@
+{
+  "id": "cur_06_mao_de_obra",
+  "titulo": "Vagas sobrando, gente faltando",
+  "tema": "mao_de_obra",
+  "dificuldade": 2,
+  "associacao": {
+    "nome": "Associação Comercial e Industrial de Nova Aurora Paulista (ACINAP)",
+    "cidade": "Nova Aurora Paulista (SP, fictícia, 77 mil habitantes)",
+    "porte": "média",
+    "associados": 540,
+    "situacao_financeira": "Boa: reserva de 5 meses; receita de cursos em queda."
+  },
+  "texto": "Nova Aurora Paulista vive um paradoxo: o desemprego caiu, mas o comércio e a indústria local não encontram trabalhadores. Um levantamento da associação identificou 640 vagas abertas entre associados — vendedores, repositores, operadores de caixa, auxiliares de produção e mecânicos. Ao mesmo tempo, a rotatividade é alta: muitos jovens contratados saem em menos de três meses, alegando salários baixos, jornada 6x1 e falta de perspectiva.\n\nUma indústria de alimentos que é a maior empregadora associada ameaçou transferir parte da produção para outra cidade se a situação não melhorar. Os pequenos comerciantes dizem que não conseguem competir com os salários da indústria nem com os aplicativos de entrega, que atraem os jovens com flexibilidade.\n\nHá caminhos na mesa. A escola técnica estadual oferece turmas gratuitas de qualificação se a associação garantir 120 vagas de estágio ou contratação para os formandos. A prefeitura tem um programa de transporte subsidiado para trabalhadores de bairros distantes, mas ele não funciona aos sábados. O sindicato dos comerciários propõe discutir, na convenção coletiva, um piloto de escala 5x2 com banco de horas; o sindicato patronal resiste. Uma plataforma de recrutamento oferece um \"banco de talentos\" exclusivo para associados por R$ 3 mil mensais.\n\nParte da diretoria quer uma campanha de imagem chamada \"Trabalhe no comércio de Nova Aurora\". Outra parte acha que, sem mudar condições de trabalho, a campanha vai soar falsa. O orçamento disponível para novos projetos neste semestre é de R$ 60 mil, e o estatuto proíbe a associação de negociar diretamente salários e jornadas, que são matéria sindical.\n\nA presidência precisa propor, até a reunião de diretoria da próxima semana, um plano para a falta de mão de obra. Qual é a sua decisão?",
+  "restricoes": [
+    "Orçamento de R$ 60 mil para o semestre.",
+    "A associação não negocia salários e jornadas (matéria sindical).",
+    "Plano a ser apresentado na reunião de diretoria da próxima semana."
+  ],
+  "em_jogo": "A permanência de grandes empregadores, a competitividade dos pequenos, a relação com sindicatos e escola técnica e a credibilidade das ações da associação.",
+  "atores": [
+    {
+      "id": "industria_alimentos",
+      "nome": "Alimentos Aurora (fictícia)",
+      "tipo": "associado",
+      "papel": "Maior empregadora associada",
+      "persona": "Pressiona com ameaça de transferência; tem diretor no conselho.",
+      "interesses": [
+        "mão de obra qualificada",
+        "incentivos"
+      ],
+      "influencia": 5,
+      "postura_inicial": 0
+    },
+    {
+      "id": "pequeno_varejo",
+      "nome": "Neide Fagundes",
+      "tipo": "associado",
+      "papel": "Dona de duas lojas de utilidades",
+      "persona": "Sobrecarregada, sente que a associação só ouve os grandes.",
+      "interesses": [
+        "custos baixos",
+        "apoio prático"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    },
+    {
+      "id": "escola_tecnica",
+      "nome": "Diretora da escola técnica estadual",
+      "tipo": "parceiro",
+      "papel": "Oferece qualificação gratuita",
+      "persona": "Quer compromisso real de contratação.",
+      "interesses": [
+        "empregabilidade dos alunos"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "sec_trabalho",
+      "nome": "Secretaria Municipal de Trabalho",
+      "tipo": "poder_publico",
+      "papel": "Gere o transporte subsidiado",
+      "persona": "Burocrática, mas aberta a pilotos com dados.",
+      "interesses": [
+        "indicadores de emprego"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "sind_comerciarios",
+      "nome": "Sindicato dos Comerciários",
+      "tipo": "sindicato",
+      "papel": "Representa trabalhadores",
+      "persona": "Quer pauta de qualidade do emprego.",
+      "interesses": [
+        "escala 5x2",
+        "salários"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "sind_patronal",
+      "nome": "Sindicato do Comércio Varejista regional",
+      "tipo": "sindicato",
+      "papel": "Negocia convenção",
+      "persona": "Resiste a mudanças de jornada.",
+      "interesses": [
+        "custos",
+        "prerrogativa negocial"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "jovens",
+      "nome": "Jovens trabalhadores",
+      "tipo": "consumidores",
+      "papel": "Público-alvo das vagas",
+      "persona": "Valorizam flexibilidade e respeito; desconfiam de campanhas.",
+      "interesses": [
+        "flexibilidade",
+        "crescimento"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1
+    },
+    {
+      "id": "plataforma",
+      "nome": "TalentoJá (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Plataforma de recrutamento",
+      "persona": "Vende solução pronta.",
+      "interesses": [
+        "contrato"
+      ],
+      "influencia": 1,
+      "postura_inicial": 1
+    },
+    {
+      "id": "diretor_marketing",
+      "nome": "Rafael Duarte",
+      "tipo": "diretoria",
+      "papel": "Diretor de comunicação",
+      "persona": "Entusiasta da campanha de imagem.",
+      "interesses": [
+        "campanha",
+        "visibilidade"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "conselheiro",
+      "nome": "Conselheira Helena Moura",
+      "tipo": "conselho",
+      "papel": "Conselheira, ex-presidente",
+      "persona": "Experiente, cética com soluções de marketing.",
+      "interesses": [
+        "coerência",
+        "resultados"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "jornal",
+      "nome": "Tribuna de Nova Aurora",
+      "tipo": "imprensa",
+      "papel": "Jornal local",
+      "persona": "Gosta de histórias de trabalhadores.",
+      "interesses": [
+        "histórias humanas"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

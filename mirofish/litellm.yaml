@@ -1,0 +1,13 @@
+# Proxy entre o MiroFish (formato OpenAI) e a Anthropic. Necessário porque o endpoint compatível
+# da Anthropic recusa response_format={"type":"json_object"}, que o MiroFish usa. O LiteLLM traduz
+# o pedido de JSON e descarta parâmetros que os modelos Claude recentes recusam (ex.: temperature).
+model_list:
+  - model_name: claude-haiku-5-5
+    litellm_params:
+      model: anthropic/claude-haiku-5-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+      # O MiroFish fixa max_tokens=4096; o raciocínio adaptativo do Haiku 5.5 (ligado por padrão)
+      # consumia parte disso e cortava o JSON da ontologia. Desligado para as chamadas do MiroFish.
+      thinking: {type: disabled}
+litellm_settings:
+  drop_params: true

@@ -1,0 +1,166 @@
+{
+  "id": "cur_10_marketplace_municipal",
+  "titulo": "O marketplace da cidade e o conflito de interesses",
+  "tema": "varejo_digital",
+  "dificuldade": 3,
+  "associacao": {
+    "nome": "Associação Comercial e Industrial de Jacutinga do Oeste (ACIJO)",
+    "cidade": "Jacutinga do Oeste (SP, fictícia, 105 mil habitantes)",
+    "porte": "grande",
+    "associados": 890,
+    "situacao_financeira": "Sólida: reserva de 10 meses; recebeu R$ 400 mil de emenda parlamentar para inovação no ano passado."
+  },
+  "texto": "Há um ano, a associação lançou o \"Compra Jacutinga\", marketplace local que permite aos associados vender online com entrega no mesmo dia. O projeto foi financiado com R$ 400 mil de uma emenda parlamentar destinada à prefeitura e repassada por convênio. Hoje, tem 160 lojas cadastradas, mas apenas 25 vendem com regularidade; o faturamento mensal é de R$ 70 mil, e a plataforma custa R$ 18 mil por mês. O convênio vence em quatro meses e exige relatório de resultados.\n\nDuas notícias abalaram o projeto nesta semana. Primeiro, um gigante nacional do comércio eletrônico anunciou um centro de distribuição na região com entrega em poucas horas, e ofereceu à associação uma \"parceria\": os associados entrariam no marketplace dele com taxa reduzida por um ano, e o \"Compra Jacutinga\" seria descontinuado. Segundo, um portal de notícias revelou que a empresa que desenvolveu e opera a plataforma pertence ao cunhado do diretor de inovação da associação — contratada sem cotação de preços, como apontou um associado em mensagem ao conselho fiscal.\n\nO diretor de inovação diz que a contratação foi \"técnica e urgente\" e que ofereceu a melhor proposta. O conselho fiscal abriu apuração. A prefeitura, responsável pelo convênio, quer explicações em 15 dias e sinaliza que pode exigir devolução de recursos se houver irregularidade. Associados que vendem bem pela plataforma temem perdê-la; outros acham que a associação deveria ter investido em capacitação digital em vez de \"brincar de Amazon\". O sindicato dos entregadores local reclama das condições oferecidas pelo marketplace.\n\nO estatuto exige que dirigentes se declarem impedidos em decisões com conflito de interesse e prevê afastamento cautelar por decisão do conselho. A presidência tem de decidir, de uma só vez, o futuro do marketplace, a resposta à proposta do gigante, a resposta à prefeitura e o tratamento do conflito de interesse. O que você decide?",
+  "restricoes": [
+    "Prefeitura exige explicações em 15 dias; convênio vence em 4 meses.",
+    "Estatuto exige impedimento de dirigentes com conflito de interesse e permite afastamento cautelar pelo conselho.",
+    "Plataforma custa R$ 18 mil/mês para R$ 70 mil de vendas.",
+    "Possível devolução de recursos públicos."
+  ],
+  "em_jogo": "A integridade da associação, o uso correto de recursos públicos, o futuro digital do comércio local e a coesão de uma diretoria com um dirigente sob suspeita.",
+  "atores": [
+    {
+      "id": "dir_inovacao",
+      "nome": "Diego Salvatori",
+      "tipo": "diretoria",
+      "papel": "Diretor de inovação",
+      "persona": "Inteligente, defensivo, acha que está sendo perseguido; tem aliados na diretoria.",
+      "interesses": [
+        "preservar o projeto",
+        "sua reputação"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "conselho_fiscal",
+      "nome": "Conselheira fiscal Irene Prado",
+      "tipo": "conselho",
+      "papel": "Coordena a apuração",
+      "persona": "Íntegra, metódica, quer documentos.",
+      "interesses": [
+        "apuração",
+        "transparência"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "presidente_conselho",
+      "nome": "Dr. Armando Queiroz",
+      "tipo": "conselho",
+      "papel": "Presidente do conselho deliberativo",
+      "persona": "Experiente, quer preservar a entidade sem linchamento.",
+      "interesses": [
+        "governança",
+        "imagem"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "sec_desenv",
+      "nome": "Secretária de Desenvolvimento Clara Vidal",
+      "tipo": "poder_publico",
+      "papel": "Gestora do convênio na prefeitura",
+      "persona": "Pressionada pelo Tribunal de Contas; quer relatório sólido.",
+      "interesses": [
+        "prestação de contas",
+        "evitar escândalo"
+      ],
+      "influencia": 5,
+      "postura_inicial": 0
+    },
+    {
+      "id": "gigante",
+      "nome": "MegaMarket Brasil (fictício)",
+      "tipo": "parceiro",
+      "papel": "Gigante do comércio eletrônico",
+      "persona": "Negociador hábil; quer os lojistas e o selo da associação.",
+      "interesses": [
+        "base de lojistas",
+        "fim da concorrência local"
+      ],
+      "influencia": 4,
+      "postura_inicial": 1
+    },
+    {
+      "id": "lojista_digital",
+      "nome": "Fernanda Rocha",
+      "tipo": "associado",
+      "papel": "Loja de cosméticos que vende bem na plataforma",
+      "persona": "Depende do canal; teme as taxas do gigante.",
+      "interesses": [
+        "manter a plataforma",
+        "taxas baixas"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "lojista_cetico",
+      "nome": "Wilson Cardoso",
+      "tipo": "associado",
+      "papel": "Dono de loja de eletro, crítico do projeto",
+      "persona": "Acha que foi desperdício; denunciou a contratação.",
+      "interesses": [
+        "capacitação",
+        "apuração"
+      ],
+      "influencia": 3,
+      "postura_inicial": -1
+    },
+    {
+      "id": "entregadores",
+      "nome": "Sindicato dos entregadores",
+      "tipo": "sindicato",
+      "papel": "Representa entregadores locais",
+      "persona": "Reivindicativo.",
+      "interesses": [
+        "remuneração",
+        "condições"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1
+    },
+    {
+      "id": "portal",
+      "nome": "Portal Jacutinga Notícias",
+      "tipo": "imprensa",
+      "papel": "Revelou o caso",
+      "persona": "Investigativo, tem mais documentos.",
+      "interesses": [
+        "novas revelações"
+      ],
+      "influencia": 4,
+      "postura_inicial": -1
+    },
+    {
+      "id": "deputado",
+      "nome": "Assessoria do deputado autor da emenda",
+      "tipo": "poder_publico",
+      "papel": "Padrinho político do recurso",
+      "persona": "Quer evitar desgaste; pode cobrar a associação.",
+      "interesses": [
+        "evitar escândalo"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "funcionario_ti",
+      "nome": "Bruno Antunes",
+      "tipo": "funcionarios",
+      "papel": "Analista que acompanha a plataforma",
+      "persona": "Conhece os números reais e teme retaliação.",
+      "interesses": [
+        "proteção",
+        "verdade"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

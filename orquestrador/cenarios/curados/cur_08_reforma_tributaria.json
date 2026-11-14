@@ -1,0 +1,178 @@
+{
+  "id": "cur_08_reforma_tributaria",
+  "titulo": "Reforma tributária: o pânico do balcão",
+  "tema": "reforma_tributaria",
+  "dificuldade": 3,
+  "associacao": {
+    "nome": "Associação Comercial e Industrial de Campo Dourado (ACICD)",
+    "cidade": "Campo Dourado (SP, fictícia, 140 mil habitantes)",
+    "porte": "grande",
+    "associados": 1250,
+    "situacao_financeira": "Boa: reserva de 8 meses, mas orçamento de 2027 ainda não aprovado."
+  },
+  "texto": "A transição da reforma tributária sobre o consumo entrou na fase em que empresas precisam adaptar sistemas, notas fiscais e preços à convivência entre tributos antigos e novos. Em Campo Dourado, a dúvida virou angústia: escritórios de contabilidade estão sobrecarregados, fornecedores mudaram condições e circulam no WhatsApp mensagens falsas dizendo que \"o Simples Nacional acabou\" e que \"o Pix vai ser taxado\".\n\nNa associação, o telefone não para. Pequenos varejistas do Simples querem saber se vão perder competitividade ao vender para empresas que aproveitam créditos; prestadores de serviço temem aumento de carga; a indústria quer saber como ficam os créditos acumulados. Um grupo de associados exige que a associação \"lute contra a reforma\" junto aos deputados; outro quer apenas orientação prática.\n\nAs oportunidades e riscos se misturam. Uma consultoria tributária da capital oferece um ciclo de palestras e um \"diagnóstico personalizado\" com preço especial, desde que a associação divulgue a marca. A federação estadual está montando uma frente de propostas de regulamentação e pede que cada associação envie dados sobre impactos locais em 30 dias. O conselho regional de contabilidade propõe uma força-tarefa conjunta, mas exige que os contadores não sejam \"substituídos\" por consultorias de fora. Um deputado federal da região quer fazer uma audiência pública na sede da associação — em ano eleitoral.\n\nInternamente, há tensão. O 1º vice-presidente, dono de rede de autopeças, vem dizendo à imprensa que a reforma \"vai quebrar o comércio\", sem aprovação da diretoria. O diretor de serviços acha que a associação deveria criar um \"Plantão da Reforma\" pago. O orçamento livre para o tema é de R$ 90 mil; a política da entidade proíbe manifestações político-partidárias e exige que posicionamentos sobre legislação federal sejam aprovados pela diretoria plena.\n\nO presidente da federação ligou cobrando a posição da ACICD. O que você decide?",
+  "restricoes": [
+    "Federação pede dados de impacto em 30 dias.",
+    "Orçamento de R$ 90 mil para o tema.",
+    "Política da entidade proíbe manifestações político-partidárias.",
+    "Posicionamento sobre legislação federal exige aprovação da diretoria plena."
+  ],
+  "em_jogo": "A capacidade da associação de orientar associados em meio à desinformação, sua credibilidade técnica, sua neutralidade político-partidária e a coesão de uma diretoria que já fala em vozes diferentes.",
+  "atores": [
+    {
+      "id": "vice_autopecas",
+      "nome": "Edson Malta",
+      "tipo": "diretoria",
+      "papel": "1º vice-presidente, dono de rede de autopeças",
+      "persona": "Carismático, populista, fala sem consultar; quer ser o próximo presidente.",
+      "interesses": [
+        "protagonismo",
+        "combater a reforma"
+      ],
+      "influencia": 4,
+      "postura_inicial": -1
+    },
+    {
+      "id": "dir_servicos",
+      "nome": "Lívia Paranhos",
+      "tipo": "diretoria",
+      "papel": "Diretora de serviços",
+      "persona": "Orientada a receita; defende produto pago.",
+      "interesses": [
+        "Plantão da Reforma",
+        "receita"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "crc",
+      "nome": "Delegacia regional do conselho de contabilidade",
+      "tipo": "parceiro",
+      "papel": "Representa contadores",
+      "persona": "Protege o mercado dos contadores locais; parceira se respeitada.",
+      "interesses": [
+        "protagonismo dos contadores"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "consultoria",
+      "nome": "Tributa Mais Consultoria (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Consultoria da capital",
+      "persona": "Comercial, competente, quer exposição de marca.",
+      "interesses": [
+        "clientes",
+        "marca"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "federacao",
+      "nome": "Federação estadual das associações",
+      "tipo": "federacao",
+      "papel": "Frente de regulamentação",
+      "persona": "Quer dados e alinhamento.",
+      "interesses": [
+        "dados locais",
+        "unidade do sistema"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "deputado",
+      "nome": "Deputado federal Wagner Tolentino (fictício)",
+      "tipo": "poder_publico",
+      "papel": "Deputado da região",
+      "persona": "Busca palco em ano eleitoral.",
+      "interesses": [
+        "audiência pública",
+        "votos"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "simples_varejo",
+      "nome": "Kátia Nunes",
+      "tipo": "associado",
+      "papel": "Dona de papelaria no Simples",
+      "persona": "Assustada com mensagens falsas.",
+      "interesses": [
+        "orientação simples",
+        "não perder clientes PJ"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    },
+    {
+      "id": "servicos",
+      "nome": "Leandro Viana",
+      "tipo": "associado",
+      "papel": "Dono de empresa de serviços de TI",
+      "persona": "Teme aumento de carga; tecnicamente informado.",
+      "interesses": [
+        "simulações de impacto"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "industria",
+      "nome": "Metalúrgica Campo Forte (fictícia)",
+      "tipo": "associado",
+      "papel": "Indústria média",
+      "persona": "Pragmática, quer créditos e planejamento.",
+      "interesses": [
+        "créditos",
+        "previsibilidade"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "conselho",
+      "nome": "Conselho deliberativo",
+      "tipo": "conselho",
+      "papel": "Governança",
+      "persona": "Preocupado com a fala do vice e a neutralidade.",
+      "interesses": [
+        "governança",
+        "neutralidade"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "jornal",
+      "nome": "Jornal de Campo Dourado",
+      "tipo": "imprensa",
+      "papel": "Maior jornal da cidade",
+      "persona": "Já publicou a fala do vice; quer saber se é a posição oficial.",
+      "interesses": [
+        "posição oficial",
+        "contradições"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "influenciador",
+      "nome": "Perfil 'Contas da Cidade'",
+      "tipo": "imprensa",
+      "papel": "Influenciador local de economia",
+      "persona": "Espalha conteúdo alarmista, mas aceita corrigir com bons dados.",
+      "interesses": [
+        "engajamento"
+      ],
+      "influencia": 3,
+      "postura_inicial": -1
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

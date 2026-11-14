@@ -1,0 +1,29 @@
+# Fontes de notícias (RSS). Edite à vontade; só notícias dos últimos N dias são usadas.
+janela_dias: 90
+max_noticias_por_fonte: 30
+pontuacao_minima: 3
+
+fontes:
+  - nome: Agência Brasil – Economia
+    url: https://agenciabrasil.ebc.com.br/rss/economia/feed.xml
+  - nome: Agência Sebrae de Notícias
+    url: https://agenciasebrae.com.br/feed/
+  - nome: Agência SP (Governo do Estado de SP)
+    url: https://www.agenciasp.sp.gov.br/feed/
+  - nome: Agência Câmara de Notícias
+    url: https://www.camara.leg.br/noticias/rss/ultimas-noticias
+  - nome: Agência Senado
+    url: https://www12.senado.leg.br/noticias/feed/todasnoticias/RSS
+
+# Temas relevantes para associações comerciais e palavras que os indicam.
+temas:
+  reforma_tributaria: [reforma tributária, IBS, CBS, imposto seletivo, split payment, simples nacional]
+  credito:            [crédito, juros, Pronampe, financiamento, Selic, microcrédito]
+  seguranca:          [segurança pública, furtos, roubos, assaltos, comércio fechado, vigilância]
+  eventos_sazonais:   [Black Friday, Natal, Dia das Mães, liquidação, datas comemorativas, festa junina]
+  varejo_digital:     [e-commerce, marketplace, comércio eletrônico, vendas online, Pix, plataformas]
+  infraestrutura:     [obras, mobilidade urbana, estacionamento, zona azul, calçadão, enchente, pavimentação]
+  legislacao_municipal: [lei municipal, câmara municipal, vereadores, alvará, plano diretor, horário de funcionamento]
+  clima:              [chuvas, enchentes, estiagem, onda de calor, defesa civil, calamidade]
+  inadimplencia:      [inadimplência, endividamento, Serasa, calote, recuperação judicial]
+  mao_de_obra:        [mão de obra, emprego, escala 6x1, contratação, qualificação, jornada de trabalho]

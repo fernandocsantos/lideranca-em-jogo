@@ -1,0 +1,58 @@
+# Liderança em Jogo — protótipo local
+#   docker compose up -d   -> orquestrador + MiroFish + proxy LLM (LiteLLM) entre o MiroFish e a Anthropic
+# Abra http://localhost:8000
+
+services:
+  orquestrador:
+    build: ./orquestrador
+    container_name: lej-orquestrador
+    env_file: .env
+    environment:
+      MIROFISH_URL: http://mirofish:5001
+    ports:
+      - "127.0.0.1:8000:8000"     # só na máquina local
+    volumes:
+      - dados-jogo:/dados
+      - ./orquestrador/config:/app/config:ro                # regras editáveis sem rebuild
+      - ./orquestrador/cenarios/gerados:/app/cenarios/gerados
+    depends_on:
+      - mirofish
+    restart: unless-stopped
+
+  mirofish:
+    image: ghcr.io/666ghj/mirofish:latest
+    container_name: lej-mirofish
+    environment:
+      # LLM dos agentes OASIS: Claude Haiku 5.5. O MiroFish fala o formato da OpenAI; o proxy LiteLLM
+      # traduz para a API da Anthropic. O MiroFish só tem a chave interna do proxy, nunca a da Anthropic.
+      LLM_API_KEY: ${LITELLM_MASTER_KEY}
+      LLM_BASE_URL: ${MIROFISH_LLM_BASE_URL:-http://llm-proxy:4000}
+      LLM_MODEL_NAME: ${MIROFISH_LLM_MODEL:-claude-haiku-5-5}
+      ZEP_API_KEY: ${ZEP_API_KEY}
+      # limites de custo
+      OASIS_DEFAULT_MAX_ROUNDS: "20"
+      REPORT_AGENT_MAX_TOOL_CALLS: "3"
+      REPORT_AGENT_MAX_REFLECTION_ROUNDS: "1"
+    expose:
+      - "5001"                       # sem porta publicada: só o orquestrador acessa
+    depends_on:
+      - llm-proxy
+    volumes:
+      - mirofish-uploads:/app/backend/uploads
+    restart: unless-stopped
+
+  llm-proxy:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: lej-llm-proxy
+    command: ["--config", "/config.yaml", "--port", "4000"]
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+    volumes:
+      - ./mirofish/litellm.yaml:/config.yaml:ro
+    expose:
+      - "4000"
+
+volumes:
+  dados-jogo:
+  mirofish-uploads:

@@ -1,0 +1,154 @@
+{
+  "id": "cur_03_mutirao_credito",
+  "titulo": "Feira de crédito ou feira de dívidas?",
+  "tema": "credito",
+  "dificuldade": 1,
+  "associacao": {
+    "nome": "Associação Comercial e Empresarial de Porto Ribeira (ACEPR)",
+    "cidade": "Porto Ribeira (SP, fictícia, 95 mil habitantes)",
+    "porte": "média",
+    "associados": 610,
+    "situacao_financeira": "Boa: superávit no último ano e reserva de 6 meses."
+  },
+  "texto": "Os juros altos travaram o capital de giro de muitos pequenos negócios de Porto Ribeira. Na última pesquisa da associação, 38% dos associados com até 9 funcionários disseram ter usado cheque especial ou cartão de crédito para pagar fornecedores, e 12% estão com parcelas atrasadas.\n\nDois parceiros procuraram a associação. Uma cooperativa de crédito com agência na cidade propõe um \"Mutirão do Crédito\" de dois dias no salão da associação, com linhas para capital de giro a juros menores que os bancos e taxa de adesão zero para associados; em troca, quer a lista de associados e um estande permanente na sede. O escritório regional do Sebrae oferece consultoria financeira gratuita no mesmo evento e sugere que só se ofereça crédito depois de um diagnóstico de cada empresa.\n\nUm banco grande, que patrocina o almoço anual da associação, ficou sabendo e pediu \"condições iguais\" no evento — e deixou no ar que pode rever o patrocínio. Alguns diretores temem que a associação vire \"balcão de banco\" e que empresas já endividadas se afundem mais. Outros dizem que a entidade precisa mostrar serviço rápido, porque a associação comercial da cidade vizinha já fez um evento parecido e atraiu associados de Porto Ribeira.\n\nA prefeitura tem um fundo municipal de aval que nunca foi bem divulgado e poderia reduzir as garantias exigidas, mas o secretário de Desenvolvimento só se compromete se o evento for \"aberto a todos os empresários da cidade\", não só a associados.\n\nA presidência quer uma decisão em 10 dias para realizar o evento antes do período de festas. O estatuto não impede parcerias comerciais, mas o código de conduta da entidade proíbe a cessão de dados de associados sem autorização individual.\n\nComo você estrutura essa iniciativa?",
+  "restricoes": [
+    "Decisão em 10 dias; evento antes das festas.",
+    "Código de conduta proíbe ceder dados de associados sem autorização individual.",
+    "A prefeitura exige evento aberto a não associados para entrar com o fundo de aval."
+  ],
+  "em_jogo": "A saúde financeira dos pequenos associados, a imagem da associação como apoio real (ou como 'balcão de banco') e a relação com patrocinadores e prefeitura.",
+  "atores": [
+    {
+      "id": "cooperativa",
+      "nome": "Coopercred Ribeira (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Cooperativa de crédito",
+      "persona": "Comunitária, mas quer crescer a carteira; negocia contrapartidas.",
+      "interesses": [
+        "novos cooperados",
+        "estande permanente"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "sebrae",
+      "nome": "Escritório regional do Sebrae",
+      "tipo": "parceiro",
+      "papel": "Consultoria a pequenos negócios",
+      "persona": "Técnico, defende educação financeira antes do crédito.",
+      "interesses": [
+        "diagnóstico",
+        "resultados medidos"
+      ],
+      "influencia": 4,
+      "postura_inicial": 1
+    },
+    {
+      "id": "banco",
+      "nome": "Banco Nacional Paulista (fictício)",
+      "tipo": "parceiro",
+      "papel": "Banco patrocinador do almoço anual",
+      "persona": "Competitivo; usa o patrocínio como alavanca.",
+      "interesses": [
+        "igualdade de condições",
+        "clientes PJ"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "sec_desenv",
+      "nome": "Otávio Ramalho",
+      "tipo": "poder_publico",
+      "papel": "Secretário de Desenvolvimento Econômico",
+      "persona": "Quer o fundo de aval como vitrine da gestão; exige abertura a todos.",
+      "interesses": [
+        "visibilidade",
+        "evento aberto"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "micro_endividado",
+      "nome": "Cleide Arantes",
+      "tipo": "associado",
+      "papel": "Dona de salão de beleza com dívidas atrasadas",
+      "persona": "Envergonhada, com medo de se endividar mais; confia na associação.",
+      "interesses": [
+        "renegociar dívidas",
+        "orientação"
+      ],
+      "influencia": 1,
+      "postura_inicial": 1
+    },
+    {
+      "id": "industria",
+      "nome": "Paulo Kimura",
+      "tipo": "associado",
+      "papel": "Dono de pequena metalúrgica",
+      "persona": "Racional, quer crédito para máquinas, não só capital de giro.",
+      "interesses": [
+        "prazo longo",
+        "juros baixos"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "diretor_critico",
+      "nome": "Lúcia Fontes",
+      "tipo": "diretoria",
+      "papel": "Diretora de relações institucionais",
+      "persona": "Crítica da proximidade com bancos; preza a independência da entidade.",
+      "interesses": [
+        "independência",
+        "proteger associados"
+      ],
+      "influencia": 3,
+      "postura_inicial": -1
+    },
+    {
+      "id": "aci_vizinha",
+      "nome": "Associação Comercial de Jacutinga do Oeste (fictícia)",
+      "tipo": "entidade_concorrente",
+      "papel": "Entidade da cidade vizinha",
+      "persona": "Agressiva na captação de associados.",
+      "interesses": [
+        "novos associados",
+        "visibilidade"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1
+    },
+    {
+      "id": "jornal",
+      "nome": "Folha Ribeirense",
+      "tipo": "imprensa",
+      "papel": "Jornal local",
+      "persona": "Equilibrado, gosta de dados.",
+      "interesses": [
+        "dados",
+        "histórias de empresários"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "contador",
+      "nome": "Associação dos Contabilistas local",
+      "tipo": "parceiro",
+      "papel": "Entidade de contadores",
+      "persona": "Podem indicar clientes ou criticar o evento.",
+      "interesses": [
+        "ser incluídos",
+        "evitar endividamento dos clientes"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

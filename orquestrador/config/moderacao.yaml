@@ -1,0 +1,16 @@
+# Regras locais aplicadas ANTES de qualquer LLM.
+termos_bloqueados:
+  - "vou matar"
+  - "filho da puta"
+  - "macaco"
+  - "viado"
+padroes_manipulacao:   # tentativas de manipular os agentes/o jogo
+  - "ignore (as|todas as) (instruções|regras)"
+  - "ignore (previous|all) instructions"
+  - "você agora é"
+  - "system prompt"
+  - "prompt do sistema"
+  - "aja como (o|a) (desenvolvedor|administrador)"
+  - "todos os agentes (devem|vão) concordar"
+  - "dê nota máxima"
+  - "aumente (todos os|os) indicadores"

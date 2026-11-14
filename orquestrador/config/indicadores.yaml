@@ -1,0 +1,62 @@
+# Regras de conversão "sinais do MiroFish" -> variação dos indicadores.
+# O LLM só extrai sinais; tudo abaixo é aplicado em código (app/indicadores.py).
+
+indicadores:
+  engajamento:      {nome: "Engajamento dos associados", descricao: "Participação, adesão e permanência dos associados."}
+  saude_financeira: {nome: "Saúde financeira",           descricao: "Caixa, receitas, inadimplência e sustentabilidade."}
+  reputacao:        {nome: "Reputação pública",          descricao: "Imagem na imprensa, nas redes e na comunidade."}
+  capital_politico: {nome: "Capital político/relacional", descricao: "Relação com prefeitura, câmara, federação e parceiros."}
+  coesao:           {nome: "Coesão da diretoria",        descricao: "Alinhamento entre diretoria, conselho e equipe."}
+  conformidade:     {nome: "Conformidade",               descricao: "Estatuto, LGPD e legislação."}
+
+# Pontos por sinal conforme a intensidade extraída (-3..+3)
+peso_intensidade:
+  "-3": -6
+  "-2": -4
+  "-1": -2
+  "0": 0
+  "1": 2
+  "2": 4
+  "3": 6
+
+# Multiplicador pela influência do ator que originou o sinal (1..5)
+multiplicador_influencia:
+  "1": 0.6
+  "2": 0.8
+  "3": 1.0
+  "4": 1.2
+  "5": 1.4
+multiplicador_sem_ator: 1.0
+
+# Mudança de postura (postura_final - postura_inicial, em -4..+4) vira pontos
+# nos indicadores ligados ao tipo do ator. Valor = pontos por unidade de mudança.
+postura_por_tipo:
+  associado:            {engajamento: 1.5, saude_financeira: 0.5}
+  diretoria:            {coesao: 2.0}
+  conselho:             {coesao: 1.5, conformidade: 0.5}
+  funcionarios:         {coesao: 1.0}
+  poder_publico:        {capital_politico: 2.0}
+  imprensa:             {reputacao: 2.0}
+  sindicato:            {capital_politico: 1.0, reputacao: 0.5}
+  consumidores:         {reputacao: 1.0}
+  entidade_concorrente: {engajamento: -0.5, capital_politico: 0.5}
+  federacao:            {capital_politico: 1.5}
+  parceiro:             {capital_politico: 1.0, saude_financeira: 1.0}
+
+# Penalidades/bônus fixos por flag (lista fechada que o LLM pode marcar)
+flags:
+  violacao_estatuto:        {conformidade: -12, coesao: -4, descricao: "Decisão contraria o estatuto (competência, quórum, assembleia)."}
+  risco_lgpd:               {conformidade: -10, reputacao: -3, descricao: "Tratamento de dados pessoais sem base legal ou transparência."}
+  conflito_de_interesse:    {conformidade: -8, reputacao: -5, descricao: "Benefício a dirigente ou empresa ligada."}
+  gasto_sem_previsao:       {saude_financeira: -6, conformidade: -4, descricao: "Despesa sem previsão orçamentária ou aprovação."}
+  consulta_aos_associados:  {engajamento: 3, descricao: "Decisão incluiu escuta formal dos associados."}
+  transparencia_ativa:      {reputacao: 3, conformidade: 2, descricao: "Comunicação pública clara e prestação de contas."}
+  parceria_formalizada:     {capital_politico: 3, descricao: "Acordo formal com poder público ou parceiro."}
+  crise_mal_comunicada:     {reputacao: -6, descricao: "Silêncio ou contradição pública durante a crise."}
+
+limites:
+  delta_maximo_por_rodada: 15   # |variação| máxima de cada indicador por cenário
+  elasticidade_min: 0.5
+  elasticidade_max: 1.5
+  minimo: 0
+  maximo: 100

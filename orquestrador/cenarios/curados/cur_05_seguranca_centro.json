@@ -1,0 +1,166 @@
+{
+  "id": "cur_05_seguranca_centro",
+  "titulo": "Furtos em série no centro",
+  "tema": "seguranca",
+  "dificuldade": 2,
+  "associacao": {
+    "nome": "Associação Comercial de Águas de Santa Luzia (ACASL)",
+    "cidade": "Águas de Santa Luzia (SP, fictícia, 54 mil habitantes, turística)",
+    "porte": "pequena",
+    "associados": 310,
+    "situacao_financeira": "Razoável: reserva de 2 meses; mensalidades em dia."
+  },
+  "texto": "Em seis semanas, 23 lojas do centro de Águas de Santa Luzia tiveram vitrines quebradas ou foram furtadas durante a madrugada. Um vídeo de câmera de segurança mostrando um furto viralizou, e a hashtag da cidade virou piada nas redes de turismo regional — justamente no início da temporada de férias, que responde por boa parte do movimento.\n\nOs lojistas estão revoltados. No grupo da associação, um grupo propõe contratar uma empresa de segurança privada para rondas noturnas, rateando o custo (cerca de R$ 22 mil por mês) entre os associados do centro. Outro grupo quer cobrar a prefeitura e fazer um protesto com portas fechadas por uma hora. Um associado postou que vai \"fazer justiça com as próprias mãos\" se pegar alguém, e outros curtiram a mensagem.\n\nA Polícia Militar diz que o efetivo é limitado, mas que pode intensificar rondas se houver um plano integrado com a Guarda Municipal e câmeras. A prefeitura tem um projeto de videomonitoramento parado por falta de recursos; o prefeito poderia retomá-lo se a associação ajudasse a financiar parte das câmeras ou conseguisse emendas parlamentares. Uma ONG que atende pessoas em situação de rua alerta que o clima de pânico está levando à hostilização de moradores de rua, que não têm relação comprovada com os furtos.\n\nA diretoria tem pressa, mas o estatuto proíbe cobrar taxa extra obrigatória sem assembleia, e a associação não pode contratar segurança armada em nome dos associados sem cumprir as regras da Polícia Federal para empresas de segurança. O conselho de turismo da cidade quer uma resposta pública rápida para proteger a temporada.\n\nA presidência precisa apresentar, em 5 dias, uma resposta à crise. O que você faz?",
+  "restricoes": [
+    "Resposta pública em até 5 dias.",
+    "Taxa extra obrigatória exige assembleia.",
+    "Segurança privada só por empresa autorizada; associação não pode organizar 'vigilância' informal.",
+    "Reserva de apenas 2 meses."
+  ],
+  "em_jogo": "A segurança e a confiança dos lojistas, a imagem turística da cidade, a relação com o poder público e o risco de a crise descambar para violência e discriminação.",
+  "atores": [
+    {
+      "id": "lojista_vitrine",
+      "nome": "Cristina Alves",
+      "tipo": "associado",
+      "papel": "Dona de joalheria furtada duas vezes",
+      "persona": "Assustada e exausta; quer solução imediata.",
+      "interesses": [
+        "segurança",
+        "seguro"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "lojista_radical",
+      "nome": "Valdir Pacheco",
+      "tipo": "associado",
+      "papel": "Dono de loja de material esportivo",
+      "persona": "Inflamado, posta mensagens agressivas; tem seguidores no grupo.",
+      "interesses": [
+        "vingança",
+        "ação imediata"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1
+    },
+    {
+      "id": "pm",
+      "nome": "Capitão Ronaldo Peixoto",
+      "tipo": "poder_publico",
+      "papel": "Comandante da companhia da PM",
+      "persona": "Profissional, quer integração e dados; rejeita vigilância informal.",
+      "interesses": [
+        "plano integrado",
+        "dados de ocorrências"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "prefeito",
+      "nome": "Prefeito Gilberto Sá",
+      "tipo": "poder_publico",
+      "papel": "Prefeito",
+      "persona": "Preocupado com a temporada; quer dividir custos e créditos.",
+      "interesses": [
+        "imagem da cidade",
+        "financiamento"
+      ],
+      "influencia": 5,
+      "postura_inicial": 0
+    },
+    {
+      "id": "guarda",
+      "nome": "Guarda Civil Municipal",
+      "tipo": "poder_publico",
+      "papel": "Guarda municipal",
+      "persona": "Efetivo pequeno, quer equipamentos.",
+      "interesses": [
+        "equipamentos",
+        "reconhecimento"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    },
+    {
+      "id": "ong",
+      "nome": "Casa Acolher (fictícia)",
+      "tipo": "consumidores",
+      "papel": "ONG de assistência a pessoas em situação de rua",
+      "persona": "Firme na defesa de direitos humanos; denuncia hostilização.",
+      "interesses": [
+        "direitos humanos",
+        "evitar violência"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    },
+    {
+      "id": "turismo",
+      "nome": "Conselho Municipal de Turismo",
+      "tipo": "parceiro",
+      "papel": "Representa pousadas e restaurantes",
+      "persona": "Quer resposta rápida e positiva.",
+      "interesses": [
+        "temporada",
+        "imagem"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "seguranca_privada",
+      "nome": "Vigilância Atenta (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Empresa de segurança autorizada",
+      "persona": "Comercial, oferece pacotes.",
+      "interesses": [
+        "contrato"
+      ],
+      "influencia": 1,
+      "postura_inicial": 1
+    },
+    {
+      "id": "tesoureiro",
+      "nome": "Marcos Leme",
+      "tipo": "diretoria",
+      "papel": "Diretor financeiro",
+      "persona": "Conservador com gastos.",
+      "interesses": [
+        "caixa",
+        "regras"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "portal",
+      "nome": "Portal Luzia Agora",
+      "tipo": "imprensa",
+      "papel": "Site de notícias local",
+      "persona": "Sensacionalista, publica vídeos.",
+      "interesses": [
+        "audiência"
+      ],
+      "influencia": 3,
+      "postura_inicial": -1
+    },
+    {
+      "id": "deputado",
+      "nome": "Assessoria de deputado estadual da região",
+      "tipo": "poder_publico",
+      "papel": "Pode destinar emendas",
+      "persona": "Interessado em entregas visíveis no ano eleitoral.",
+      "interesses": [
+        "visibilidade",
+        "base eleitoral"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

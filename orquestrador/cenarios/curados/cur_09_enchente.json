@@ -1,0 +1,178 @@
+{
+  "id": "cur_09_enchente",
+  "titulo": "Depois da enchente",
+  "tema": "clima",
+  "dificuldade": 3,
+  "associacao": {
+    "nome": "Associação Comercial e Empresarial de Serra Morena (ACESM)",
+    "cidade": "Serra Morena (SP, fictícia, 88 mil habitantes)",
+    "porte": "média",
+    "associados": 700,
+    "situacao_financeira": "Boa: reserva de 6 meses; sede atingida pela água no térreo."
+  },
+  "texto": "Uma chuva de 180 milímetros em seis horas fez o ribeirão que corta Serra Morena transbordar. O centro comercial ficou sob até 1,2 metro de água por uma noite. Levantamento preliminar da Defesa Civil aponta 310 estabelecimentos atingidos, 140 deles associados; muitos perderam estoque, móveis e equipamentos, e vários não têm seguro. Duas pessoas morreram na cidade, nenhuma no centro. A prefeitura decretou situação de emergência, o que abre a possibilidade de recursos estaduais e federais e de linhas de crédito especiais.\n\nTrês dias depois, a lama ainda está nas ruas. Lojistas querem reabrir rápido para não perder o Dia das Crianças, mas a Vigilância Sanitária exige limpeza e descarte de alimentos e medicamentos contaminados. Um supermercado associado foi flagrado tentando vender produtos molhados com desconto. Nas redes, circulam acusações de que a prefeitura não limpou bueiros e de que um loteamento recente, de uma incorporadora associada, agravou o escoamento.\n\nOfertas e pedidos se acumulam: uma rede de bancos oferece crédito emergencial com carência, mas exige que a associação faça a triagem dos pedidos; o Sebrae oferece consultores para reconstrução; uma universidade quer mapear perdas; uma campanha de doações espontânea começou no Instagram de um associado, sem prestação de contas. A sede da associação teve o térreo inundado, e funcionários estão trabalhando de casa. A Câmara convocou audiência sobre responsabilidades pela drenagem e convidou a associação.\n\nA diretoria aprovou, por telefone, o uso de até R$ 150 mil da reserva em ações emergenciais, mas o conselho quer ratificar formalmente em 7 dias. A imprensa estadual chega amanhã à cidade e pediu entrevista com a presidência.\n\nVocê precisa decidir as prioridades da associação para as próximas duas semanas e o posicionamento público, inclusive sobre as acusações. O que você faz?",
+  "restricoes": [
+    "Até R$ 150 mil da reserva aprovados por telefone; ratificação formal pelo conselho em 7 dias.",
+    "Normas sanitárias para reabertura e descarte de produtos.",
+    "Entrevista à imprensa estadual amanhã.",
+    "Sede parcialmente inutilizada."
+  ],
+  "em_jogo": "A recuperação econômica de centenas de negócios, a vida e a saúde da população, a credibilidade da associação na crise e a relação com prefeitura, Câmara e um associado acusado.",
+  "atores": [
+    {
+      "id": "prefeita",
+      "nome": "Prefeita Denise Cavalcanti",
+      "tipo": "poder_publico",
+      "papel": "Prefeita",
+      "persona": "Sob pressão por causa dos bueiros; quer parceria, teme críticas.",
+      "interesses": [
+        "recursos estaduais e federais",
+        "imagem"
+      ],
+      "influencia": 5,
+      "postura_inicial": 0
+    },
+    {
+      "id": "defesa_civil",
+      "nome": "Coordenador da Defesa Civil",
+      "tipo": "poder_publico",
+      "papel": "Coordena a resposta",
+      "persona": "Técnico, precisa de cadastro confiável de danos.",
+      "interesses": [
+        "dados",
+        "segurança"
+      ],
+      "influencia": 4,
+      "postura_inicial": 1
+    },
+    {
+      "id": "vigilancia",
+      "nome": "Vigilância Sanitária municipal",
+      "tipo": "poder_publico",
+      "papel": "Fiscaliza reabertura",
+      "persona": "Rígida com riscos à saúde.",
+      "interesses": [
+        "descarte seguro"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "lojista_atingido",
+      "nome": "Hélio Batista",
+      "tipo": "associado",
+      "papel": "Dono de loja de móveis sem seguro",
+      "persona": "Desesperado, perdeu quase tudo.",
+      "interesses": [
+        "crédito",
+        "reabrir rápido"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "supermercado",
+      "nome": "Supermercado Morena (fictício)",
+      "tipo": "associado",
+      "papel": "Associado flagrado vendendo produtos molhados",
+      "persona": "Defensivo, diz que era 'só desconto'.",
+      "interesses": [
+        "evitar multa",
+        "reputação"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "incorporadora",
+      "nome": "Incorporadora Alto da Serra (fictícia)",
+      "tipo": "associado",
+      "papel": "Associada acusada de agravar o escoamento",
+      "persona": "Influente, financia eventos da associação; ameaça processar quem a acusar.",
+      "interesses": [
+        "defender a imagem"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "banco",
+      "nome": "Rede de bancos regional",
+      "tipo": "parceiro",
+      "papel": "Crédito emergencial",
+      "persona": "Quer que a associação faça triagem (e assuma parte do risco reputacional).",
+      "interesses": [
+        "carteira",
+        "risco baixo"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "sebrae",
+      "nome": "Escritório regional do Sebrae",
+      "tipo": "parceiro",
+      "papel": "Consultoria de reconstrução",
+      "persona": "Colaborativo.",
+      "interesses": [
+        "impacto mensurável"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "vereador_oposicao",
+      "nome": "Vereador Lucas Brandão",
+      "tipo": "poder_publico",
+      "papel": "Oposição na Câmara, convocou a audiência",
+      "persona": "Combativo, quer responsabilizar a prefeitura e a incorporadora.",
+      "interesses": [
+        "responsabilização",
+        "palco"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "doacoes",
+      "nome": "Thaís Monteiro",
+      "tipo": "associado",
+      "papel": "Associada que lançou campanha de doações no Instagram",
+      "persona": "Bem-intencionada, desorganizada; muita visibilidade.",
+      "interesses": [
+        "ajudar",
+        "reconhecimento"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "tv_estadual",
+      "nome": "Emissora de TV estadual",
+      "tipo": "imprensa",
+      "papel": "Imprensa estadual",
+      "persona": "Busca personagens e responsáveis.",
+      "interesses": [
+        "imagens fortes",
+        "culpados"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "funcionarios",
+      "nome": "Equipe da associação",
+      "tipo": "funcionarios",
+      "papel": "7 funcionários trabalhando de casa",
+      "persona": "Dedicados, cansados, alguns também atingidos.",
+      "interesses": [
+        "segurança",
+        "orientação clara"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}

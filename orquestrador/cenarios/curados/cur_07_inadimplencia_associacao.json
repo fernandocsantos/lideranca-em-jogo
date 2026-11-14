@@ -1,0 +1,165 @@
+{
+  "id": "cur_07_inadimplencia_associacao",
+  "titulo": "Quando quem não paga é o associado",
+  "tema": "inadimplencia",
+  "dificuldade": 2,
+  "associacao": {
+    "nome": "Associação Comercial de Ribeirão das Pedras (ACRP)",
+    "cidade": "Ribeirão das Pedras (SP, fictícia, 62 mil habitantes)",
+    "porte": "média",
+    "associados": 480,
+    "situacao_financeira": "Crítica: inadimplência de mensalidades em 27%; reserva de 1 mês."
+  },
+  "texto": "A inadimplência das mensalidades da associação saltou de 9% para 27% em um ano. A receita caiu tanto que a reserva cobre apenas um mês de despesas, e a tesouraria projeta déficit a partir do terceiro mês se nada mudar. A folha tem sete funcionários, incluindo o serviço de proteção ao crédito e o balcão de certificação digital, que ainda dão lucro.\n\nOs inadimplentes têm perfis distintos: parte são pequenos negócios em dificuldade real, que dizem não ver retorno na mensalidade; parte são empresas médias que simplesmente deixaram de pagar e continuam usando serviços como a consulta de crédito com desconto. Um levantamento interno mostra que 40% dos associados nunca usaram nenhum serviço além da consulta.\n\nA diretoria discute opções. O tesoureiro propõe cortar dois funcionários e suspender imediatamente o acesso de inadimplentes aos serviços. O diretor de serviços quer criar planos de mensalidade escalonados por porte, com um plano \"básico\" mais barato, e uma campanha de renegociação com desconto de juros e multa. Um conselheiro sugere protestar os débitos em cartório, como o estatuto permite. Uma empresa de software oferece um sistema de cobrança automatizada por R$ 1.800 mensais.\n\nA federação estadual das associações tem um programa de reestruturação que oferece consultoria gratuita, mas exige adesão ao seu sistema de gestão e repasse de 3% da receita. Uma associação concorrente, de um segmento específico de lojistas do shopping, está oferecendo mensalidade zero no primeiro ano para atrair associados da ACRP.\n\nO estatuto exige assembleia para alterar o valor das mensalidades, e a próxima assembleia ordinária ocorre em 45 dias; uma extraordinária pode ser convocada com 10 dias. Demissões precisam ser comunicadas ao conselho. Os funcionários já ouviram rumores de cortes.\n\nQual é o seu plano para a crise financeira da associação?",
+  "restricoes": [
+    "Déficit projetado a partir do 3º mês.",
+    "Alterar mensalidades exige assembleia (extraordinária com 10 dias de antecedência).",
+    "Demissões devem ser comunicadas ao conselho.",
+    "Reserva de apenas 1 mês."
+  ],
+  "em_jogo": "A sobrevivência financeira da entidade, a confiança dos associados e funcionários e a percepção de valor da associação na cidade.",
+  "atores": [
+    {
+      "id": "tesoureiro",
+      "nome": "Gustavo Braga",
+      "tipo": "diretoria",
+      "papel": "Diretor financeiro",
+      "persona": "Duro, focado em números; acha que a diretoria foi leniente.",
+      "interesses": [
+        "equilíbrio de caixa",
+        "cortes"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "dir_servicos",
+      "nome": "Patrícia Okada",
+      "tipo": "diretoria",
+      "papel": "Diretora de serviços",
+      "persona": "Criativa, defende reinventar a proposta de valor.",
+      "interesses": [
+        "planos por porte",
+        "renegociação"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "conselheiro_protesto",
+      "nome": "Conselheiro Álvaro Mattos",
+      "tipo": "conselho",
+      "papel": "Conselheiro",
+      "persona": "Legalista; defende protestar débitos.",
+      "interesses": [
+        "cobrança firme",
+        "estatuto"
+      ],
+      "influencia": 3,
+      "postura_inicial": 0
+    },
+    {
+      "id": "funcionaria",
+      "nome": "Rosana Pires",
+      "tipo": "funcionarios",
+      "papel": "Coordenadora do balcão de certificação digital",
+      "persona": "Leal, assustada com os rumores; respeitada pela equipe.",
+      "interesses": [
+        "emprego",
+        "transparência"
+      ],
+      "influencia": 2,
+      "postura_inicial": 1
+    },
+    {
+      "id": "pequeno_inadimplente",
+      "nome": "Jorge Santana",
+      "tipo": "associado",
+      "papel": "Dono de bar, inadimplente há 5 meses",
+      "persona": "Constrangido, acha a mensalidade cara para o que recebe.",
+      "interesses": [
+        "desconto",
+        "serviços úteis"
+      ],
+      "influencia": 1,
+      "postura_inicial": -1
+    },
+    {
+      "id": "media_inadimplente",
+      "nome": "Distribuidora Pedra Forte (fictícia)",
+      "tipo": "associado",
+      "papel": "Empresa média inadimplente",
+      "persona": "Usa serviços e não paga; reage mal a ameaças públicas.",
+      "interesses": [
+        "consulta de crédito",
+        "não pagar"
+      ],
+      "influencia": 3,
+      "postura_inicial": -1
+    },
+    {
+      "id": "associado_fiel",
+      "nome": "Maria do Carmo Rezende",
+      "tipo": "associado",
+      "papel": "Lojista adimplente há 25 anos",
+      "persona": "Indignada com quem não paga e continua usando serviços.",
+      "interesses": [
+        "justiça",
+        "contrapartida"
+      ],
+      "influencia": 3,
+      "postura_inicial": 1
+    },
+    {
+      "id": "federacao",
+      "nome": "Federação estadual das associações",
+      "tipo": "federacao",
+      "papel": "Programa de reestruturação",
+      "persona": "Institucional, quer padronizar as filiadas.",
+      "interesses": [
+        "adesão ao sistema",
+        "repasse"
+      ],
+      "influencia": 4,
+      "postura_inicial": 0
+    },
+    {
+      "id": "concorrente",
+      "nome": "Associação de Lojistas do Shopping (fictícia)",
+      "tipo": "entidade_concorrente",
+      "papel": "Entidade concorrente",
+      "persona": "Oportunista, oferece mensalidade zero.",
+      "interesses": [
+        "roubar associados"
+      ],
+      "influencia": 2,
+      "postura_inicial": -1
+    },
+    {
+      "id": "software",
+      "nome": "CobraFácil (fictícia)",
+      "tipo": "parceiro",
+      "papel": "Software de cobrança",
+      "persona": "Vende automação.",
+      "interesses": [
+        "contrato"
+      ],
+      "influencia": 1,
+      "postura_inicial": 1
+    },
+    {
+      "id": "jornal",
+      "nome": "Correio das Pedras",
+      "tipo": "imprensa",
+      "papel": "Jornal local",
+      "persona": "Atento a crises institucionais.",
+      "interesses": [
+        "notícia de crise"
+      ],
+      "influencia": 2,
+      "postura_inicial": 0
+    }
+  ],
+  "inspirado_em": null,
+  "status": "curado"
+}
