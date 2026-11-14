@@ -184,7 +184,8 @@
       "efeitos_adiar": {
         "coesao": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "associados ouvidos"
     },
     {
       "id": "estudo_impacto",
@@ -199,7 +200,8 @@
       "efeitos_adiar": {
         "capital_politico": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "dados apresentados à Câmara"
     },
     {
       "id": "apoio_lojas_rua",
@@ -214,7 +216,8 @@
       "efeitos_adiar": {
         "engajamento": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas de rua no revezamento"
     }
   ],
   "regras": [

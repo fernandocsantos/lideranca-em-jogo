@@ -180,7 +180,8 @@
       "efeitos_adiar": {
         "engajamento": -2.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas vendendo pela internet"
     },
     {
       "id": "formacao_vendas",
@@ -197,7 +198,8 @@
         "engajamento": -2.0,
         "coesao": -1.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "vendedores formados"
     },
     {
       "id": "atendimento",
@@ -214,7 +216,8 @@
         "saude_financeira": -3.0,
         "coesao": -2.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "associados atrasados recontatados"
     }
   ],
   "regras": [

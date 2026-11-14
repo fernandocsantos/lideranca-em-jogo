@@ -172,7 +172,8 @@
       "efeitos_adiar": {
         "conformidade": -4
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "cadastros revisados"
     },
     {
       "id": "novo_consentimento",
@@ -188,7 +189,8 @@
       "efeitos_adiar": {
         "conformidade": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "consumidores com novo consentimento"
     },
     {
       "id": "app_patrocinio",
@@ -203,7 +205,8 @@
       "efeitos_adiar": {
         "saude_financeira": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "cadastros voluntários no aplicativo"
     }
   ],
   "regras": [

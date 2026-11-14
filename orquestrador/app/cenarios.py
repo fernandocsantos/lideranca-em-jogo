@@ -69,7 +69,7 @@ def publico(c: Cenario) -> dict:
         "narrativa": c.narrativa, "tags": c.tags[:3], "orcamento": c.orcamento, "periodo": c.periodo,
         "disponivel": c.disponivel, "trimestre": c.trimestre, "continua_de": c.continua_de,
         "evento": c.evento.model_dump() if c.evento else None,
-        "demandas": [d.model_dump(include={"id", "titulo", "custo", "solicitante", "beneficio", "minimo_util"})
+        "demandas": [d.model_dump(include={"id", "titulo", "custo", "solicitante", "beneficio", "minimo_util", "meta_sugerida"})
                      for d in c.demandas],
         "regras": [r.model_dump() for r in c.regras],
     }

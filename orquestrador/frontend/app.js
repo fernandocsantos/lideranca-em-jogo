@@ -331,29 +331,174 @@ function blocoManterAjustar(c, aplicar) {
     msg);
 }
 
-// ------------------------------------------------------------------ decisão (versão simples; P3 traz o construtor guiado)
-function resumoAlocacao() {
-  const c = estado.campanha.cenario;
-  const partes = c.demandas.map((d) => {
-    const v = estado.aloc[d.id];
-    return v >= d.custo ? `financiar ${d.titulo.toLowerCase()} (${brl(v)})` : v > 0 ? `financiar em parte ${d.titulo.toLowerCase()} (${brl(v)} de ${brl(d.custo)})` : `adiar ${d.titulo.toLowerCase()}`;
+// ------------------------------------------------------------------ voz (Web Speech API)
+const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+const VOZ_OK = !!Reconhecimento;
+
+/** Botão de microfone que escreve no campo (a transcrição continua editável). */
+function botaoVoz(campo, aoTerminar) {
+  if (!VOZ_OK) return el("span", { class: "pequeno suave" }, "Voz indisponível neste navegador: use o texto.");
+  let rec = null;
+  const b = el("button", { type: "button", class: "secundario voz", "aria-pressed": "false" }, "🎤 Falar");
+  b.addEventListener("click", () => {
+    if (rec) { rec.stop(); return; }
+    rec = new Reconhecimento();
+    rec.lang = "pt-BR"; rec.interimResults = true; rec.continuous = true;
+    const inicial = campo.value ? campo.value.trim() + " " : "";
+    rec.onresult = (ev) => {
+      let txt = "";
+      for (const r of ev.results) txt += r[0].transcript;
+      campo.value = inicial + txt.trim();
+      campo.dispatchEvent(new Event("input"));
+    };
+    rec.onend = () => { rec = null; b.textContent = "🎤 Falar"; b.setAttribute("aria-pressed", "false"); b.classList.remove("gravando"); aoTerminar?.(); };
+    rec.onerror = (ev) => { if (ev.error === "not-allowed") alert("O navegador não deu acesso ao microfone. Use o texto."); };
+    rec.start();
+    b.textContent = "⏹️ Parar"; b.setAttribute("aria-pressed", "true"); b.classList.add("gravando");
   });
-  const saldo = c.disponivel - Object.values(estado.aloc).reduce((a, b) => a + b, 0);
-  return `Decidimos ${partes.join("; ")}.` + (saldo > 0 ? ` Guardamos ${brl(saldo)}.` : "");
+  return b;
 }
 
-function telaDecisao() {
-  const area = el("textarea", { id: "decisao", maxlength: estado.cfg.decisao.max_caracteres });
-  area.value = estado.escolhas.textoLivre || resumoAlocacao() + " Motivo: ";
-  const botao = el("button", { class: "grande", type: "submit" }, "Confirmar e ver o resultado");
-  const form = el("form", { class: "cartao", onsubmit: async (ev) => {
-    ev.preventDefault(); botao.disabled = true; botao.textContent = "Enviando…";
-    try { await enviarDecisao(area.value); } catch (e) { mostrarErro(form, e); botao.disabled = false; botao.textContent = "Confirmar e ver o resultado"; }
-  } }, el("label", { for: "decisao" }, "Resumo da decisão (o que, por quê e como vai comunicar)"), area, botao);
-  tela("Registrar a decisão", cabecalhoTrimestre(), form,
-    el("p", {}, el("button", { class: "secundario", onclick: telaOrcamento }, "← Voltar ao orçamento")));
+function avisoVoz() {
+  return el("p", { class: "pequeno suave" }, VOZ_OK
+    ? "🎤 A voz é transcrita pelo serviço de reconhecimento do navegador (no Chrome, servidores do Google). Revise o texto antes de enviar."
+    : "Este navegador não tem reconhecimento de voz. Use os botões ou o texto.");
+}
+
+/** Grupo de botões selecionáveis (chips). */
+function chips(opcoes, selecionados, { multiplo = true, max = 2, aoMudar } = {}) {
+  const grupo = el("div", { class: "chips", role: "group" });
+  const render = () => grupo.replaceChildren(...opcoes.map((o) => {
+    const ativo = selecionados.includes(o);
+    return el("button", { type: "button", class: `chip ${ativo ? "ativo" : ""}`, "aria-pressed": String(ativo),
+      onclick: () => {
+        const i = selecionados.indexOf(o);
+        if (i >= 0) selecionados.splice(i, 1);
+        else if (multiplo) { if (selecionados.length >= max) selecionados.shift(); selecionados.push(o); }
+        else { selecionados.splice(0, selecionados.length, o); }
+        render(); aoMudar?.();
+      } }, ativo ? "✓ " + o : o);
+  }));
+  render();
+  return grupo;
+}
+
+// ------------------------------------------------------------------ decisão guiada (3 passos + resumo)
+const MOTIVOS = ["Maior impacto nas vendas", "Mais associados beneficiados", "Urgência", "Menor risco financeiro", "Exigência de parceiro"];
+const CANAIS = ["Assembleia", "WhatsApp", "Reunião setorial", "Jornal local"];
+const PRAZOS = ["o fim do trimestre", "30 dias", "60 dias", "90 dias"];
+const REVISOES = ["30 dias", "60 dias", "90 dias"];
+
+function construtor() {
+  if (!estado.escolhas.construtor) {
+    estado.escolhas.construtor = { motivos: [], motivoLivre: "", canais: [], canalLivre: "", qtd: "", oque: [], oqueLivre: "", prazo: [], revisao: [] };
+  }
+  return estado.escolhas.construtor;
+}
+
+function financiadas() {
+  const c = estado.campanha.cenario;
+  return c.demandas.filter((d) => estado.aloc[d.id] > 0);
+}
+
+function passoDecisao(n) {
+  const k = construtor();
+  const total = 4;
+  const progresso = el("p", { class: "pequeno suave" }, `Passo ${n} de ${total}`);
+  const voltar = el("button", { class: "secundario", onclick: () => (n === 1 ? telaOrcamento() : passoDecisao(n - 1)) }, "← Voltar");
+  const avancar = (rotulo = "Próximo →") => el("button", { class: "grande", onclick: () => passoDecisao(n + 1) }, rotulo);
+  const campoLivre = (chave, rotulo, id) => {
+    const inp = el("input", { type: "text", id, maxlength: 300, value: k[chave] });
+    inp.addEventListener("input", () => { k[chave] = inp.value; });
+    return el("div", { class: "livre" }, el("label", { for: id }, rotulo), el("div", { class: "linha" }, inp, botaoVoz(inp)));
+  };
+  let corpo;
+  if (n === 1) {
+    corpo = [el("h2", {}, "Por que essa prioridade?"), el("p", { class: "suave" }, "Escolha até 2 motivos."),
+      chips(MOTIVOS, k.motivos), campoLivre("motivoLivre", "Outro motivo (opcional)", "m-livre"), avisoVoz(), el("p", {}, voltar, avancar())];
+  } else if (n === 2) {
+    corpo = [el("h2", {}, "Como vai comunicar aos associados?"), el("p", { class: "suave" }, "Escolha até 2 canais."),
+      chips(CANAIS, k.canais), campoLivre("canalLivre", "Outro canal (opcional)", "c-livre"), el("p", {}, voltar, avancar())];
+  } else if (n === 3) {
+    const sugestoes = financiadas().map((d) => d.meta_sugerida).filter(Boolean);
+    const qtd = el("input", { type: "number", id: "meta-qtd", min: 1, max: 100000, inputmode: "numeric", value: k.qtd, class: "qtd" });
+    qtd.addEventListener("input", () => { k.qtd = qtd.value; });
+    corpo = [el("h2", {}, "Qual a meta e quando rever?"),
+      el("p", { class: "modelo-meta" }, "[quantidade] [o quê] até [quando]; reavaliar em 30, 60 ou 90 dias"),
+      el("label", { for: "meta-qtd" }, "Quantidade"), qtd,
+      el("p", { class: "rotulo" }, "O quê"), sugestoes.length ? chips(sugestoes, k.oque, { multiplo: false }) : "",
+      campoLivre("oqueLivre", "Ou escreva/fale o que será medido", "o-livre"),
+      el("p", { class: "rotulo" }, "Até quando"), chips(PRAZOS, k.prazo, { multiplo: false }),
+      el("p", { class: "rotulo" }, "Reavaliar em"), chips(REVISOES, k.revisao, { multiplo: false }),
+      el("p", {}, voltar, avancar("Ver o resumo →"))];
+  } else {
+    return telaResumoDecisao();
+  }
+  tela("Registrar a decisão", cabecalhoTrimestre(), el("div", { class: "cartao passo" }, progresso, corpo));
   marcarEtapa(2);
 }
+
+const min1 = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+
+function textoMeta(k) {
+  const oque = k.oqueLivre.trim() || k.oque[0] || "";
+  if (!k.qtd || !oque || !k.prazo[0]) return "";
+  return `${k.qtd} ${oque} até ${k.prazo[0]}` + (k.revisao[0] ? `; reavaliar em ${k.revisao[0]}` : "");
+}
+
+/** Resumo de até 5 linhas: prioridade, motivo, limites que pesaram, comunicação e meta. */
+function gerarResumo() {
+  const c = estado.campanha.cenario;
+  const k = construtor();
+  const fin = c.demandas.filter((d) => estado.aloc[d.id] >= d.custo).map((d) => `${d.titulo} (${brl(estado.aloc[d.id])})`);
+  const parc = c.demandas.filter((d) => estado.aloc[d.id] > 0 && estado.aloc[d.id] < d.custo).map((d) => `${d.titulo} em parte (${brl(estado.aloc[d.id])} de ${brl(d.custo)})`);
+  const adi = c.demandas.filter((d) => !estado.aloc[d.id]).map((d) => d.titulo);
+  const saldo = c.disponivel - Object.values(estado.aloc).reduce((a, b) => a + b, 0);
+  const motivos = [...k.motivos, k.motivoLivre.trim()].filter(Boolean);
+  const canais = [...k.canais, k.canalLivre.trim()].filter(Boolean);
+  const limites = [`orçamento de ${brl(c.disponivel)}` + (c.evento ? ` (${c.evento.titulo.charAt(0).toLowerCase() + c.evento.titulo.slice(1)})` : "")];
+  if (c.regras[0]) limites.push(min1(c.regras[0].texto.replace(/\.$/, "")));
+  const linhas = [
+    `Prioridade: ${[...fin, ...parc].join("; ") || "nenhum pedido financiado"}` + (adi.length ? `. Adiado: ${adi.join(", ")}` : "") + (saldo > 0 ? `. Guardamos ${brl(saldo)}` : "") + ".",
+    `Por quê: ${motivos.map(min1).join("; ") || "(não informado)"}.`,
+    `Limites que pesaram: ${limites.join("; ")}.`,
+    `Comunicação: ${canais.map((x) => (x === "WhatsApp" ? x : min1(x))).join(", ") || "(não definida)"}.`,
+    `Meta: ${textoMeta(k) || "(não definida)"}.`,
+  ];
+  return linhas.join("\n");
+}
+
+function telaResumoDecisao() {
+  const k = construtor();
+  const area = el("textarea", { id: "resumo", maxlength: estado.cfg.decisao.max_caracteres, rows: 6 });
+  area.value = k.resumoEditado || gerarResumo();
+  area.addEventListener("input", () => { k.resumoEditado = area.value; });
+  const completo = k.motivos.length + (k.motivoLivre ? 1 : 0) > 0 && k.canais.length + (k.canalLivre ? 1 : 0) > 0 && !!textoMeta(k);
+  const botao = el("button", { class: "grande", type: "submit" }, "Confirmar decisão");
+  const form = el("form", { class: "cartao", onsubmit: async (ev) => {
+    ev.preventDefault(); botao.disabled = true; botao.textContent = "Enviando…";
+    const escolhas = {
+      construtor: k, motivos: [...k.motivos, k.motivoLivre].filter(Boolean),
+      canais: [...k.canais, k.canalLivre].filter(Boolean), meta: textoMeta(k),
+      comunicacao: (k.canais.length || k.canalLivre) ? 1 : 0, meta_mensuravel: textoMeta(k) ? 1 : 0,
+      revisao_programada: k.revisao.length ? 1 : 0, resumo_completo: completo ? 1 : 0,
+      continuidade: estado.escolhas.continuidade, experiencias_citadas: estado.escolhas.experiencias_citadas,
+      consultou_conselheiro: estado.escolhas.consultou_conselheiro ? 1 : 0,
+    };
+    try { await enviarDecisao(area.value, escolhas); } catch (e) { mostrarErro(form, e); botao.disabled = false; botao.textContent = "Confirmar decisão"; }
+  } },
+    el("p", { class: "pequeno suave" }, "Passo 4 de 4"),
+    el("h2", {}, "Resumo da decisão"),
+    el("p", { class: "suave" }, "Confira: alguém de fora deve entender a prioridade e os limites que pesaram. Você pode editar."),
+    el("label", { for: "resumo", class: "sr" }, "Resumo da decisão"), area,
+    el("div", { class: "linha" }, botaoVoz(area), el("button", { type: "button", class: "secundario", onclick: () => { k.resumoEditado = ""; area.value = gerarResumo(); } }, "Refazer o resumo")),
+    completo ? "" : el("p", { class: "aviso" }, "Dica: com motivo, canal e meta preenchidos, a decisão fica mais clara."),
+    el("p", {}, el("button", { type: "button", class: "secundario", onclick: () => passoDecisao(3) }, "← Voltar"), botao));
+  tela("Registrar a decisão", cabecalhoTrimestre(), form);
+  marcarEtapa(2);
+}
+
+function telaDecisao() { passoDecisao(1); }
 
 async function enviarDecisao(texto, escolhas = estado.escolhas) {
   const camp = estado.campanha;
@@ -498,9 +643,39 @@ async function painelConversa(t) {
     enviar.disabled = false; log.scrollTop = log.scrollHeight;
   };
   const form = el("form", { onsubmit: (ev) => { ev.preventDefault(); const v = campo.value; campo.value = ""; mandar(v); } },
-    el("label", { for: "msg" }, "Sua pergunta"), el("div", { class: "linha" }, campo, enviar));
+    el("label", { for: "msg" }, "Sua pergunta"), el("div", { class: "linha" }, campo, botaoVoz(campo), enviar));
+  const sugestoes = el("div", { class: "chips", role: "group", "aria-label": "Perguntas sugeridas" });
+  const rostinho = el("span", { class: "conversa-avatar" });
+  const atualizarSugestoes = () => {
+    const a = ator(sel.value);
+    const postura = posturaAtual(t, sel.value);
+    rostinho.replaceChildren(a ? avatarDe(a, AVATAR.expressaoDePostura(postura), 56) : AVATAR.criar({ id: "analista", tipo: "parceiro", expressao: "neutra", tamanho: 56 }));
+    sugestoes.replaceChildren(...perguntasSugeridas(t, sel.value).map((q) => el("button", { type: "button", class: "chip", onclick: () => mandar(q) }, q)));
+  };
+  sel.addEventListener("change", atualizarSugestoes);
+  atualizarSugestoes();
   await carregar();
-  return el("div", { class: "cartao" }, el("h2", {}, "Conversar"), el("label", { for: "interlocutor" }, "Com quem?"), sel, log, form, dica);
+  return el("div", { class: "cartao" }, el("h2", {}, "Conversar"),
+    el("div", { class: "linha" }, rostinho, el("div", { class: "flex1" }, el("label", { for: "interlocutor" }, "Com quem?"), sel)),
+    el("p", { class: "pequeno suave" }, "Toque numa pergunta ou escreva/fale a sua."), sugestoes, log, form, dica);
+}
+
+function posturaAtual(t, atorId) {
+  const r = t.resultado || {};
+  const reac = (r.reacoes || []).find((x) => x.ator_id === atorId);
+  if (reac) return reac.postura_final;
+  const d = (r.demandas || []).find((x) => x.solicitante === atorId);
+  return d ? d.postura_prevista : (ator(atorId)?.postura_inicial ?? 0);
+}
+
+/** 3 perguntas por interlocutor, conforme o que aconteceu com o pedido dele. */
+function perguntasSugeridas(t, atorId) {
+  if (atorId === "relatorio") return ["Quem ficou mais insatisfeito?", "Qual é o maior risco agora?", "O que a simulação mostrou de inesperado?"];
+  const d = (t.resultado?.demandas || []).find((x) => x.solicitante === atorId);
+  if (d && d.valor === 0) return ["Por que você ficou insatisfeito?", "Dá para fazer parte do seu projeto com menos dinheiro?", "O que faria você apoiar a diretoria no próximo trimestre?"];
+  if (d && d.valor < d.custo) return ["Com metade do valor, o que dá para entregar?", "O que você precisa para não desistir do projeto?", "Como vamos medir o resultado?"];
+  if (d) return ["O que você vai entregar com esse dinheiro?", "Como vamos medir o resultado?", "O que pode dar errado?"];
+  return ["O que você achou da decisão?", "Quem ficou de fora, na sua opinião?", "O que você faria diferente?"];
 }
 
 // ------------------------------------------------------------------ final

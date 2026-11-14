@@ -185,7 +185,8 @@
         "conformidade": -4,
         "reputacao": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "relatório entregue à prefeitura"
     },
     {
       "id": "manter_plataforma",
@@ -200,7 +201,8 @@
       "efeitos_adiar": {
         "engajamento": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas vendendo na plataforma"
     },
     {
       "id": "capacitacao_digital",
@@ -215,7 +217,8 @@
       "efeitos_adiar": {
         "engajamento": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojistas capacitados"
     }
   ],
   "regras": [

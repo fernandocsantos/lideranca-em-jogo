@@ -133,3 +133,17 @@ fieldset.perfis legend { font-weight: 700; margin-bottom: .3rem; }
 .girando { display: inline-block; animation: girar 2s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }
 @media (max-width: 600px) { .barras-resultado .linha-barra { grid-template-columns: 1fr 3rem 5rem; } .barras-resultado .barra { display: none; } }
+/* decisão guiada */
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0 1rem; }
+.chip { background: #fff; color: var(--primaria); border: 2px solid var(--primaria); border-radius: 999px; padding: .55rem 1rem; min-height: 48px; margin: 0; }
+.chip.ativo { background: var(--primaria); color: #fff; }
+button + .chip, .chip + .chip { margin-left: 0; }
+.livre .linha input { flex: 1; min-width: 200px; }
+.voz.gravando { background: var(--negativo); border-color: var(--negativo); color: #fff; }
+.modelo-meta { background: #f1f5f9; border-radius: 8px; padding: .5rem .8rem; font-family: ui-monospace, monospace; font-size: .95rem; }
+.rotulo { font-weight: 600; margin: .9rem 0 .2rem; }
+input.qtd { max-width: 160px; font-size: 1.2rem; }
+.passo h2 { margin-top: .2rem; }
+.sr { position: absolute; left: -9999px; }
+.flex1 { flex: 1; }
+.conversa-avatar svg { display: block; }

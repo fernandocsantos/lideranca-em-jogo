@@ -180,7 +180,8 @@
         "engajamento": -2.0,
         "reputacao": -1.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "novas lojas vendendo pela internet"
     },
     {
       "id": "formacao_vendas",
@@ -197,7 +198,8 @@
         "engajamento": -1.0,
         "coesao": -1.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "vendedores formados"
     },
     {
       "id": "atendimento",
@@ -213,7 +215,8 @@
         "saude_financeira": -3.0,
         "coesao": -1.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "associados com mensalidade em dia"
     },
     {
       "id": "black_friday",
@@ -229,7 +232,8 @@
       "efeitos_adiar": {
         "engajamento": -1.0
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas participando da campanha"
     }
   ],
   "regras": [

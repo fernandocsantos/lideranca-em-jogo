@@ -182,7 +182,8 @@
       "efeitos_adiar": {
         "capital_politico": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "estagiários contratados"
     },
     {
       "id": "campanha_imagem",
@@ -194,7 +195,8 @@
         "reputacao": 2
       },
       "efeitos_adiar": {},
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "candidatos inscritos"
     },
     {
       "id": "banco_talentos",
@@ -207,7 +209,8 @@
         "saude_financeira": 1
       },
       "efeitos_adiar": {},
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "vagas preenchidas"
     },
     {
       "id": "transporte_sabado",
@@ -222,7 +225,8 @@
       "efeitos_adiar": {
         "engajamento": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "trabalhadores atendidos aos sábados"
     }
   ],
   "regras": [

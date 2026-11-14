@@ -172,7 +172,8 @@
       "efeitos_adiar": {
         "engajamento": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "empresas atendidas no mutirão"
     },
     {
       "id": "diagnostico_sebrae",
@@ -188,7 +189,8 @@
       "efeitos_adiar": {
         "reputacao": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "diagnósticos feitos"
     },
     {
       "id": "evento_aberto",
@@ -203,7 +205,8 @@
       "efeitos_adiar": {
         "capital_politico": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "empresas com aval aprovado"
     }
   ],
   "regras": [

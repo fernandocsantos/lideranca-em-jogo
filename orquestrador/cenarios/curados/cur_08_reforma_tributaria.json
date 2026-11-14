@@ -197,7 +197,8 @@
       "efeitos_adiar": {
         "engajamento": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "empresas orientadas"
     },
     {
       "id": "plantao_pago",
@@ -210,7 +211,8 @@
         "engajamento": 1
       },
       "efeitos_adiar": {},
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "atendimentos pagos"
     },
     {
       "id": "estudo_federacao",
@@ -225,7 +227,8 @@
       "efeitos_adiar": {
         "capital_politico": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "empresas no levantamento"
     },
     {
       "id": "checagem",
@@ -239,7 +242,8 @@
       "efeitos_adiar": {
         "reputacao": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "pessoas alcançadas pela campanha"
     }
   ],
   "regras": [

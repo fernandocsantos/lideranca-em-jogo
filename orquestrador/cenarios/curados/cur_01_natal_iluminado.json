@@ -174,7 +174,8 @@
         "engajamento": -3,
         "reputacao": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "cupons de sorteio distribuídos"
     },
     {
       "id": "atracoes_bairros",
@@ -190,7 +191,8 @@
         "engajamento": -2,
         "capital_politico": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "atrações nos bairros"
     },
     {
       "id": "comunicacao",
@@ -205,7 +207,8 @@
       "efeitos_adiar": {
         "reputacao": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "pessoas alcançadas"
     }
   ],
   "regras": [

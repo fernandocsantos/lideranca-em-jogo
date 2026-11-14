@@ -184,7 +184,8 @@
       "efeitos_adiar": {
         "capital_politico": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "câmeras funcionando"
     },
     {
       "id": "seguranca_privada",
@@ -199,7 +200,8 @@
       "efeitos_adiar": {
         "engajamento": -3
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "noites com ronda"
     },
     {
       "id": "campanha_turismo",
@@ -213,7 +215,8 @@
       "efeitos_adiar": {
         "reputacao": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "turistas alcançados"
     }
   ],
   "regras": [

@@ -62,6 +62,7 @@ class Demanda(Estrito):
     efeitos: dict[str, float]       # pontos por indicador se financiada por inteiro
     efeitos_adiar: dict[str, float] = {}  # pontos por indicador se não financiada
     minimo_util: float = 0.5        # abaixo desta fração o benefício cai pela metade
+    meta_sugerida: str = ""         # unidade da meta, ex.: "lojas vendendo pela internet"
 
 
 class Regra(Estrito):

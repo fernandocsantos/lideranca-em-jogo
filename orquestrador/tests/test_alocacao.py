@@ -69,3 +69,12 @@ def test_material_semente_tem_alocacao_estruturada():
     m = cenarios.material_semente(c, "Priorizamos o atendimento.", {"atendimento": 8000})
     assert "| Atendimento ao associado | Patrícia Lemos | R$ 8.000 | R$ 8.000 | financiada |" in m
     assert "adiada" in m and "Regras que a decisão e a simulação devem respeitar" in m
+
+
+def test_decisao_guiada_soma_pontos_de_comunicacao_e_meta():
+    c = _c()
+    a = {"atendimento": 8000}
+    sem = alocacao.calcular(c, a, {})["pontos"]
+    com = alocacao.calcular(c, a, {"comunicacao": 1, "meta_mensuravel": 1, "revisao_programada": 1})["pontos"]
+    assert com["engajamento"] - sem["engajamento"] == 1.5
+    assert com["conformidade"] - sem["conformidade"] == 2.0

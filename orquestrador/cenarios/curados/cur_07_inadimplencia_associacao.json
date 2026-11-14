@@ -183,7 +183,8 @@
       "efeitos_adiar": {
         "saude_financeira": -3
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "associados que voltaram a pagar"
     },
     {
       "id": "planos_porte",
@@ -198,7 +199,8 @@
       "efeitos_adiar": {
         "engajamento": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "associados no plano básico"
     },
     {
       "id": "cobranca",
@@ -212,7 +214,8 @@
       "efeitos_adiar": {
         "saude_financeira": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "boletos pagos em dia"
     },
     {
       "id": "protesto",
@@ -225,7 +228,8 @@
         "reputacao": -2
       },
       "efeitos_adiar": {},
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "débitos recuperados"
     }
   ],
   "regras": [

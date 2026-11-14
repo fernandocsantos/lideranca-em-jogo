@@ -197,7 +197,8 @@
       "efeitos_adiar": {
         "engajamento": -3
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas reabertas"
     },
     {
       "id": "mutirao_limpeza",
@@ -213,7 +214,8 @@
       "efeitos_adiar": {
         "conformidade": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "lojas liberadas pela Vigilância"
     },
     {
       "id": "triagem_credito",
@@ -228,7 +230,8 @@
       "efeitos_adiar": {
         "engajamento": -1
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "pedidos de crédito encaminhados"
     },
     {
       "id": "doacoes_organizadas",
@@ -243,7 +246,8 @@
       "efeitos_adiar": {
         "reputacao": -2
       },
-      "minimo_util": 0.5
+      "minimo_util": 0.5,
+      "meta_sugerida": "doações com prestação de contas"
     }
   ],
   "regras": [
