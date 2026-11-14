@@ -129,7 +129,7 @@ function influencia(n) { return el("span", { "aria-label": `Influência ${n} de 
 
 function abrirAtor(a, postura) {
   const expr = AVATAR.expressaoDePostura(postura ?? a.postura_inicial);
-  abrirPainel(a.nome,
+  abrirPainel(nomeFuncao(a),
     el("div", { class: "linha" }, avatarDe(a, expr, 84), el("div", {}, el("span", { class: "etiqueta neutra" }, TIPOS[a.tipo] || a.tipo),
       el("p", { style: "margin:.4rem 0 0" }, a.papel))),
     el("p", {}, el("strong", {}, "Influência: "), influencia(a.influencia)),

@@ -27,7 +27,9 @@ em 1ª pessoa de no máximo 2 frases curtas (até 18 palavras no total), fiel ao
 - riscos: 3 a 5 riscos que a simulação mostrou, cada um com probabilidade e impacto (alto, medio ou baixo).
 - sinais_alerta: 2 a 4 sinais concretos a monitorar nas próximas semanas.
 - o_que_mudaria: 1 a 3 fatos que mudariam esta previsão.
-Indicadores: engajamento, saude_financeira, reputacao, capital_politico, coesao, conformidade."""
+Indicadores: engajamento, saude_financeira, reputacao, capital_politico, coesao, conformidade.
+Sempre que citar uma pessoa nos textos (resumo, reações, riscos), escreva a função dela entre parênteses na \
+primeira menção, como "Otávio Rezende (presidente da associação)"."""
 
 
 def _usuario(c: Cenario, decisao: str, relatorio: str, acoes: list[dict]) -> str:

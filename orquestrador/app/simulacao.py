@@ -10,7 +10,7 @@ import unicodedata
 from typing import Any
 
 from . import alocacao as alocacao_mod
-from . import avaliacao, cenarios, config, custos, db, devolutiva, indicadores, settings, sinais
+from . import avaliacao, cenarios, funcoes, config, custos, db, devolutiva, indicadores, settings, sinais
 from .contingencia import simular as simular_contingencia
 from .esclarecimento import decisao_completa
 from .llm import Ctx
@@ -292,7 +292,7 @@ async def gerar_devolutiva(tid: str) -> None:
         dev = await devolutiva.gerar(c, decisao_completa(t["decisao"], t["esclarecimentos"]), None,
                                      (t["resultado"] or {}).get("indicadores", {}).get("variacao", {}), ctx,
                                      alocacao=t["alocacao"] or {})
-        db.atualizar("tentativas", tid, {"devolutiva": dev})
+        db.atualizar("tentativas", tid, {"devolutiva": funcoes.aplicar(dev, funcoes.pessoas(c))})
     except Exception as e:  # noqa: BLE001
         log.exception("Devolutiva da tentativa %s falhou", tid)
         db.atualizar("tentativas", tid, {"devolutiva": {"erro": f"Devolutiva indisponível: {e}"}})
@@ -390,6 +390,11 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
             "relatorio": relatorio[:20000],
             "acoes": acoes[:200],
         }
+        # toda pessoa citada nos textos gerados aparece com a função (primeira menção)
+        gente = funcoes.pessoas(c)
+        for k in ("resumo", "momentos", "reacoes", "riscos", "sinais_alerta", "o_que_mudaria", "sinais"):
+            resultado[k] = funcoes.aplicar(resultado.get(k), gente)
+        resultado["indicadores"]["auditoria"] = funcoes.aplicar(resultado["indicadores"].get("auditoria", []), gente)
         if aloc and c.demandas:
             resultado["avaliacao"] = avaliacao.avaliar(c, resultado, escolhas, aloc)
         db.atualizar("tentativas", tid, {"status": "concluida", "etapa": "Concluída", "progresso": 100,

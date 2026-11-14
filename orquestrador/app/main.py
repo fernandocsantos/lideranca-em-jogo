@@ -21,7 +21,7 @@ import asyncio
 from . import alocacao as aloc_mod
 from . import campanha as camp
 from . import mascaramento
-from . import avaliacao, cenarios, config, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao, vivencias
+from . import avaliacao, cenarios, funcoes, config, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao, vivencias
 from .llm import Ctx, ErroLLM
 from .mirofish_client import novo as novo_mirofish
 
@@ -356,6 +356,7 @@ async def nova_tentativa(cid: str, dados: Decisao, s: dict = Depends(sessao_atua
     # LGPD: o texto livre do jogador é mascarado antes de salvar e de seguir para o LLM e o MiroFish.
     ficticios = _nomes_ficticios(cen)
     texto = mascaramento.mascarar(texto, permitidos=ficticios, generalizar_valores=False)["texto"]
+    texto = funcoes.com_funcao(texto, funcoes.pessoas(cen))  # "Nome (função)" também no texto do jogador
     k = escolhas.get("construtor") or {}
     for campo in ("motivoLivre", "canalLivre", "oqueLivre", "ataEditada"):
         if isinstance(k.get(campo), str) and k[campo]:

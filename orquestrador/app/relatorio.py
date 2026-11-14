@@ -30,7 +30,8 @@ def ata(campanha: dict, t: dict, consolidada: bool) -> dict[str, Any]:
     linhas = []
     for d in c.demandas:
         ant, prop = int(base.get(d.id, 0)), int(aloc.get(d.id, 0))
-        linhas.append({"linha": d.titulo, "solicitante": nomes[d.solicitante].nome if d.solicitante in nomes else d.solicitante,
+        linhas.append({"linha": d.titulo, "solicitante": (f"{nomes[d.solicitante].nome} ({nomes[d.solicitante].funcao_curta})"
+                                                         if d.solicitante in nomes else d.solicitante),
                        "ano_anterior": ant, "proposto": prop, "variacao": prop - ant, "variacao_pct": _pct(ant, prop), "pedido": d.custo})
     total = sum(x["proposto"] for x in linhas)
     escolhida = max(linhas, key=lambda x: x["proposto"])["linha"] if linhas and total else "nenhuma"
@@ -48,12 +49,13 @@ def ata(campanha: dict, t: dict, consolidada: bool) -> dict[str, Any]:
         "prioridades": {"opcoes": [d.titulo for d in c.demandas], "escolhida": escolhida, "adiadas": adiadas,
                         "criterios": e.get("motivos") or [], "trade_offs": (dev.get("trade_offs") or [])[:3] or
                         ([f"Adiar {', '.join(adiadas)} para caber no teto"] if adiadas else []),
-                        "envolvidos": [nomes[i].nome for i in e.get("envolvidos", []) if i in nomes]},
+                        "envolvidos": [f"{nomes[i].nome} ({nomes[i].funcao_curta})" for i in e.get("envolvidos", []) if i in nomes]},
         "orcamento": {"linhas": linhas, "total": total, "teto": c.disponivel, "saldo": c.disponivel - total,
                       "justificativa_cortes": e.get("cortes_justificativa") or []},
         "resultados": {"meta": e.get("meta") or "", "responsavel": e.get("responsavel") or "", "revisao": revisao,
                        "indicador": e.get("indicador_acompanhamento") or "", "previsao_meta": res.get("meta")},
-        "previsao": {"reacoes": [{"nome": r["nome"], "tipo": r["tipo"], "postura": r["postura_final"], "reacao": r.get("reacao", "")}
+        "previsao": {"reacoes": [{"nome": (f"{nomes[r['ator_id']].nome} ({nomes[r['ator_id']].funcao_curta})"
+                                           if r.get("ator_id") in nomes else r["nome"]), "tipo": r["tipo"], "postura": r["postura_final"], "reacao": r.get("reacao", "")}
                                  for r in res.get("reacoes", [])],
                      "riscos": res.get("riscos") or [], "sinais_alerta": res.get("sinais_alerta") or [],
                      "o_que_mudaria": res.get("o_que_mudaria") or [], "aviso": AVISO},

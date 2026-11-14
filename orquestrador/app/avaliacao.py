@@ -118,6 +118,10 @@ def pesos(c: Cenario, auditoria: list[dict[str, Any]]) -> dict[str, list[dict[st
         partes = ([f"ajudou {', '.join(ajudou[:2])}"] if ajudou else []) + ([f"pesou contra {', '.join(pesou[:2])}"] if pesou else [])
         itens.append({"fator": fator, "efeito": "; ".join(partes), "sentido": "positivo" if sum(por_ind.values()) >= 0 else "negativo",
                       "_peso": total})
+    from .funcoes import com_funcao, pessoas as gente_de
+    gente = gente_de(c)
+    for x in itens:
+        x["fator"] = com_funcao(x["fator"], gente)
     itens.sort(key=lambda x: -x["_peso"])
     limpa = lambda xs: [{k: v for k, v in x.items() if k != "_peso"} for x in xs]  # noqa: E731
     return {"mais": limpa(itens[:3]), "menos": limpa(list(reversed(itens[3:]))[:2] if len(itens) > 3 else [])}
