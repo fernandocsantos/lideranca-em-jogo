@@ -73,6 +73,8 @@ def aplicar(c: Cenario, perfil_id: str | None) -> Cenario:
         d.custo = max(500, _arredondar(d.custo * fator))
         if d.ano_anterior is not None:
             d.ano_anterior = min(d.custo, _arredondar(d.ano_anterior * fator))
+        if d.meta_capacidade:
+            d.meta_capacidade = max(1, int(round(d.meta_capacidade * fator)))
     if novo.evento and novo.evento.delta_orcamento:
         novo.evento.delta_orcamento = _arredondar(novo.evento.delta_orcamento * fator)
     # O texto completo cita os valores de referência; acrescenta a versão do perfil para o MiroFish.

@@ -195,7 +195,11 @@ def progresso_meta(c: Cenario, aloc: dict[str, int], escolhas: dict[str, Any] | 
     u = utilidade(d, aloc.get(d.id, 0), regras) if d else 0.0
     eng = float(depois.get("engajamento", 50))
     fator = max(0.5, min(1.1, 0.75 + 0.5 * (eng - 50) / 100))
-    previsto = int(round(alvo * min(1.0, u * fator)))
+    if d is not None and d.meta_capacidade:
+        # capacidade de entrega com a verba aprovada × engajamento; a meta só é cumprida se couber nela
+        previsto = int(min(alvo, round(d.meta_capacidade * u * fator)))
+    else:
+        previsto = int(round(alvo * min(1.0, u * fator)))
     pct = round(100 * previsto / alvo)
     situacao = "no caminho" if pct >= 80 else "atrasada" if pct >= 40 else "longe da meta"
     return {"texto": (escolhas or {}).get("meta") or f"{alvo} {oque}", "alvo": alvo, "unidade": oque,

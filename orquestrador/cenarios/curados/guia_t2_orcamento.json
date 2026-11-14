@@ -183,7 +183,8 @@
       "minimo_util": 0.5,
       "meta_sugerida": "novas lojas vendendo pela internet",
       "horas": 40,
-      "indicador_sugerido": "% de lojistas digitalizados"
+      "indicador_sugerido": "% de lojistas digitalizados",
+      "meta_capacidade": 30
     },
     {
       "id": "formacao_vendas",
@@ -203,7 +204,8 @@
       "minimo_util": 0.5,
       "meta_sugerida": "vendedores formados",
       "horas": 30,
-      "indicador_sugerido": "participação na formação"
+      "indicador_sugerido": "participação na formação",
+      "meta_capacidade": 40
     },
     {
       "id": "atendimento",
@@ -222,7 +224,8 @@
       "minimo_util": 0.5,
       "meta_sugerida": "associados com mensalidade em dia",
       "horas": 40,
-      "indicador_sugerido": "tempo de resposta ao associado"
+      "indicador_sugerido": "tempo de resposta ao associado",
+      "meta_capacidade": 80
     },
     {
       "id": "black_friday",
@@ -241,7 +244,8 @@
       "minimo_util": 0.5,
       "meta_sugerida": "lojas participando da campanha",
       "horas": 30,
-      "indicador_sugerido": "lojas dos bairros na campanha"
+      "indicador_sugerido": "lojas dos bairros na campanha",
+      "meta_capacidade": 60
     }
   ],
   "regras": [

@@ -184,7 +184,8 @@
       "meta_sugerida": "lojas vendendo pela internet",
       "ano_anterior": 18000,
       "horas": 60,
-      "indicador_sugerido": "% de lojistas digitalizados"
+      "indicador_sugerido": "% de lojistas digitalizados",
+      "meta_capacidade": 40
     },
     {
       "id": "formacao_vendas",
@@ -206,7 +207,8 @@
       "ano_anterior": 14000,
       "horas": 40,
       "grupo": "formacao",
-      "indicador_sugerido": "participação na formação"
+      "indicador_sugerido": "participação na formação",
+      "meta_capacidade": 60
     },
     {
       "id": "formacao_online",
@@ -229,7 +231,8 @@
       "horas": 16,
       "grupo": "formacao",
       "requer_consulta": true,
-      "indicador_sugerido": "participação na formação"
+      "indicador_sugerido": "participação na formação",
+      "meta_capacidade": 60
     },
     {
       "id": "atendimento",
@@ -250,7 +253,8 @@
       "meta_sugerida": "associados atrasados recontatados",
       "ano_anterior": 8000,
       "horas": 50,
-      "indicador_sugerido": "tempo de resposta ao associado"
+      "indicador_sugerido": "tempo de resposta ao associado",
+      "meta_capacidade": 80
     }
   ],
   "regras": [

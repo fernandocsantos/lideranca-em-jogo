@@ -1,7 +1,7 @@
 /* Service worker: interface e recursos locais em cache (offline); API com rede primeiro e cache de reserva. */
-const VERSAO = "legado-v4-1";
+const VERSAO = "legado-v4-2";
 const CASCA = ["/", "/static/styles.css", "/static/app.js", "/static/avatar.js", "/static/icones.js", "/static/sons.js",
-  "/static/relatorio.js", "/static/vivencias.js", "/static/ensaio.js", "/static/missao.js", "/static/icon.svg", "/manifest.webmanifest",
+  "/static/relatorio.js", "/static/vivencias.js", "/static/ensaio.js", "/static/missao.js", "/static/marca/legado-64.png", "/static/marca/legado-256.png", "/static/marca/icone-192.png", "/static/marca/favicon-32.png", "/manifest.webmanifest",
   "/static/vendor/fontes/inter-latin.woff2", "/static/vendor/fontes/inter-latin-ext.woff2",
   "/static/vendor/js/jspdf.umd.min.js", "/static/vendor/js/jspdf.plugin.autotable.min.js"];
 

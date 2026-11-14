@@ -155,7 +155,7 @@ def test_limite_diario_de_simulacoes(monkeypatch):
 
 def test_spa_e_estaticos_servidos():
     with TestClient(app) as cli:
-        assert "Liderança em Jogo" in cli.get("/").text
+        assert "<title>Legado</title>" in cli.get("/").text
         assert cli.get("/static/app.js").status_code == 200
         assert cli.get("/facilitador").status_code == 200
 

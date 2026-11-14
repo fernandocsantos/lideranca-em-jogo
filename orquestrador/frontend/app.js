@@ -250,35 +250,95 @@ async function carregarCampanha() {
   catch (e) { if (e.status === 401 || e.status === 404) { localStorage.removeItem("lej_campanha"); estado.campanhaId = null; } return null; }
 }
 
+// ------------------------------------------------------------------ diálogo do próprio app (nunca alert/confirm do navegador)
+function dialogo(titulo, texto, { confirmar = "Confirmar", cancelar = "Cancelar", perigo = false } = {}) {
+  return new Promise((resolve) => {
+    const anterior = document.activeElement;
+    const fechar = (v) => { fundo.remove(); anterior?.focus?.(); resolve(v); };
+    const ok = el("button", { class: `botao ${perigo ? "perigo" : "principal"}`, onclick: () => fechar(true) }, confirmar);
+    const fundo = el("div", { class: "fundo-dialogo", onclick: (ev) => { if (ev.target === fundo) fechar(false); } },
+      el("div", { class: "dialogo", role: "alertdialog", "aria-modal": "true", "aria-labelledby": "dlg-t", "aria-describedby": "dlg-d" },
+        el("h2", { id: "dlg-t" }, titulo), el("p", { id: "dlg-d" }, texto),
+        el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: () => fechar(false) }, cancelar), ok)));
+    fundo.addEventListener("keydown", (ev) => { if (ev.key === "Escape") fechar(false); });
+    document.body.append(fundo); ok.focus();
+  });
+}
+
 // ------------------------------------------------------------------ painel (mandato)
+async function recomecarMissao() {
+  if (!(await dialogo("Recomeçar esta missão do zero?", "A Mesa volta ao ano anterior e as escolhas desta missão são limpas. As tentativas anteriores ficam no histórico.", { confirmar: "Recomeçar" }))) return;
+  estado.campanha = await api(`/api/campanhas/${estado.campanhaId}`);
+  SOM.tocar("transicao"); iniciarTrimestre();
+}
+async function desfazerTrimestre() {
+  if (!(await dialogo("Desfazer o último trimestre?", "Você volta para a missão anterior, com os indicadores de antes dela. A tentativa desfeita continua no histórico.", { confirmar: "Desfazer" }))) return;
+  try { estado.campanha = await api(`/api/campanhas/${estado.campanhaId}/desfazer`, { method: "POST" }); avisoCurto("Último trimestre desfeito."); telaPainel(); }
+  catch (e) { mostrarErro(main(), e); }
+}
+async function reiniciarJornada() {
+  if (!(await dialogo("Reiniciar toda a jornada?", "Começa um mandato novo, do primeiro trimestre. A jornada atual fica arquivada e suas contribuições ao Banco de Vivências são preservadas.", { confirmar: "Reiniciar a jornada", perigo: true }))) return;
+  const c = await api(`/api/campanhas/${estado.campanhaId}/reiniciar`, { method: "POST" });
+  estado.campanhaId = c.id; localStorage.setItem("lej_campanha", c.id); estado.campanha = c;
+  avisoCurto("Jornada reiniciada."); telaPainel();
+}
+
 async function telaPainel() {
   if (!estado.token || !(await carregarCampanha())) return localStorage.getItem("lej_onboarding_ok") ? telaPosse() : telaOnboarding();
   const camp = estado.campanha;
   const perfil = (estado.cfg.perfis || []).find((p) => p.id === camp.perfil);
-  topo("Painel", `${perfil?.nome || ""} · Mandato`); abas("painel");
+  const j = jogador();
+  topo("Painel", `${j.apelido} (${j.funcao})`); abas("painel");
   const feitos = camp.mandato.filter((m) => m.status === "concluido").length;
   const ultima = camp.tentativas.at(-1);
-  const sigla = camp.cenario?.associacao?.nome?.match(/\(([^)]+)\)/)?.[1] || "";
+  const assoc = camp.cenario?.associacao || {};
   tela(
-    el("div", { class: "cabecalho-doc" }, el("span", {}, "Mandato"), el("span", {}, sigla || "Associação"), el("span", {}, perfil?.id || "")),
-    el("p", { class: "rotulo-secao", style: "margin-top:0" }, "Indicadores da associação"),
-    blocosIndicadores(camp.indicadores),
-    el("div", { class: "linha entre", style: "margin-top:1.4rem" }, el("p", { class: "rotulo-secao", style: "margin:0" }, "Mandato"),
-      el("span", { class: "pequeno suave" }, `${feitos} de ${camp.total} concluídos`)),
-    el("div", { class: "progresso-mandato", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": camp.total, "aria-valuenow": feitos },
+    el("div", { class: "cartao cartao-principal associacao" },
+      el("span", { class: "etiqueta-mono" }, "Sua associação"),
+      el("h2", {}, assoc.nome || perfil?.nome || "Associação"),
+      el("p", { class: "duas-linhas" }, `${assoc.associados ? assoc.associados + " associados · " : ""}${perfil?.equipe || ""} ${assoc.situacao_financeira || ""}`.trim()),
+      blocosIndicadores(camp.indicadores)),
+    el("div", { class: "linha entre", style: "margin-top:1.2rem" }, el("h2", { class: "titulo-secao" }, "Seu Mandato"),
+      el("span", { class: "etiqueta-mono" }, `${feitos} de ${camp.total}`)),
+    el("div", { class: "progresso-mandato", role: "progressbar", "aria-label": "Progresso na trilha", "aria-valuemin": 0, "aria-valuemax": camp.total, "aria-valuenow": feitos },
       el("span", { style: `width:${(feitos / camp.total) * 100}%` })),
-    el("ul", { class: "mandato" }, camp.mandato.map((m) => el("li", { class: m.status },
-      el("span", { class: "num" }, m.status === "concluido" ? icone("circle-check", 18) : String(m.indice + 1)),
-      el("div", { class: "corpo" }, el("strong", {}, m.titulo),
-        el("span", { class: "pequeno suave" }, `${m.tema} · ${m.demandas} pedidos · cerca de ${m.duracao_min} min`)),
-      m.status === "atual" ? el("button", { class: "botao", onclick: () => (ultima ? telaResultado(ultima.id) : iniciarTrimestre()) },
-        icone("play", 16), ultima ? "Continuar" : "Jogar")
-        : m.status === "concluido" ? el("span", { class: "etiqueta ok" }, "Concluído") : el("span", { class: "etiqueta neutra" }, icone("lock", 12), "Bloqueado")))),
+    el("ol", { class: "trilha" }, camp.mandato.map((m) => el("li", { class: m.status },
+      el("span", { class: "num", "aria-hidden": "true" }, m.status === "concluido" ? icone("circle-check", 18) : String(m.indice + 1)),
+      el("div", { class: "corpo" }, el("strong", {}, `${m.indice + 1}. ${m.titulo}`),
+        el("span", { class: "pequeno suave" }, `${m.status === "concluido" ? "Concluída" : m.status === "atual" ? (ultima ? "Em andamento" : "Disponível") : "Bloqueada"} · até ${m.duracao_min} min`)),
+      m.status === "atual" ? el("div", { class: "acoes-trilha" },
+        el("button", { class: "botao principal", onclick: () => (ultima ? telaResultado(ultima.id) : iniciarTrimestre()) }, icone("play", 16), ultima ? "Continuar" : "Jogar"),
+        el("button", { class: "botao secundario mini", onclick: recomecarMissao }, icone("refresh-ccw", 14), "Recomeçar do zero"))
+        : m.status === "concluido" ? el("span", { class: "etiqueta ok" }, icone("circle-check", 12), "Concluída") : el("span", { class: "etiqueta neutra" }, icone("lock", 12), "Bloqueada")))),
+    el("div", { class: "acoes" },
+      el("button", { class: "botao secundario", onclick: () => irPara("relatorio") }, icone("file-text", 18), "Ver plano"),
+      camp.historico.length ? el("button", { class: "botao secundario", onclick: desfazerTrimestre }, icone("arrow-left", 18), "Desfazer o último trimestre") : "",
+      el("button", { class: "botao fantasma", onclick: reiniciarJornada }, icone("refresh-ccw", 18), "Reiniciar toda a jornada")),
     camp.status === "concluida" ? el("div", { class: "cartao cartao-destaque" }, el("h3", {}, "Mandato concluído"),
-      el("p", { class: "suave" }, "O Relatório de gestão reúne as Atas Padronizadas e o consolidado do mandato."),
-      el("div", { class: "acoes" }, el("button", { class: "botao", onclick: () => irPara("relatorio") }, icone("file-text", 18), "Abrir relatório"),
-        el("button", { class: "botao secundario", onclick: () => novaCampanha(camp.perfil) }, "Novo mandato"))) : "",
-    el("p", { class: "pequeno suave", style: "margin-top:1.4rem" }, FRASE));
+      el("div", { class: "acoes" }, el("button", { class: "botao principal", onclick: () => (typeof telaFimJornada === "function" ? telaFimJornada() : irPara("relatorio")) }, icone("award", 18), "Ver o fechamento"),
+        el("button", { class: "botao secundario", onclick: () => irPara("relatorio") }, icone("file-text", 18), "Plano de decisão"))) : "",
+    el("button", { class: "cartao banco-destaque", onclick: () => irPara("vivencias") },
+      el("span", { class: "icone-circular" }, icone("library", 24)),
+      el("span", {}, el("strong", {}, "Banco de Vivências"), el("span", { class: "pequeno" }, "Compartilhe o que você aprendeu. Tudo é anonimizado antes de ser usado.")),
+      icone("chevron-right", 20)));
+}
+
+// ------------------------------------------------------------------ recapitulando (antes de cada nova missão; pode ser pulado)
+function telaRecapitulando() {
+  const camp = estado.campanha, h = camp.historico.at(-1);
+  if (!h) return iniciarTrimestre();
+  topo("Recapitulando", `Antes da missão ${camp.indice_atual + 1}`, telaPainel); abas(null);
+  const linhas = (h.resumo || "").split("\n");
+  tela(el("div", { class: "cartao cartao-principal recap" },
+    el("span", { class: "etiqueta-mono" }, `Missão ${h.indice + 1}`),
+    el("h2", {}, "Recapitulando"),
+    el("h3", {}, "O que você decidiu"), el("p", {}, linhas[0] || "—"),
+    el("h3", {}, "O resultado"), el("p", {}, h.carimbo ? el("span", { class: "carimbo-mini" }, h.carimbo) : "—", h.motivo ? ` ${h.motivo}` : ""),
+    el("h3", {}, "O que ficou de olho"),
+    el("ul", {}, h.meta ? el("li", {}, `Meta: ${h.meta.texto} (previsto ${h.meta.previsto} de ${h.meta.alvo})`) : el("li", {}, "Sem meta mensurável."),
+      (h.riscos || []).map((r) => el("li", {}, `Risco: ${r}`))),
+    el("div", { class: "acoes" }, el("button", { class: "botao secundario", onclick: () => iniciarTrimestre() }, "Pular"),
+      el("button", { class: "botao principal", onclick: () => { SOM.tocar("transicao"); iniciarTrimestre(); } }, "Começar a missão", icone("chevron-right", 18)))));
 }
 
 // ------------------------------------------------------------------ voz

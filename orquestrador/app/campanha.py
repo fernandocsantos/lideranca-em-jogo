@@ -66,6 +66,9 @@ def avancar(campanha: dict, tentativa: dict) -> dict:
         "fracoes": {d["id"]: d["fracao"] for d in (tentativa.get("resultado") or {}).get("demandas", [])},
         "meta": (tentativa.get("resultado") or {}).get("meta"),
         "resumo": tentativa.get("decisao"),
+        "carimbo": ((tentativa.get("resultado") or {}).get("avaliacao") or {}).get("carimbo"),
+        "motivo": ((tentativa.get("resultado") or {}).get("avaliacao") or {}).get("motivo"),
+        "riscos": [r.get("descricao") for r in (tentativa.get("resultado") or {}).get("riscos") or []][:3],
     }]
     novo_indice = campanha["indice_atual"] + 1
     status = "concluida" if novo_indice >= len(campanha["cenarios"]) else "em_andamento"
@@ -73,3 +76,22 @@ def avancar(campanha: dict, tentativa: dict) -> dict:
              "status": status}
     db.atualizar("campanhas", campanha["id"], dados)
     return {**campanha, **dados}
+
+
+def desfazer(campanha: dict) -> dict:
+    """Desfaz a última missão consolidada: volta ao índice dela e aos indicadores de antes.
+    As tentativas continuam no histórico (tabela tentativas); nada é apagado."""
+    if not campanha["historico"]:
+        raise ValueError("Não há missão concluída para desfazer.")
+    ultimo = campanha["historico"][-1]
+    dados = {"historico": campanha["historico"][:-1], "indice_atual": int(ultimo["indice"]),
+             "indicadores": ultimo["antes"], "status": "em_andamento"}
+    db.atualizar("campanhas", campanha["id"], dados)
+    return {**campanha, **dados}
+
+
+def reiniciar(campanha: dict) -> dict:
+    """Arquiva a jornada atual (fica no histórico) e começa outra com o mesmo perfil de AC.
+    As contribuições ao Banco de Vivências não são tocadas."""
+    db.atualizar("campanhas", campanha["id"], {"status": "reiniciada"})
+    return criar(campanha["sessao_id"], perfil=campanha.get("perfil"))

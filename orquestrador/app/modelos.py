@@ -76,6 +76,7 @@ class Demanda(Estrito):
     grupo: Optional[str] = None     # alternativas do mesmo grupo são excludentes (ex.: formação presencial × online)
     requer_consulta: bool = False   # só aparece na Mesa depois de "Consultar os associados"
     indicador_sugerido: str = ""    # indicador de acompanhamento sugerido na Ata
+    meta_capacidade: Optional[int] = None  # quanto a demanda entrega com verba cheia (ex.: 40 lojas)
 
 
 class Regra(Estrito):

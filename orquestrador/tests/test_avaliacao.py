@@ -74,3 +74,31 @@ def test_revisao_humana_pelo_facilitador():
         assert cli.post(f"/api/facilitador/simulacoes/{tid}/revisao", headers=hf, json={"status": "validada"}).json()["ok"]
         assert cli.get(f"/api/tentativas/{tid}", headers=h).json()["revisao_humana"] == "validada"
         assert any(x["id"] == tid for x in cli.get("/api/facilitador/simulacoes", headers=hf).json()["simulacoes"])
+
+
+def test_desfazer_e_reiniciar_sem_corromper_o_historico():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app import db, settings
+    with TestClient(app) as cli:
+        settings.MIROFISH_DESATIVADO = True
+        s = cli.post("/api/sessoes", json={"apelido": "Lia"}).json()
+        h = {"X-Sessao": s["token"]}
+        camp = cli.post("/api/campanhas", headers=h, json={"perfil": "media"}).json()
+        cid, ini = camp["id"], camp["indicadores"]
+        assert cli.post(f"/api/campanhas/{cid}/desfazer", headers=h).status_code == 400  # nada a desfazer
+        r = cli.post(f"/api/campanhas/{cid}/tentativas", headers=h, json={"decisao": "Prioridade: atendimento e digitalização.",
+                     "alocacao": {"atendimento": 8000, "digitalizacao": 12000}, "escolhas": {}}).json()
+        est = cli.post(f"/api/campanhas/{cid}/avancar", headers=h, json={"tentativa_id": r["tentativa_id"]}).json()
+        assert est["indice_atual"] == 1 and est["historico"][0]["carimbo"]
+        volta = cli.post(f"/api/campanhas/{cid}/desfazer", headers=h).json()
+        assert volta["indice_atual"] == 0 and volta["historico"] == [] and volta["indicadores"] == ini
+        assert len(volta["tentativas"]) == 1  # a tentativa continua no histórico
+        # vivência da sessão sobrevive ao reinício
+        db.executar("INSERT INTO vivencias (id, sessao_id, perfil, tipo, tema, respostas, substituicoes, risco, status, codigo_hash, "
+                    "consentimento, criado_em, expira_em) VALUES ('viv_t', ?, '{}', 'feedback', 'orcamento', '{}', '[]', '{}', "
+                    "'em_revisao', 'x', '{}', '2026-11-14', '2028-11-14')", (s["sessao_id"],))
+        nova = cli.post(f"/api/campanhas/{cid}/reiniciar", headers=h).json()
+        assert nova["id"] != cid and nova["indice_atual"] == 0 and nova["historico"] == []
+        assert db.um("SELECT status FROM campanhas WHERE id=?", (cid,))["status"] == "reiniciada"
+        assert db.um("SELECT id FROM vivencias WHERE id='viv_t'")

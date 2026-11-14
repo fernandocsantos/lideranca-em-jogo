@@ -313,6 +313,20 @@ def _validar_texto(decisao: str) -> str:
     return d
 
 
+@app.post("/api/campanhas/{cid}/desfazer")
+async def desfazer_missao(cid: str, s: dict = Depends(sessao_atual)):
+    c = _campanha_da_sessao(cid, s)
+    try:
+        return _estado(camp.desfazer(c))
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/api/campanhas/{cid}/reiniciar")
+async def reiniciar_jornada(cid: str, s: dict = Depends(sessao_atual)):
+    return _estado(camp.reiniciar(_campanha_da_sessao(cid, s)))
+
+
 @app.post("/api/campanhas/{cid}/decisoes/avaliar")
 async def avaliar_decisao(cid: str, dados: Decisao, s: dict = Depends(sessao_atual)):
     c = _campanha_da_sessao(cid, s)
