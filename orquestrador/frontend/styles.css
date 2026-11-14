@@ -169,3 +169,9 @@ button.link { background: none; border: 0; color: var(--primaria); text-decorati
 .dialogo::backdrop { background: rgba(0,0,0,.4); }
 .centro { text-align: center; }
 .centro svg { margin: 0 auto; display: block; }
+.barra.grossa { height: 18px; }
+.meta-no-caminho .barra span { background: var(--positivo); }
+.meta-atrasada .barra span { background: #b45309; }
+.meta-longe-da-meta .barra span { background: var(--negativo); }
+.continuidade .meta { box-shadow: none; }
+.etiqueta-continuidade { background: #eef4fb; border-radius: 8px; padding: .4rem .7rem; display: inline-block; }

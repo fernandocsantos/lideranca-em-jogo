@@ -198,6 +198,7 @@ function telaPauta() {
   const c = camp.cenario;
   renderIndicadores(camp.indicadores);
   tela(c.titulo, cabecalhoTrimestre(),
+    blocoTrimestreAnterior(c),
     el("div", { class: "cartao narrativa" }, el("p", {}, c.narrativa || c.texto.split(/\n\n/)[0])),
     c.evento ? el("div", { class: "cartao evento" }, el("span", { class: "icone-grande", "aria-hidden": "true" }, Number(c.evento.delta_orcamento) < 0 ? "📉" : "📈"),
       el("div", {}, el("strong", {}, c.evento.titulo), el("div", { class: "pequeno" }, c.evento.texto))) : "",
@@ -302,9 +303,8 @@ function telaOrcamento() {
       l.humor);
   });
 
-  const continuidade = c.continua_de && estado.campanha.historico.length
-    ? blocoManterAjustar(c, (aloc) => { for (const d of c.demandas) definir(d, 0); for (const d of c.demandas) definir(d, aloc[d.id] || 0); })
-    : "";
+  const continuidade = estado.escolhas.continuidade
+    ? el("p", { class: "pequeno etiqueta-continuidade" }, `Você escolheu ${estado.escolhas.continuidade.toUpperCase()} a decisão anterior.`) : "";
 
   tela("Dividir o orçamento", cabecalhoTrimestre(), relogio,
     el("div", { class: "cartao" },
@@ -323,20 +323,33 @@ function telaOrcamento() {
   pedirPrevia(aplicarPrevia);
 }
 
-function blocoManterAjustar(c, aplicar) {
+function cartaoMeta(meta, titulo = "Sua meta") {
+  if (!meta) return el("div", { class: "cartao meta" }, el("h2", {}, titulo), el("p", { class: "suave" }, "Nenhuma meta mensurável foi definida."));
+  return el("div", { class: `cartao meta meta-${meta.situacao.replace(/ /g, "-")}` },
+    el("h2", {}, titulo), el("p", {}, el("strong", {}, meta.texto)),
+    el("div", { class: "barra grossa", role: "meter", "aria-valuemin": 0, "aria-valuemax": meta.alvo, "aria-valuenow": meta.previsto,
+      "aria-label": `Previsto ${meta.previsto} de ${meta.alvo}` }, el("span", { style: `width:${Math.min(100, meta.pct)}%` })),
+    el("p", {}, `Previsto: ${meta.previsto} de ${meta.alvo} ${meta.unidade} (${meta.pct}%) · `, el("strong", {}, meta.situacao)),
+    el("p", { class: "pequeno suave" }, meta.explicacao));
+}
+
+function blocoTrimestreAnterior(c) {
   const anterior = estado.campanha.historico.at(-1);
-  const fracoes = anterior?.fracoes || {};
+  if (!c.continua_de || !anterior) return "";
+  const fracoes = anterior.fracoes || {};
   // mesma proporção de cada projeto no trimestre anterior; pedidos novos começam em zero
-  const escala = (fator) => Object.fromEntries(c.demandas.map((d) => [d.id, Math.min(d.custo, Math.round(d.custo * (fracoes[d.id] || 0) * fator / 500) * 500)]));
-  const msg = el("p", { class: "pequeno", "aria-live": "polite" });
-  return el("div", { class: "cartao continuidade" },
-    el("h2", {}, "Manter, ajustar ou rever a decisão anterior?"),
-    anterior?.resumo ? el("p", { class: "pequeno" }, el("strong", {}, "No trimestre passado: "), anterior.resumo.split("\n")[0]) : "",
+  const escala = () => Object.fromEntries(c.demandas.map((d) => [d.id, Math.min(d.custo, Math.round(d.custo * (fracoes[d.id] || 0) / 500) * 500)]));
+  const ir = (escolha, aloc) => { estado.escolhas.continuidade = escolha; estado.aloc = { ...Object.fromEntries(c.demandas.map((d) => [d.id, 0])), ...aloc }; telaOrcamento(); };
+  return el("section", { class: "cartao continuidade", "aria-label": "Como foi o trimestre passado" },
+    el("h2", {}, "Como foi o trimestre passado"),
+    anterior.meta ? cartaoMeta(anterior.meta, "Meta do trimestre passado") : el("p", { class: "suave" }, "No trimestre passado não houve meta mensurável."),
+    el("p", { class: "pequeno" }, "Os indicadores no alto da tela já somam o resultado anterior."),
+    el("h3", {}, "Manter, ajustar ou rever a decisão?"),
     el("div", { class: "linha" },
-      el("button", { type: "button", onclick: () => { estado.escolhas.continuidade = "manter"; aplicar(escala(1)); msg.textContent = "Mantido: os mesmos projetos continuam."; } }, "Manter"),
-      el("button", { type: "button", class: "secundario", onclick: () => { estado.escolhas.continuidade = "ajustar"; aplicar(escala(1)); msg.textContent = "Ajustar: começamos da decisão anterior. Mexa nos controles abaixo."; document.querySelector(".demanda input[type=range]")?.focus(); } }, "Ajustar"),
-      el("button", { type: "button", class: "secundario", onclick: () => { estado.escolhas.continuidade = "rever"; aplicar({}); msg.textContent = "Rever: começando do zero."; } }, "Rever")),
-    msg);
+      el("button", { class: "grande", onclick: () => ir("manter", escala()) }, "Manter"),
+      el("button", { class: "secundario grande", onclick: () => ir("ajustar", escala()) }, "Ajustar"),
+      el("button", { class: "secundario grande", onclick: () => ir("rever", {}) }, "Rever")),
+    el("p", { class: "pequeno suave" }, "Manter e Ajustar começam com a mesma proporção de cada projeto; Rever começa do zero."));
 }
 
 // ------------------------------------------------------------------ voz (Web Speech API)
@@ -551,6 +564,7 @@ async function telaResultado(tid) {
       el("p", {}, "O resultado base sai da sua divisão do orçamento, por regras fixas e públicas. A simulação dos agentes só ajusta até ±10 pontos."),
       el("ul", {}, ind.auditoria.slice(0, 40).map((a) => el("li", {}, `${nomeInd[a.indicador] || a.indicador}: ${a.pontos > 0 ? "+" : ""}${a.pontos} — ${a.detalhe}`)))),
     el("h2", {}, "O que você financiou"), demandas,
+    r.meta !== undefined ? cartaoMeta(r.meta) : "",
     status, linhaTempo, devol, conversaBox,
     el("div", { class: "cartao" },
       el("h2", {}, "E agora?"),

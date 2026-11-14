@@ -78,3 +78,15 @@ def test_decisao_guiada_soma_pontos_de_comunicacao_e_meta():
     com = alocacao.calcular(c, a, {"comunicacao": 1, "meta_mensuravel": 1, "revisao_programada": 1})["pontos"]
     assert com["engajamento"] - sem["engajamento"] == 1.5
     assert com["conformidade"] - sem["conformidade"] == 2.0
+
+
+def test_progresso_da_meta_do_jogador():
+    c = _c()
+    esc = {"construtor": {"qtd": "40", "oque": ["lojas vendendo pela internet"], "oqueLivre": ""},
+           "meta": "40 lojas vendendo pela internet até o fim do trimestre"}
+    cheio = alocacao.progresso_meta(c, {"digitalizacao": 18000}, esc, {"engajamento": 60})
+    metade = alocacao.progresso_meta(c, {"digitalizacao": 9000}, esc, {"engajamento": 60})
+    nada = alocacao.progresso_meta(c, {"atendimento": 8000}, esc, {"engajamento": 60})
+    assert cheio["demanda_id"] == "digitalizacao" and cheio["previsto"] > metade["previsto"] > nada["previsto"] == 0
+    assert cheio["situacao"] == "no caminho" and nada["situacao"] == "longe da meta"
+    assert alocacao.progresso_meta(c, {"digitalizacao": 18000}, {}, {"engajamento": 60}) is None

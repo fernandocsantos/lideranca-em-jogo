@@ -112,3 +112,35 @@ def previa(c: Cenario, alocacao: dict[str, Any], antes: dict[str, float],
     tend = {i: ("sobe" if v > 0.5 else "desce" if v < -0.5 else "estavel") for i, v in cons["variacao"].items()}
     return {"saldo": calc["saldo"], "disponivel": calc["disponivel"], "demandas": calc["demandas"],
             "variacao": cons["variacao"], "tendencia": tend}
+
+
+def progresso_meta(c: Cenario, aloc: dict[str, int], escolhas: dict[str, Any] | None,
+                   depois: dict[str, float]) -> dict[str, Any] | None:
+    """Estimativa determinística do avanço da meta que o próprio jogador definiu.
+
+    A meta é ligada à demanda cuja "meta_sugerida" coincide com o "o quê" escolhido (ou à demanda mais
+    financiada). Previsto = quantidade × utilidade da verba × fator de engajamento dos associados.
+    """
+    k = (escolhas or {}).get("construtor") or {}
+    try:
+        alvo = int(str(k.get("qtd") or "0").strip() or 0)
+    except ValueError:
+        alvo = 0
+    oque = (k.get("oqueLivre") or "").strip() or ((k.get("oque") or [""])[0])
+    if alvo <= 0 or not oque:
+        return None
+    regras = config.indicadores()["alocacao"]
+    d = next((x for x in c.demandas if x.meta_sugerida and x.meta_sugerida == oque), None)
+    if d is None:
+        financiadas = [x for x in c.demandas if aloc.get(x.id, 0) > 0]
+        d = max(financiadas, key=lambda x: aloc.get(x.id, 0) / x.custo, default=None)
+    u = utilidade(d, aloc.get(d.id, 0), regras) if d else 0.0
+    eng = float(depois.get("engajamento", 50))
+    fator = max(0.5, min(1.1, 0.75 + 0.5 * (eng - 50) / 100))
+    previsto = int(round(alvo * min(1.0, u * fator)))
+    pct = round(100 * previsto / alvo)
+    situacao = "no caminho" if pct >= 80 else "atrasada" if pct >= 40 else "longe da meta"
+    return {"texto": (escolhas or {}).get("meta") or f"{alvo} {oque}", "alvo": alvo, "unidade": oque,
+            "previsto": previsto, "pct": pct, "situacao": situacao, "demanda_id": d.id if d else None,
+            "explicacao": (f"{d.titulo}: {int(u * 100)}% do efeito da verba × engajamento dos associados "
+                           f"({eng:.0f}/100)") if d else "Nenhum pedido financiado ligado à meta."}

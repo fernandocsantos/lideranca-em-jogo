@@ -247,6 +247,7 @@ def resultado_base(c: Cenario, aloc: dict[str, int], escolhas: dict, antes: dict
     cons = indicadores.consolidar(antes, calc["pontos"], {i: 0.0 for i in config.INDICADORES})
     cons["auditoria"] = calc["auditoria"] + cons["auditoria"]
     return {"fase": "base", "resumo": "", "momentos": [], "reacoes": reacoes_previstas(c, calc["demandas"]),
+            "meta": alocacao_mod.progresso_meta(c, aloc, escolhas, cons["depois"]),
             "sinais": [], "flags": [], "indicadores": cons, "pontos_base": calc["pontos"],
             "demandas": calc["demandas"], "saldo": calc["saldo"], "disponivel": calc["disponivel"],
             "relatorio": "", "acoes": []}
@@ -330,6 +331,7 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
         resultado = {
             **anterior,
             "fase": "completo",
+            "meta": alocacao_mod.progresso_meta(c, aloc or {}, escolhas, final["depois"]) if aloc else None,
             "resumo": ext.resumo_narrativo,
             "momentos": [{"ator_id": m.ator_id, "nome": nomes[m.ator_id].nome, "tipo": nomes[m.ator_id].tipo,
                           "fala": m.fala} for m in ext.momentos],

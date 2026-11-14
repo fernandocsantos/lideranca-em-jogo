@@ -64,6 +64,7 @@ def avancar(campanha: dict, tentativa: dict) -> dict:
         "antes": tentativa["indicadores_antes"], "depois": tentativa["indicadores_depois"],
         "alocacao": tentativa.get("alocacao"), "escolhas": tentativa.get("escolhas"),
         "fracoes": {d["id"]: d["fracao"] for d in (tentativa.get("resultado") or {}).get("demandas", [])},
+        "meta": (tentativa.get("resultado") or {}).get("meta"),
         "resumo": tentativa.get("decisao"),
     }]
     novo_indice = campanha["indice_atual"] + 1
