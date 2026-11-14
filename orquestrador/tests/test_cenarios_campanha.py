@@ -59,11 +59,13 @@ def test_material_semente_inclui_atores_e_decisao():
 
 
 def test_nenhuma_pauta_passa_de_80_palavras():
-    from app import perfis
+    from app import conselho, perfis
     for c in cenarios.todos():
         for p in [x["id"] for x in perfis.listar()] if c.usa_perfil else [None]:
             cc = cenarios.obter(c.id, p)
-            n = len(cc.narrativa.split()) + (len(cc.evento.texto.split()) if cc.evento else 0)
+            exps = conselho.aprovadas(conselho.temas_do_cenario(cc))[:1]
+            cit = len(conselho.frase_citacao(exps[0], max_palavras=12).split()) if exps else 0
+            n = len(cc.narrativa.split()) + (len(cc.evento.texto.split()) if cc.evento else 0) + cit
             assert n <= 80, (cc.id, p, n)
 
 

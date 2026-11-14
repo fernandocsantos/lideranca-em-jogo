@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_uso_sessao ON uso_tokens(sessao_id);
 
 JSON_COLS = {"cenarios", "indicadores", "historico", "esclarecimentos", "parciais", "resultado",
              "indicadores_antes", "indicadores_depois", "mirofish", "alocacao", "escolhas", "devolutiva",
-             "selos", "dados"}
+             "selos", "dados", "avatar", "respostas"}
 
 # Colunas acrescentadas depois da primeira versão (migração simples e idempotente).
 MIGRACOES = {
@@ -145,4 +145,8 @@ def apagar_sessao(sessao_id: str) -> None:
         c.execute("DELETE FROM campanhas WHERE sessao_id=?", (sessao_id,))
         c.execute("UPDATE uso_tokens SET sessao_id=NULL WHERE sessao_id=?", (sessao_id,))
         c.execute("DELETE FROM sessoes WHERE id=?", (sessao_id,))
+        try:
+            c.execute("DELETE FROM contribuicoes WHERE sessao_id=?", (sessao_id,))
+        except sqlite3.OperationalError:
+            pass
         c.commit()

@@ -147,3 +147,25 @@ input.qtd { max-width: 160px; font-size: 1.2rem; }
 .sr { position: absolute; left: -9999px; }
 .flex1 { flex: 1; }
 .conversa-avatar svg { display: block; }
+/* Sala do Conselho */
+.conselho-convite { display: flex; gap: 1rem; align-items: center; border-left: 6px solid #b45309; }
+.conselho-convite h2 { margin-top: 0; }
+.temas { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .7rem; margin: 1rem 0; }
+.tema { background: #fff; color: var(--texto); border: 2px solid var(--borda); border-radius: var(--raio); padding: 1.1rem; min-height: 110px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; font-size: 1.1rem; margin: 0; }
+.tema.ativo, .tema:hover { border-color: var(--primaria); background: #eef4fb; }
+button + .tema, .tema + .tema { margin-left: 0; }
+.escolha-avatar { background: #fff; border: 3px solid transparent; border-radius: 50%; padding: 2px; margin: 0; min-height: 0; }
+.escolha-avatar.ativo { border-color: var(--primaria); }
+.pergunta-grande { font-size: 1.45rem; line-height: 1.3; }
+.voz-destaque { font-size: 1.3rem; padding: 1rem 1.6rem; margin: .5rem 0 1rem; }
+label.checkbox { font-weight: 400; display: flex; gap: .5rem; align-items: center; }
+label.checkbox input { width: 22px; height: 22px; }
+button.link { background: none; border: 0; color: var(--primaria); text-decoration: underline; padding: 0; min-height: 44px; }
+.experiencia { border-left: 6px solid #b45309; }
+.experiencia .exp { align-items: flex-start; flex-wrap: nowrap; }
+.experiencia .exp p { margin: .2rem 0; }
+.dialogo { max-width: 680px; width: calc(100% - 2rem); border: 1px solid var(--borda); border-radius: var(--raio); padding: 1.2rem; }
+.dialogo::backdrop { background: rgba(0,0,0,.4); }
+.centro { text-align: center; }
+.centro svg { margin: 0 auto; display: block; }

@@ -133,7 +133,12 @@ function telaInicio() {
     : null;
   tela("Formar lideranças para decidir e acompanhar resultados",
     el("p", { class: "destaque" }, "Você vai presidir uma associação comercial por dois trimestres: escolher prioridades, dividir o orçamento e acompanhar os resultados."),
-    continuar, form);
+    continuar, form,
+    el("div", { class: "cartao conselho-convite" },
+      AVATAR.criar({ id: "conselheiro", tipo: "conselheiro", genero: "m", idade: 70, expressao: "favoravel", tamanho: 72 }),
+      el("div", {}, el("h2", {}, "Sala do Conselho"),
+        el("p", {}, "É dirigente experiente? Conte, por voz ou texto, o que você aprendeu. Leva uns 5 minutos."),
+        el("button", { class: "secundario grande", onclick: () => telaConselho(1) }, "Contribuir com minha experiência"))));
 }
 
 async function novaCampanha(perfil) {
@@ -200,12 +205,14 @@ function telaPauta() {
     el("h2", {}, "Quem está envolvido"),
     el("ul", { class: "fileira-avatares", role: "list" }, c.atores.map((a) => cartaoAtor(a))),
     el("p", { class: "suave pequeno" }, "Toque em uma pessoa para ver papel, influência e postura."),
+    blocoExperiencias(),
     el("h2", {}, "Regras deste trimestre"),
     el("ul", { class: "regras", role: "list" }, c.regras.map((r) => el("li", {}, el("span", { class: "icone", "aria-hidden": "true" }, r.icone), r.texto))),
     c.inspirado_em ? el("p", { class: "suave pequeno" }, "Inspirado em: ",
       el("a", { href: c.inspirado_em.url, rel: "noopener", target: "_blank" }, c.inspirado_em.titulo),
       ` — ${c.inspirado_em.veiculo}, ${c.inspirado_em.data}. Nomes trocados por fictícios.`) : "",
-    el("p", {}, el("button", { class: "grande", onclick: telaOrcamento }, "Ir para o orçamento →")));
+    el("p", {}, el("button", { class: "secundario grande", onclick: abrirConselheiro }, "🦉 Consultar o conselheiro"),
+      el("button", { class: "grande", onclick: telaOrcamento }, "Ir para o orçamento →")));
   marcarEtapa(0);
 }
 
@@ -307,6 +314,7 @@ function telaOrcamento() {
       el("p", { class: "pequeno suave" }, "Os pedidos somam mais do que o disponível. As setas nos indicadores mostram a tendência da sua escolha.")),
     continuidade, cartoes,
     el("p", {}, el("button", { class: "secundario", onclick: telaPauta }, "← Voltar à pauta"),
+      el("button", { class: "secundario", onclick: abrirConselheiro }, "🦉 Conselheiro"),
       el("button", { class: "grande", onclick: telaDecisao }, "Registrar a decisão →")));
   marcarEtapa(1);
   for (const d of c.demandas) { linhas[d.id].valor.textContent = `${brl(estado.aloc[d.id])} de ${brl(d.custo)}`; }
@@ -678,6 +686,148 @@ function perguntasSugeridas(t, atorId) {
   return ["O que você achou da decisão?", "Quem ficou de fora, na sua opinião?", "O que você faria diferente?"];
 }
 
+// ------------------------------------------------------------------ Sala do Conselho (experiência dos seniores)
+const contrib = { nome: "", anonimo: false, entidade: "", anos: "", avatar: { genero: "f", idade: 70 }, tema: "", respostas: {}, consentimento: "" };
+const AVATARES_SENIOR = [["f", 38], ["f", 56], ["f", 72], ["m", 38], ["m", 56], ["m", 72]];
+
+async function telaConselho(n) {
+  renderIndicadores(null);
+  if (!estado.conselho) estado.conselho = await api("/api/conselho");
+  const k = estado.conselho;
+  const total = 3 + k.perguntas.length;
+  const passo = el("p", { class: "pequeno suave" }, `Passo ${n} de ${total}`);
+  const nav = (proximo, rotulo = "Próximo →", validar = () => true) => el("p", {},
+    n > 1 ? el("button", { class: "secundario grande", onclick: () => telaConselho(n - 1) }, "← Voltar") : el("button", { class: "secundario grande", onclick: telaInicio }, "Cancelar"),
+    el("button", { class: "grande", onclick: () => { if (validar()) proximo(); } }, rotulo));
+  let corpo;
+  if (n === 1) {
+    const nome = el("input", { type: "text", id: "c-nome", maxlength: 80, value: contrib.nome, autocomplete: "name" });
+    nome.addEventListener("input", () => { contrib.nome = nome.value; });
+    const anon = el("input", { type: "checkbox", id: "c-anon", checked: contrib.anonimo });
+    anon.addEventListener("change", () => { contrib.anonimo = anon.checked; nome.disabled = anon.checked; });
+    nome.disabled = contrib.anonimo;
+    const ent = el("input", { type: "text", id: "c-ent", maxlength: 120, value: contrib.entidade });
+    ent.addEventListener("input", () => { contrib.entidade = ent.value; });
+    const anos = el("input", { type: "number", id: "c-anos", min: 0, max: 80, inputmode: "numeric", value: contrib.anos, class: "qtd" });
+    anos.addEventListener("input", () => { contrib.anos = anos.value; });
+    const avatares = el("div", { class: "chips", role: "radiogroup", "aria-label": "Escolha um avatar" });
+    const renderAv = () => avatares.replaceChildren(...AVATARES_SENIOR.map(([g, i]) => {
+      const ativo = contrib.avatar.genero === g && contrib.avatar.idade === i;
+      return el("button", { type: "button", class: `escolha-avatar ${ativo ? "ativo" : ""}`, role: "radio", "aria-checked": String(ativo),
+        "aria-label": `Avatar ${g === "f" ? "feminino" : "masculino"}, cerca de ${i} anos`,
+        onclick: () => { contrib.avatar = { genero: g, idade: i }; renderAv(); } },
+        AVATAR.criar({ id: `senior-${g}-${i}`, tipo: "conselheiro", genero: g, idade: i, expressao: "favoravel", tamanho: 64 }));
+    }));
+    renderAv();
+    corpo = [el("h2", {}, "Quem é você?"),
+      el("label", { for: "c-nome" }, "Seu nome"), nome,
+      el("label", { class: "checkbox" }, anon, " Prefiro ficar anônimo(a)"),
+      el("label", { for: "c-ent" }, "Entidade onde atuou"), ent,
+      el("label", { for: "c-anos" }, "Anos de associativismo"), anos,
+      el("p", { class: "rotulo" }, "Escolha um avatar (não usamos foto)"), avatares,
+      nav(() => telaConselho(2))];
+  } else if (n === 2) {
+    corpo = [el("h2", {}, "Sobre qual tema você quer falar?"),
+      el("div", { class: "temas" }, k.temas.map((t) => el("button", { type: "button", class: `tema ${contrib.tema === t.id ? "ativo" : ""}`,
+        "aria-pressed": String(contrib.tema === t.id), onclick: () => { contrib.tema = t.id; telaConselho(3); } },
+        el("span", { class: "icone-grande", "aria-hidden": "true" }, t.icone), t.nome))),
+      el("p", {}, el("button", { class: "secundario grande", onclick: () => telaConselho(1) }, "← Voltar"))];
+  } else if (n <= 2 + k.perguntas.length) {
+    const q = k.perguntas[n - 3];
+    const area = el("textarea", { id: `c-${q.id}`, rows: 6, maxlength: 2000 });
+    area.value = contrib.respostas[q.id] || "";
+    area.addEventListener("input", () => { contrib.respostas[q.id] = area.value; });
+    const mic = botaoVoz(area);
+    if (mic.classList) mic.classList.add("grande", "voz-destaque");
+    corpo = [el("h2", { class: "pergunta-grande" }, q.texto),
+      el("p", { class: "suave" }, VOZ_OK ? "Toque em Falar e conte do seu jeito. Depois você pode corrigir o texto." : "Escreva do seu jeito."),
+      mic, el("label", { for: `c-${q.id}` }, "Sua resposta"), area, avisoVoz(),
+      nav(() => telaConselho(n + 1), "Próximo →"),
+      el("p", {}, el("button", { class: "link", onclick: () => telaConselho(n + 1) }, "Pular esta pergunta"))];
+  } else {
+    const opc = (v, titulo, desc) => el("label", { class: "cartao-opcao" },
+      el("input", { type: "radio", name: "consent", value: v, checked: contrib.consentimento === v,
+        onchange: () => { contrib.consentimento = v; } }), el("strong", {}, titulo), el("span", { class: "pequeno" }, desc));
+    const enviar = el("button", { class: "grande" }, "Enviar minha experiência");
+    const caixa = el("div", { class: "cartao passo" });
+    enviar.addEventListener("click", async () => {
+      if (!contrib.consentimento) return mostrarErro(caixa, new Error("Escolha como podemos usar sua experiência."));
+      enviar.disabled = true;
+      try {
+        await api("/api/conselho/contribuicoes", { method: "POST", body: { ...contrib, anos: contrib.anos ? Number(contrib.anos) : null } });
+        localStorage.setItem("lej_conselheiro_rede", "1");
+        telaObrigado();
+      } catch (e) { mostrarErro(caixa, e); enviar.disabled = false; }
+    });
+    caixa.append(passo, el("h2", {}, "Como podemos usar sua experiência?"),
+      opc("com_nome", "Pode usar com meu nome", "Aparece como: " + (contrib.anonimo || !contrib.nome ? "Dirigente da rede (anônimo)" : contrib.nome)),
+      opc("anonimo", "Use como anônimo(a)", "Aparece como: Dirigente da rede (anônimo)"),
+      el("p", { class: "pequeno suave" }, "Sua experiência fica em revisão até um facilitador aprovar. Ela ajuda novos dirigentes no jogo e nas simulações. Você pode pedir a remoção a qualquer momento."),
+      el("p", {}, el("button", { class: "secundario grande", onclick: () => telaConselho(n - 1) }, "← Voltar"), enviar));
+    tela("Sala do Conselho", caixa);
+    return;
+  }
+  tela("Sala do Conselho", el("div", { class: "cartao passo" }, passo, corpo));
+}
+
+function telaObrigado() {
+  tela("Obrigado!",
+    el("div", { class: "cartao centro" },
+      AVATAR.criar({ id: "obrigado", tipo: "conselheiro", genero: contrib.avatar.genero, idade: contrib.avatar.idade, expressao: "favoravel", tamanho: 96 }),
+      el("p", { class: "destaque" }, "Sua experiência foi registrada e está em revisão."),
+      typeof seloAnimado === "function" ? seloAnimado("conselheiro_rede") : "",
+      el("button", { class: "grande", onclick: () => { location.href = "/"; } }, "Voltar ao início")));
+}
+
+function blocoExperiencias() {
+  const exps = estado.campanha?.experiencias || [];
+  if (!exps.length) return "";
+  return el("section", { class: "cartao experiencia", "aria-label": "Experiência da rede" },
+    el("h2", {}, "Experiência da rede"),
+    exps.map((e) => el("div", { class: "linha exp" },
+      AVATAR.criar({ id: e.id, tipo: "conselheiro", genero: e.avatar?.genero, idade: e.avatar?.idade, expressao: "favoravel", tamanho: 48 }),
+      el("p", {}, e.citacao))));
+}
+
+async function abrirConselheiro() {
+  if (!estado.conselho) estado.conselho = await api("/api/conselho");
+  const camp = estado.campanha;
+  const dlg = el("dialog", { class: "dialogo", "aria-labelledby": "titulo-conselheiro" });
+  const log = el("div", { class: "chat", role: "log", "aria-live": "polite" });
+  const restantes = el("p", { class: "pequeno suave" });
+  const campo = el("input", { type: "text", id: "conselheiro-msg", maxlength: 600, placeholder: "Sua pergunta ao conselheiro" });
+  const sugest = el("div", { class: "chips" });
+  const atualizar = (h) => {
+    log.replaceChildren(...h.mensagens.flatMap((m) => [el("div", { class: "msg jogador" }, m.pergunta), el("div", { class: "msg agente" }, m.resposta)]));
+    restantes.textContent = h.restantes > 0 ? `Você ainda pode fazer ${h.restantes} pergunta(s) neste trimestre.` : "O conselheiro já respondeu as 3 perguntas deste trimestre.";
+    sugest.replaceChildren(...(h.restantes > 0 ? estado.conselho.sugestoes.map((q) => el("button", { type: "button", class: "chip", onclick: () => perguntar(q) }, q)) : []));
+    campo.disabled = h.restantes <= 0;
+    log.scrollTop = log.scrollHeight;
+  };
+  const perguntar = async (q) => {
+    if (!q.trim()) return;
+    log.append(el("div", { class: "msg jogador" }, q), el("div", { class: "msg agente suave", id: "pensando" }, "…"));
+    try {
+      const r = await api(`/api/campanhas/${camp.id}/conselheiro`, { method: "POST", body: { pergunta: q } });
+      estado.escolhas.consultou_conselheiro = 1;
+      estado.escolhas.experiencias_citadas = r.citacoes;
+      atualizar(await api(`/api/campanhas/${camp.id}/conselheiro`));
+      if (typeof registrarSelo === "function") registrarSelo("ouviu_experiencia");
+    } catch (e) { $("#pensando")?.remove(); mostrarErro(dlg, e); }
+  };
+  const form = el("form", { onsubmit: (ev) => { ev.preventDefault(); const v = campo.value; campo.value = ""; perguntar(v); } },
+    el("label", { for: "conselheiro-msg" }, "Pergunte ao conselheiro"), el("div", { class: "linha" }, campo, botaoVoz(campo), el("button", { type: "submit" }, "Enviar")));
+  dlg.append(el("div", { class: "linha" },
+      AVATAR.criar({ id: "conselheiro", tipo: "conselheiro", genero: "m", idade: 70, expressao: "favoravel", tamanho: 64 }),
+      el("div", {}, el("h2", { id: "titulo-conselheiro" }, "Conselheiro sênior"),
+        el("p", { class: "pequeno" }, "Ele não dá a resposta pronta: ajuda a pensar com a experiência da rede."))),
+    sugest, log, restantes, form,
+    el("p", {}, el("button", { class: "secundario", onclick: () => { dlg.close(); dlg.remove(); } }, "Fechar")));
+  document.body.append(dlg);
+  dlg.showModal();
+  atualizar(await api(`/api/campanhas/${camp.id}/conselheiro`));
+}
+
 // ------------------------------------------------------------------ final
 async function telaFinal() {
   const camp = estado.campanha;
@@ -705,7 +855,8 @@ async function telaFacilitador() {
   const carregar = async () => {
     area.replaceChildren(el("p", {}, "Carregando…"));
     try {
-      const [p, c] = await Promise.all([f("/api/facilitador/partidas"), f("/api/facilitador/cenarios")]);
+      const [p, c, contribs] = await Promise.all([f("/api/facilitador/partidas"), f("/api/facilitador/cenarios"),
+        f("/api/facilitador/contribuicoes")]);
       sessionStorage.setItem("lej_fac", codigo);
       const comparacao = el("div", {});
       area.replaceChildren(
@@ -746,6 +897,15 @@ async function telaFacilitador() {
               s.status === "pendente_revisao" ? [
                 el("button", { onclick: async () => { await f(`/api/facilitador/cenarios/${s.id}/status`, { method: "POST", body: { status: "aprovado" } }); carregar(); } }, "Aprovar"),
                 el("button", { class: "secundario", onclick: async () => { await f(`/api/facilitador/cenarios/${s.id}/status`, { method: "POST", body: { status: "rejeitado" } }); carregar(); } }, "Rejeitar")] : ""))))),
+        el("h2", {}, "Sala do Conselho: experiências para revisar"),
+        contribs.contribuicoes.length ? el("ul", { class: "contribuicoes", role: "list" }, contribs.contribuicoes.map((x) => el("li", { class: "cartao" },
+          el("div", { class: "linha" }, AVATAR.criar({ id: x.id, tipo: "conselheiro", genero: x.avatar?.genero, idade: x.avatar?.idade, expressao: "favoravel", tamanho: 48 }),
+            el("div", {}, el("strong", {}, x.nome), ` · ${x.tema_nome} · ${x.anos ?? "?"} anos · `, el("span", { class: "etiqueta" }, x.status),
+              x.ficticia ? el("span", { class: "etiqueta" }, "exemplo fictício") : "")),
+          el("dl", {}, Object.entries(x.respostas).filter(([, v]) => v).map(([k2, v]) => [el("dt", {}, k2), el("dd", {}, v)])),
+          x.status !== "aprovada" ? el("button", { onclick: async () => { await f(`/api/facilitador/contribuicoes/${x.id}/status`, { method: "POST", body: { status: "aprovada" } }); carregar(); } }, "Aprovar") : "",
+          x.status !== "rejeitada" ? el("button", { class: "secundario", onclick: async () => { await f(`/api/facilitador/contribuicoes/${x.id}/status`, { method: "POST", body: { status: "rejeitada" } }); carregar(); } }, "Rejeitar") : "")))
+          : el("p", {}, "Nenhuma contribuição ainda."),
         comparacao);
     } catch (e) { area.replaceChildren(); mostrarErro(area, e); }
   };
@@ -762,6 +922,7 @@ async function telaFacilitador() {
   try { estado.cfg = await api("/api/config"); } catch (e) { tela("Serviço indisponível", el("p", {}, e.message)); return; }
   verificarStatus();
   if (location.pathname.startsWith("/facilitador")) return telaFacilitador();
+  if (location.pathname.startsWith("/conselho")) return telaConselho(1);
   if (estado.token && estado.campanhaId) return abrirCampanha(estado.campanhaId);
   telaInicio();
 })();

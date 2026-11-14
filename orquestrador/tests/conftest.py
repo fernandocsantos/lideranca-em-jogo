@@ -20,6 +20,8 @@ def ambiente(tmp_path, monkeypatch):
     # banco e cenários isolados por teste
     db._conn = None
     db.conectar(str(tmp_path / "teste.sqlite3"))
+    from app import conselho
+    conselho.preparar()
     cen = tmp_path / "cenarios"
     shutil.copytree(RAIZ / "cenarios" / "curados", cen / "curados")
     (cen / "gerados").mkdir()

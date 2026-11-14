@@ -17,7 +17,7 @@ import asyncio
 
 from . import alocacao as aloc_mod
 from . import campanha as camp
-from . import cenarios, config, conversa, custos, db, esclarecimento, fila, moderacao, perfis, settings, simulacao
+from . import cenarios, config, conselho, conversa, custos, db, esclarecimento, fila, moderacao, perfis, settings, simulacao
 from .llm import Ctx, ErroLLM
 from .mirofish_client import novo as novo_mirofish
 
@@ -27,6 +27,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 @asynccontextmanager
 async def ciclo(app: FastAPI):
     db.conectar()
+    conselho.preparar()
     fila.iniciar()
     yield
     await fila.parar()
@@ -83,6 +84,30 @@ class Decisao(BaseModel):
 class NovaCampanha(BaseModel):
     perfil: Optional[str] = None
     modo: Optional[str] = None
+
+
+class AvatarEscolhido(BaseModel):
+    genero: Optional[str] = None
+    idade: Optional[int] = None
+
+
+class Contribuicao(BaseModel):
+    nome: str = Field(default="", max_length=80)
+    anonimo: bool = False
+    entidade: str = Field(default="", max_length=120)
+    anos: Optional[int] = Field(default=None, ge=0, le=80)
+    avatar: AvatarEscolhido = AvatarEscolhido()
+    tema: str
+    respostas: dict[str, str]
+    consentimento: str  # com_nome | anonimo
+
+
+class Pergunta(BaseModel):
+    pergunta: str = Field(min_length=2, max_length=600)
+
+
+class StatusContribuicao(BaseModel):
+    status: str
 
 
 class Previa(BaseModel):
@@ -154,9 +179,14 @@ async def apagar_sessao(s: dict = Depends(sessao_atual)):
 def _estado(c: dict) -> dict:
     atual = None
     tentativas = []
+    experiencias = []
     if c["status"] == "em_andamento":
         cid = c["cenarios"][c["indice_atual"]]
-        atual = cenarios.publico(cenarios.obter(cid, c.get("perfil")))
+        cen_obj = cenarios.obter(cid, c.get("perfil"))
+        atual = cenarios.publico(cen_obj)
+        # Na pauta, 1 experiência com citação curta (limite de 80 palavras por tela); as demais no conselheiro.
+        experiencias = [{**e, "citacao": conselho.frase_citacao(e, max_palavras=12)}
+                        for e in conselho.aprovadas(conselho.temas_do_cenario(cen_obj))[:1]]
         tentativas = [_resumo_tentativa(t) for t in db.varios(
             "SELECT * FROM tentativas WHERE campanha_id=? AND indice=? ORDER BY criado_em",
             (c["id"], c["indice_atual"]))]
@@ -164,6 +194,7 @@ def _estado(c: dict) -> dict:
         "id": c["id"], "status": c["status"], "indice_atual": c["indice_atual"], "total": len(c["cenarios"]),
         "indicadores": c["indicadores"], "historico": c["historico"], "cenario": atual, "tentativas": tentativas,
         "custo": custos.resumo("campanha_id", c["id"]), "perfil": c.get("perfil"), "selos": c.get("selos") or [],
+        "experiencias": experiencias,
     }
 
 
@@ -324,6 +355,82 @@ async def comparar(cid: str, indice: int, s: dict = Depends(sessao_atual)):
 
 
 # ------------------------------------------------------------------ facilitador
+# ------------------------------------------------------------- Sala do Conselho
+@app.get("/api/conselho")
+async def conselho_config():
+    k = conselho.cfg()
+    return {"temas": [{"id": t, **v} for t, v in k["temas"].items()], "perguntas": k["perguntas"],
+            "sugestoes": k["conselheiro"]["sugestoes"],
+            "perguntas_por_trimestre": k["conselheiro"]["perguntas_por_trimestre"]}
+
+
+@app.post("/api/conselho/contribuicoes")
+async def nova_contribuicao(dados: Contribuicao, x_sessao: str = Header(default="")):
+    k = conselho.cfg()
+    if dados.tema not in k["temas"]:
+        raise HTTPException(400, "Tema inválido.")
+    if dados.consentimento not in ("com_nome", "anonimo"):
+        raise HTTPException(400, "Escolha como a experiência pode ser usada.")
+    ids = [p["id"] for p in k["perguntas"]]
+    respostas = {i: (dados.respostas.get(i) or "").strip()[:2000] for i in ids}
+    if not any(respostas.values()):
+        raise HTTPException(400, "Responda pelo menos uma pergunta.")
+    s = db.um("SELECT * FROM sessoes WHERE token=?", (x_sessao,)) if x_sessao else None
+    ctx = Ctx(s["id"] if s else None, None, None)
+    mod = await moderacao.moderar("\n".join(respostas.values()), ctx)
+    if not mod.permitido and mod.categoria != "fora_de_contexto":
+        raise HTTPException(400, mod.motivo or "O texto não pôde ser aceito.")
+    anonimo = dados.anonimo or dados.consentimento == "anonimo" or not dados.nome.strip()
+    cid = db.novo_id("contrib")
+    db.inserir("contribuicoes", {
+        "id": cid, "nome": "" if anonimo else dados.nome.strip(), "anonimo": int(anonimo),
+        "entidade": dados.entidade.strip(), "anos": dados.anos, "avatar": dados.avatar.model_dump(),
+        "tema": dados.tema, "respostas": respostas, "consentimento": "anonimo" if anonimo else "com_nome",
+        "status": "em_revisao", "ficticia": 0, "sessao_id": s["id"] if s else None, "criado_em": db.agora()})
+    return {"id": cid, "status": "em_revisao"}
+
+
+@app.get("/api/campanhas/{cid}/conselheiro")
+async def historico_conselheiro(cid: str, s: dict = Depends(sessao_atual)):
+    c = _campanha_da_sessao(cid, s)
+    hist = conselho.consultas(cid, c["indice_atual"])
+    limite = int(conselho.cfg()["conselheiro"]["perguntas_por_trimestre"])
+    return {"mensagens": hist, "restantes": max(0, limite - len(hist))}
+
+
+@app.post("/api/campanhas/{cid}/conselheiro")
+async def perguntar_conselheiro(cid: str, dados: Pergunta, s: dict = Depends(sessao_atual)):
+    c = _campanha_da_sessao(cid, s)
+    limite = int(conselho.cfg()["conselheiro"]["perguntas_por_trimestre"])
+    if len(conselho.consultas(cid, c["indice_atual"])) >= limite:
+        raise HTTPException(429, f"O conselheiro já respondeu {limite} perguntas neste trimestre.")
+    ctx = Ctx(s["id"], cid, None)
+    mod = await moderacao.moderar(dados.pergunta, ctx)
+    if not mod.permitido:
+        raise HTTPException(400, mod.motivo)
+    try:
+        return await conselho.responder(c, _cenario_atual(c), dados.pergunta, ctx)
+    except ErroLLM as e:
+        raise HTTPException(503, str(e)) from e
+
+
+@app.get("/api/facilitador/contribuicoes", dependencies=[Depends(facilitador)])
+async def listar_contribuicoes():
+    linhas = db.varios("SELECT * FROM contribuicoes ORDER BY CASE status WHEN 'em_revisao' THEN 0 ELSE 1 END, criado_em DESC")
+    return {"contribuicoes": [{**conselho.publica(x), "status": x["status"], "entidade": x["entidade"],
+                               "nome_real": x["nome"], "consentimento": x["consentimento"]} for x in linhas]}
+
+
+@app.post("/api/facilitador/contribuicoes/{cid}/status", dependencies=[Depends(facilitador)])
+async def moderar_contribuicao(cid: str, dados: StatusContribuicao):
+    if dados.status not in ("aprovada", "rejeitada", "em_revisao"):
+        raise HTTPException(400, "Status inválido.")
+    if not db.um("SELECT id FROM contribuicoes WHERE id=?", (cid,)):
+        raise HTTPException(404, "Contribuição não encontrada.")
+    db.atualizar("contribuicoes", cid, {"status": dados.status})
+    return {"ok": True}
+
+
 @app.get("/api/perfis")
 async def listar_perfis():
     return {"perfis": perfis.listar(), "padrao": perfis.padrao()}
@@ -398,5 +505,6 @@ app.mount("/static", StaticFiles(directory=settings.FRONTEND_DIR), name="static"
 
 @app.get("/")
 @app.get("/facilitador")
+@app.get("/conselho")
 async def spa():
     return FileResponse(settings.FRONTEND_DIR / "index.html")

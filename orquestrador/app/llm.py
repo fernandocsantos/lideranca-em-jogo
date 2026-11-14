@@ -114,7 +114,9 @@ class LLMFalso:
         self.chamadas.append((tarefa, messages[-1]["content"]))
         custos.registrar(ctx, tarefa, "falso", 100, 50, 0)
         f = self.respostas.get(tarefa)
-        return f(messages) if f else "Resposta simulada."
+        if not f:
+            return "Resposta simulada."
+        return f(messages, system) if f.__code__.co_argcount >= 2 else f(messages)
 
 
 _instancia: Any = None

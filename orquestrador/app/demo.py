@@ -105,6 +105,16 @@ def _esclarecimento(usuario: str) -> dict:
     return {"simulavel": False, "perguntas": ["Quem será envolvido diretamente na execução dessa decisão?"]}
 
 
+def _conversa(msgs, system=""):
+    if "Conselheiro sênior" in system:
+        m = re.search(r"caso: (.*?) \|", system)
+        caso = m.group(1) if m else "escolher pouco e fazer bem feito"
+        return (f"Um dirigente da rede conta: \"{caso}\" Antes de decidir, pergunte-se: quem fica de fora e "
+                "como você vai explicar a essa pessoa quando chega a vez dela? (resposta do modo demonstração)")
+    return ("Olha, do meu ponto de vista, a decisão tem méritos, mas ainda quero ver "
+            "como vai funcionar na prática. (resposta do modo demonstração)")
+
+
 def llm_demo() -> LLMFalso:
     return LLMFalso({
         "moderacao": lambda u: {"permitido": True, "categoria": "ok", "motivo": ""},
@@ -112,6 +122,5 @@ def llm_demo() -> LLMFalso:
         "sinais": _sinais,
         "devolutiva": _devolutiva,
         "contingencia": _contingencia,
-        "conversa": lambda msgs: "Olha, do meu ponto de vista, a decisão tem méritos, mas ainda quero ver "
-                                 "como vai funcionar na prática. (resposta do modo demonstração)",
+        "conversa": _conversa,
     })
