@@ -99,3 +99,39 @@ def test_casar_perfis_por_nome():
               {"user_id": 3, "name": "Cristina Alves", "username": "cris"}]
     m = simulacao.casar_perfis(c, perfis)
     assert m["pm"] == 7 and m["lojista_vitrine"] == 3
+
+
+async def test_cache_de_simulacao_reaproveita_mesma_alocacao(monkeypatch):
+    monkeypatch.setitem(config.jogo()["simulacao"], "cache_simulacoes", True)
+    c = cenarios.obter("cur_01_natal_iluminado")
+    falso = MiroFishFalso([a.model_dump() for a in c.atores])
+    tid1 = _tentativa()
+    db.atualizar("tentativas", tid1, {"alocacao": {"decoracao_centro": 70000}})
+    await simulacao.processar(tid1, _mf(falso))
+    n = len(falso.chamadas)
+    tid2 = _tentativa()
+    db.atualizar("tentativas", tid2, {"alocacao": {"decoracao_centro": 70000}})
+    await simulacao.processar(tid2, _mf(falso))
+    t2 = db.um("SELECT * FROM tentativas WHERE id=?", (tid2,))
+    assert t2["status"] == "concluida" and "reaproveitadas" in t2["aviso"]
+    assert len(falso.chamadas) == n  # nenhuma chamada nova ao MiroFish
+
+
+async def test_sem_internet_usa_respostas_de_demonstracao(monkeypatch):
+    import anthropic
+    import httpx as hx
+    from app import llm as llm_mod
+    from app.modelos import AvaliacaoClareza
+
+    class Quebrado(llm_mod.LLM):
+        def __init__(self):
+            pass
+
+        async def _chamar(self, *a, **k):
+            raise llm_mod.SemConexaoLLM("sem rede")
+
+    r = await Quebrado().estruturado("esclarecimento", "s", "<decisao>\ncurta\n</decisao>\n<esclarecimentos_ja_dados>\n(nenhum)\n</esclarecimentos_ja_dados>",
+                                     AvaliacaoClareza, llm_mod.Ctx())
+    assert isinstance(r, AvaliacaoClareza)
+    t = await Quebrado().texto("conversa", "Conselheiro sênior caso: escolher pouco |", [{"role": "user", "content": "oi"}], llm_mod.Ctx())
+    assert "modo demonstração" in t

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import logging
 import re
 import unicodedata
@@ -224,6 +225,29 @@ def _item_legivel(i: dict, nomes: dict[int, str]) -> dict:
             "texto": str(i.get("content") or "")[:400], "quando": i.get("created_at")}
 
 
+def chave_simulacao(t: dict, aloc: dict | None, escolhas: dict, fato: dict | None) -> str:
+    """Mesma pauta + mesmo perfil + mesma divisão do orçamento + mesma escolha de continuidade = mesma simulação."""
+    bruto = json.dumps([t["cenario_id"], perfil_da_campanha(t["campanha_id"]), sorted((aloc or {}).items()),
+                        escolhas.get("continuidade"), (fato or {}).get("id"),
+                        None if aloc else t["decisao"]], ensure_ascii=False)
+    return hashlib.sha256(bruto.encode()).hexdigest()
+
+
+def cache_simulacao(chave: str) -> dict | None:
+    if not config.jogo()["simulacao"].get("cache_simulacoes", True):
+        return None
+    r = db.um("SELECT dados FROM sim_cache WHERE chave=?", (chave,))
+    if not r:
+        return None
+    return r["dados"] if isinstance(r["dados"], dict) else json.loads(r["dados"])
+
+
+def gravar_simulacao(chave: str, dados: dict) -> None:
+    if config.jogo()["simulacao"].get("cache_simulacoes", True):
+        db.executar("INSERT OR REPLACE INTO sim_cache (chave, dados, criado_em) VALUES (?,?,?)",
+                    (chave, json.dumps(dados, ensure_ascii=False), db.agora()))
+
+
 def perfil_da_campanha(campanha_id: str) -> str | None:
     r = db.um("SELECT perfil FROM campanhas WHERE id=?", (campanha_id,))
     return r["perfil"] if r else None
@@ -291,9 +315,16 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
     db.atualizar("tentativas", tid, {"status": "executando"})
     mf = mf or novo()
     modo, aviso = "mirofish", None
+    chave_sim = chave_simulacao(t, aloc, escolhas, fato)
+    gravada = cache_simulacao(chave_sim)
     try:
         relatorio, acoes = "", []
-        usar_mf = not settings.MIROFISH_DESATIVADO and await mf.saudavel()
+        usar_mf = gravada is None and not settings.MIROFISH_DESATIVADO and await mf.saudavel()
+        if gravada is not None:
+            relatorio, acoes, modo = gravada["relatorio"], gravada["acoes"], gravada["modo"]
+            aviso = ("Reações reaproveitadas de uma simulação já feita com esta mesma divisão do orçamento "
+                     "(demonstração).") + (" " + AVISO_CONTINGENCIA if modo == "contingencia" else "")
+            _progresso(tid, "Reações gravadas (demonstração)", 80, acoes[-6:])
         if usar_mf:
             try:
                 prazo = config.jogo()["mirofish"]["timeout_total_min"] * 60
@@ -303,7 +334,7 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
                 log.warning("MiroFish falhou na tentativa %s: %s", tid, e)
                 usar_mf = False
                 aviso = AVISO_CONTINGENCIA + f" (Motivo técnico: {str(e)[:160]})"
-        if not usar_mf:
+        if not usar_mf and gravada is None:
             modo = "contingencia"
             aviso = aviso or AVISO_CONTINGENCIA
             db.atualizar("tentativas", tid, {"modo": modo, "aviso": aviso})
@@ -318,6 +349,8 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
             acoes = [{"rodada": a["round_num"], "autor": a["agent_name"], "ator_id": a["ator_id"],
                       "tipo": a["action_type"], "texto": a["content"]} for a in acoes]
         db.atualizar("tentativas", tid, {"modo": modo, "aviso": aviso})
+        if gravada is None and acoes:
+            gravar_simulacao(chave_sim, {"relatorio": relatorio, "acoes": acoes, "modo": modo})
 
         _progresso(tid, "Analisando as reações", 88)
         texto_ext = decisao

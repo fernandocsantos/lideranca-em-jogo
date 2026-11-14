@@ -15,6 +15,7 @@ services:
       - dados-jogo:/dados
       - ./orquestrador/config:/app/config:ro                # regras editáveis sem rebuild
       - ./orquestrador/cenarios/gerados:/app/cenarios/gerados
+      - ./orquestrador/cenarios/fatos:/app/cenarios/fatos
     depends_on:
       - mirofish
     restart: unless-stopped

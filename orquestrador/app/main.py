@@ -139,6 +139,7 @@ async def config_publica():
         "niveis": config.rubrica()["niveis"],
         "decisao": jg["decisao"],
         "perfis": perfis.listar(),
+        "roteiro_demo": jg.get("roteiro_demo"),
         "perfil_padrao": perfis.padrao(),
         "simulacao": {"max_rodadas": jg["simulacao"]["max_rodadas"], "rodadas_padrao": jg["simulacao"]["rodadas_padrao"]},
         "limites": {"simulacoes_por_dia": jg["limites"]["simulacoes_por_dia"],

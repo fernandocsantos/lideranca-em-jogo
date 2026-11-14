@@ -5,3 +5,4 @@ __pycache__/
 orquestrador/dados/
 orquestrador/cenarios/gerados/*.json
 .claude/
+orquestrador/cenarios/fatos/*.json

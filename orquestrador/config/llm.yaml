@@ -9,6 +9,11 @@ tarefas:
   esclarecimento:  {modelo: claude-haiku-5-5, esforco: low,    max_tokens: 2000}
   conversa:        {modelo: claude-haiku-5-5, esforco: low,    max_tokens: 2000}
 
+# Respostas idênticas (mesmo prompt) são reaproveitadas: economiza e deixa a demonstração reprodutível.
+cache_respostas: true
+# Sem internet, usa as respostas fixas do modo demonstração (o texto avisa "modo demonstração").
+demo_sem_internet: true
+
 # Fallback do lado do servidor quando o modelo recusar por política
 # (só para modelos que suportam; Haiku 5.5 não tem).
 fallback_servidor:

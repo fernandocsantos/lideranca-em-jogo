@@ -21,6 +21,7 @@ simulacao:
   max_rodadas: 20             # teto rígido: o jogador/facilitador não passa disso
   rodadas_padrao: 4           # a simulação roda em segundo plano; o resultado base sai na hora
   max_agentes: 15
+  cache_simulacoes: true      # mesma pauta + mesma divisão do orçamento reaproveita a simulação (demonstração)
 
 limites:
   simulacoes_por_dia: 10      # por jogador (MiroFish + contingência)
@@ -49,3 +50,29 @@ mirofish:
 facilitador:
   # Código definido em FACILITADOR_CODIGO no .env
   habilitado: true
+
+# Roteiro da demonstração (botão "Roteiro da demonstração" na tela inicial). As escolhas são sempre as
+# mesmas, então as simulações e respostas ficam em cache depois da primeira execução.
+roteiro_demo:
+  perfil: media
+  trimestres:
+    - alocacao: {digitalizacao: 16000, formacao_vendas: 0, atendimento: 8000}
+      construtor:
+        motivos: ["Mais associados beneficiados", "Menor risco financeiro"]
+        canais: ["Assembleia", "WhatsApp"]
+        qtd: "40"
+        oque: ["lojas vendendo pela internet"]
+        prazo: ["o fim do trimestre"]
+        revisao: ["30 dias"]
+      conselheiro: "O que costuma fazer diferença numa decisão assim?"
+      conversa: {ator: lojista_tradicional, pergunta: "Por que você ficou insatisfeito?"}
+    - continuidade: ajustar
+      alocacao: {digitalizacao: 10500, formacao_vendas: 5000, atendimento: 8000, black_friday: 9000}
+      construtor:
+        motivos: ["Exigência de parceiro", "Mais associados beneficiados"]
+        canais: ["Reunião setorial", "Jornal local"]
+        qtd: "60"
+        oque: ["lojas participando da campanha"]
+        prazo: ["60 dias"]
+        revisao: ["30 dias"]
+      conversa: {ator: associado_bairro, pergunta: "O que você achou da decisão?"}

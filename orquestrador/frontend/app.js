@@ -129,12 +129,20 @@ function telaInicio() {
     el("p", { id: "dica-apelido", class: "suave pequeno" }, "Pode ser um apelido. Não pedimos e-mail nem dados pessoais."),
     perfis.length > 1 ? escolhaPerfil : "",
     el("button", { type: "submit", class: "grande" }, "Começar"));
+  const roteiro = estado.cfg.roteiro_demo ? el("p", {}, el("button", { class: "secundario", onclick: async () => {
+    try {
+      estado.roteiro = true; localStorage.setItem("lej_roteiro", "1");
+      const r = await api("/api/sessoes", { method: "POST", body: { apelido: campo.value || "Demonstração" } });
+      estado.token = r.token; localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
+      localStorage.setItem("lej_onboarding_ok", "1");
+      await novaCampanha(estado.cfg.roteiro_demo.perfil);
+    } catch (e) { mostrarErro(form, e); } } }, "▶ Roteiro da demonstração (2 trimestres)")) : "";
   const continuar = estado.token && estado.campanhaId
     ? el("p", {}, el("button", { class: "secundario grande", onclick: () => abrirCampanha(estado.campanhaId) }, "Continuar de onde parei"))
     : null;
   tela("Formar lideranças para decidir e acompanhar resultados",
     el("p", { class: "destaque" }, "Você vai presidir uma associação comercial por dois trimestres: escolher prioridades, dividir o orçamento e acompanhar os resultados."),
-    continuar, form,
+    continuar, form, roteiro,
     el("div", { class: "cartao conselho-convite" },
       AVATAR.criar({ id: "conselheiro", tipo: "conselheiro", genero: "m", idade: 70, expressao: "favoravel", tamanho: 72 }),
       el("div", {}, el("h2", {}, "Sala do Conselho"),
@@ -160,6 +168,17 @@ async function abrirCampanha(id) {
     if (e.status === 401 || e.status === 404) { localStorage.removeItem("lej_campanha"); estado.campanhaId = null; telaInicio(); }
     else alert(e.message);
   }
+}
+
+function passoRoteiro() {
+  if (!(estado.roteiro || localStorage.getItem("lej_roteiro") === "1") || !estado.cfg.roteiro_demo) return null;
+  return estado.cfg.roteiro_demo.trimestres[estado.campanha?.indice_atual ?? 0] || null;
+}
+
+function faixaRoteiro(texto, acao, rotulo) {
+  if (!passoRoteiro()) return "";
+  return el("div", { class: "aviso roteiro" }, el("strong", {}, "Roteiro da demonstração: "), texto, " ",
+    acao ? el("button", { type: "button", onclick: acao }, rotulo) : "");
 }
 
 function iniciarTrimestre(alocInicial) {
@@ -199,6 +218,8 @@ function telaPauta() {
   const c = camp.cenario;
   renderIndicadores(camp.indicadores);
   tela(c.titulo, cabecalhoTrimestre(),
+    faixaRoteiro(passoRoteiro()?.continuidade ? `escolha "${passoRoteiro().continuidade[0].toUpperCase() + passoRoteiro().continuidade.slice(1)}" abaixo.`
+      : (passoRoteiro()?.conselheiro ? "consulte o conselheiro e depois vá para o orçamento." : "leia a pauta e vá para o orçamento.")),
     blocoTrimestreAnterior(c),
     el("div", { class: "cartao narrativa" }, el("p", {}, c.narrativa || c.texto.split(/\n\n/)[0])),
     blocoFato(c.fato_noticia),
@@ -308,7 +329,9 @@ function telaOrcamento() {
   const continuidade = estado.escolhas.continuidade
     ? el("p", { class: "pequeno etiqueta-continuidade" }, `Você escolheu ${estado.escolhas.continuidade.toUpperCase()} a decisão anterior.`) : "";
 
+  const rot = passoRoteiro();
   tela("Dividir o orçamento", cabecalhoTrimestre(), relogio,
+    rot ? faixaRoteiro("divida o orçamento como no roteiro.", () => { for (const d of c.demandas) definir(d, 0); for (const d of c.demandas) definir(d, rot.alocacao[d.id] || 0); }, "Aplicar a divisão do roteiro") : "",
     el("div", { class: "cartao" },
       el("p", {}, el("strong", {}, `Disponível neste ${c.periodo}: ${brl(disp)}`),
         c.evento ? el("span", { class: "pequeno suave" }, ` (${brl(c.orcamento)} ${Number(c.evento.delta_orcamento) < 0 ? "−" : "+"} ${brl(Math.abs(c.evento.delta_orcamento))}: ${c.evento.titulo.charAt(0).toLowerCase() + c.evento.titulo.slice(1)})`) : ""),
@@ -415,6 +438,11 @@ const REVISOES = ["30 dias", "60 dias", "90 dias"];
 function construtor() {
   if (!estado.escolhas.construtor) {
     estado.escolhas.construtor = { motivos: [], motivoLivre: "", canais: [], canalLivre: "", qtd: "", oque: [], oqueLivre: "", prazo: [], revisao: [] };
+    const rot = passoRoteiro();
+    if (rot?.construtor) {  // roteiro: mesmas escolhas sempre (o resumo sai idêntico e a resposta vem do cache)
+      const k = estado.escolhas.construtor;
+      for (const [chave, v] of Object.entries(rot.construtor)) k[chave] = Array.isArray(v) ? [...v] : v;
+    }
   }
   return estado.escolhas.construtor;
 }
@@ -679,9 +707,12 @@ async function painelConversa(t) {
     sugestoes.replaceChildren(...perguntasSugeridas(t, sel.value).map((q) => el("button", { type: "button", class: "chip", onclick: () => mandar(q) }, q)));
   };
   sel.addEventListener("change", atualizarSugestoes);
+  const rotConv = passoRoteiro()?.conversa;
+  if (rotConv && cen.atores.some((a) => a.id === rotConv.ator)) sel.value = rotConv.ator;
   atualizarSugestoes();
   await carregar();
   return el("div", { class: "cartao" }, el("h2", {}, "Conversar"),
+    rotConv ? faixaRoteiro(`pergunte "${rotConv.pergunta}"`, () => mandar(rotConv.pergunta), "Perguntar") : "",
     el("div", { class: "linha" }, rostinho, el("div", { class: "flex1" }, el("label", { for: "interlocutor" }, "Com quem?"), sel)),
     el("p", { class: "pequeno suave" }, "Toque numa pergunta ou escreva/fale a sua."), sugestoes, log, form, dica);
 }
@@ -803,7 +834,7 @@ async function telaCertificado() {
       c.selos.length ? el("ul", { class: "selos-grade", role: "list" }, c.selos.map((x) => el("li", {}, el("span", { class: "icone-grande", "aria-hidden": "true" }, x.icone), el("strong", {}, x.nome), el("span", { class: "pequeno" }, x.descricao))))
         : el("p", {}, "Nenhum selo ainda."),
       el("h3", {}, "Decisões"),
-      c.trimestres.map((t) => el("section", { class: "cartao" }, el("h4", {}, `Trimestre ${t.indice + 1}: ${t.cenario}`),
+      c.trimestres.map((t) => el("section", { class: "cartao" }, el("h4", {}, /^Trimestre/.test(t.cenario) ? t.cenario : `Trimestre ${t.indice + 1}: ${t.cenario}`),
         el("pre", { class: "resumo-cert" }, t.resumo || ""),
         t.meta ? el("p", { class: "pequeno" }, `Meta: ${t.meta.texto} — previsto ${t.meta.previsto} de ${t.meta.alvo} (${t.meta.pct}%).`) : "",
         el("p", { class: "pequeno" }, Object.keys(t.depois).map((k) => `${nomeInd[k]}: ${Number(t.antes[k]).toFixed(0)} → ${Number(t.depois[k]).toFixed(0)}`).join(" · "))))),
@@ -957,6 +988,7 @@ async function abrirConselheiro() {
       AVATAR.criar({ id: "conselheiro", tipo: "conselheiro", genero: "m", idade: 70, expressao: "favoravel", tamanho: 64 }),
       el("div", {}, el("h2", { id: "titulo-conselheiro" }, "Conselheiro sênior"),
         el("p", { class: "pequeno" }, "Ele não dá a resposta pronta: ajuda a pensar com a experiência da rede."))),
+    passoRoteiro()?.conselheiro ? faixaRoteiro("toque na pergunta do roteiro.", () => perguntar(passoRoteiro().conselheiro), "Perguntar") : "",
     sugest, log, restantes, form,
     el("p", {}, el("button", { class: "secundario", onclick: () => { dlg.close(); dlg.remove(); } }, "Fechar")));
   document.body.append(dlg);
@@ -967,6 +999,7 @@ async function abrirConselheiro() {
 // ------------------------------------------------------------------ final
 async function telaFinal() {
   const camp = estado.campanha;
+  estado.roteiro = false; localStorage.removeItem("lej_roteiro");
   renderIndicadores(camp.indicadores);
   tela("Campanha concluída",
     el("p", {}, `Você liderou a associação por ${camp.total} ${camp.total > 1 ? "trimestres" : "trimestre"}.`),

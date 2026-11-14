@@ -211,3 +211,5 @@ body.alto-contraste :focus-visible { outline: 4px solid #000; outline-offset: 3p
 .experiencia summary::after, .fato summary::after { content: "▸ ler"; margin-left: auto; color: var(--primaria); font-size: .9rem; }
 .experiencia[open] summary::after, .fato[open] summary::after { content: "▾ fechar"; }
 .fato { border-left: 6px solid #0b5394; }
+.roteiro { background: #ecfdf5; border-color: #047857; }
+.roteiro button { margin-left: .5rem; min-height: 40px; padding: .3rem .9rem; }

@@ -41,6 +41,12 @@ CREATE TABLE IF NOT EXISTS uso_tokens (
 CREATE TABLE IF NOT EXISTS grafos_cache (
   chave TEXT PRIMARY KEY, graph_id TEXT NOT NULL, project_id TEXT NOT NULL, criado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS llm_cache (
+  chave TEXT PRIMARY KEY, tarefa TEXT NOT NULL, resposta TEXT NOT NULL, criado_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sim_cache (
+  chave TEXT PRIMARY KEY, dados TEXT NOT NULL, criado_em TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_tent_camp ON tentativas(campanha_id);
 CREATE INDEX IF NOT EXISTS idx_uso_sessao ON uso_tokens(sessao_id);
 """
