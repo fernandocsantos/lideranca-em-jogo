@@ -64,7 +64,12 @@ def _sinais(usuario: str) -> dict:
     return {"resumo_narrativo": "Simulação de demonstração: a decisão circulou entre associados, imprensa e "
                                 "poder público. Houve apoio de parte da base e cobranças por detalhes de "
                                 "execução, custo e prazo. (Texto gerado pelo modo demonstração.)",
-            "momentos": momentos, "sinais": sinais, "reacoes": reacoes, "flags": flags}
+            "momentos": momentos, "sinais": sinais, "reacoes": reacoes, "flags": flags,
+            "riscos": [{"descricao": "Quem teve o pedido cortado deixar de apoiar a diretoria", "probabilidade": "medio", "impacto": "alto"},
+                       {"descricao": "Meta não ser medida por falta de responsável", "probabilidade": "baixo", "impacto": "medio"},
+                       {"descricao": "Inadimplência continuar subindo", "probabilidade": "alto", "impacto": "medio"}],
+            "sinais_alerta": ["Queda na presença em reuniões setoriais", "Mensalidades atrasadas acima de 15%"],
+            "o_que_mudaria": ["Um patrocínio para o projeto adiado", "Nova queda de receita"]}
 
 
 def _devolutiva(usuario: str) -> dict:
@@ -84,7 +89,9 @@ def _devolutiva(usuario: str) -> dict:
             "atores_nao_considerados": [],
             "trade_offs": ["Rapidez na resposta × legitimidade de ouvir a base antes."],
             "perguntas_reflexivas": ["Quem perde com essa decisão e como você vai conversar com essas pessoas?",
-                                     "Que sinal mostraria, em 30 dias, que você precisa mudar de rota?"]}
+                                     "Que sinal mostraria, em 30 dias, que você precisa mudar de rota?"],
+            "aprendizados": ["Explicar os cortes a quem ficou de fora na mesma semana", "Definir o responsável pela meta na reunião",
+                             "Rever a decisão com dados em 30 dias"]}
 
 
 def _contingencia(usuario: str) -> dict:

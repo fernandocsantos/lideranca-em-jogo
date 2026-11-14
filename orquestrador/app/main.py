@@ -435,6 +435,12 @@ async def lista_selos():
     return {"selos": [{"id": k, **v} for k, v in selos.definicoes().items()]}
 
 
+@app.get("/api/campanhas/{cid}/relatorio")
+async def relatorio_mandato(cid: str, apelido: int = 0, s: dict = Depends(sessao_atual)):
+    from . import relatorio
+    return relatorio.montar(_campanha_da_sessao(cid, s), s["apelido"] if apelido else None)
+
+
 @app.get("/api/campanhas/{cid}/certificado")
 async def certificado(cid: str, s: dict = Depends(sessao_atual)):
     c = _campanha_da_sessao(cid, s)

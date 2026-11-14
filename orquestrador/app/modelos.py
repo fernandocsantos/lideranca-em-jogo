@@ -141,9 +141,18 @@ class Momento(Estrito):
     fala: str  # até 2 frases, em 1ª pessoa
 
 
+class Risco(Estrito):
+    descricao: str
+    probabilidade: Literal["alto", "medio", "baixo"]
+    impacto: Literal["alto", "medio", "baixo"]
+
+
 class ExtracaoSinais(Estrito):
     resumo_narrativo: str
     momentos: list[Momento]
+    riscos: list[Risco]
+    sinais_alerta: list[str]
+    o_que_mudaria: list[str]
     sinais: list[Sinal]
     reacoes: list[ReacaoAtor]
     flags: list[Flag]
@@ -162,6 +171,7 @@ class Devolutiva(Estrito):
     atores_nao_considerados: list[str]
     trade_offs: list[str]
     perguntas_reflexivas: list[str]
+    aprendizados: list[str]
 
 
 class AcaoSimulada(Estrito):

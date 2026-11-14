@@ -7,7 +7,7 @@ BASE = {"engajamento": 50, "saude_financeira": 50, "reputacao": 50, "capital_pol
 
 
 def _ext(sinais=(), reacoes=(), flags=()):
-    return ExtracaoSinais(resumo_narrativo="x", momentos=[], sinais=list(sinais), reacoes=list(reacoes),
+    return ExtracaoSinais(resumo_narrativo="x", momentos=[], riscos=[], sinais_alerta=[], o_que_mudaria=[], sinais=list(sinais), reacoes=list(reacoes),
                           flags=list(flags))
 
 
