@@ -1,0 +1,106 @@
+# Banco de Vivências da Rede. Só perfis amplos; nada de nome, CPF/CNPJ, contato, entidade ou cidade exata.
+perfil:
+  papel: [Associado, Voluntário, Liderança, Gestor, "Stakeholder: parceiro", "Stakeholder: poder público", "Stakeholder: imprensa", "Stakeholder: fornecedor", "Stakeholder: outra entidade"]
+  segmento: [Varejo, Serviços, Indústria, Alimentação, Entidade associativa, Setor público, Outro]
+  porte: [Microempresa ou MEI, Pequeno porte, Médio porte, Grande porte, Entidade pequena, Entidade média ou grande]
+  regiao: ["Interior de SP", "Região metropolitana de SP", "Outro estado: Sudeste", "Outra região do país"]
+  tempo: ["Menos de 2 anos", "2 a 5 anos", "6 a 15 anos", "Mais de 15 anos"]
+
+temas:
+  orcamento:     "Orçamento e prioridades"
+  parcerias:     "Parcerias e patrocínio"
+  crise:         "Crise financeira"
+  poder_publico: "Relação com o poder público"
+  engajamento:   "Engajamento dos associados"
+  sucessao:      "Sucessão na diretoria"
+
+tipos:
+  decisao:
+    nome: "Relato de uma decisão"
+    perguntas:
+      - {id: contexto,  texto: "Qual era o contexto da decisão?"}
+      - {id: opcoes,    texto: "Quais opções vocês tinham?"}
+      - {id: escolha,   texto: "O que foi escolhido e por quê?"}
+      - {id: resultado, texto: "Qual foi o resultado?"}
+  situacao:
+    nome: "Situação-problema vivida"
+    perguntas:
+      - {id: situacao,  texto: "Que situação-problema você viveu?"}
+      - {id: envolvidos, texto: "Quem estava envolvido? Descreva papéis, sem nomes."}
+      - {id: em_jogo,   texto: "O que estava em jogo?"}
+  feedback:
+    nome: "Feedback sobre a associação"
+    perguntas:
+      - {id: aspecto,   texto: "Sobre qual aspecto da associação é o seu feedback?"}
+      - {id: funciona,  texto: "O que funciona bem?"}
+      - {id: mudar,     texto: "O que deveria mudar?"}
+  stakeholder:
+    nome: "Percepção como stakeholder"
+    perguntas:
+      - {id: visao,     texto: "Como você enxerga a associação a partir do seu papel?"}
+      - {id: espera,    texto: "O que você espera dela?"}
+      - {id: apoio,     texto: "O que faria você apoiar a associação ou se afastar dela?"}
+
+consentimento:
+  finalidade: "Gerar situações-problema e perfis sintéticos de stakeholders para formação de lideranças de associações comerciais."
+  base_legal: "Consentimento do titular (LGPD, art. 7º, I). Apenas a versão mascarada é guardada."
+  retencao_meses: 24
+  compartilhamento: "O texto mascarado pode ser processado por provedores de IA (Anthropic, nos EUA) e pelo simulador do jogo. Nunca o original nem o áudio."
+  direitos: "Você pode pedir a exclusão a qualquer momento com o código de exclusão mostrado ao final."
+
+curadoria:
+  personas_min_vivencias: 3      # persona sintética só com 3 ou mais vivências do mesmo grupo
+  relatos_por_pauta: 3
+
+# 6 vivências FICTÍCIAS, já aprovadas, para a demonstração (marcadas como fictícias).
+exemplos:
+  - id: viv_ex1
+    tipo: decisao
+    tema: orcamento
+    perfil: {papel: Liderança, segmento: Entidade associativa, porte: Entidade média ou grande, regiao: "Interior de SP", tempo: "Mais de 15 anos"}
+    respostas:
+      contexto: "A receita caiu no meio do ano e tínhamos três projetos aprovados para o mesmo semestre."
+      opcoes: "Cortar todos um pouco, adiar um inteiro ou usar a reserva."
+      escolha: "Adiamos o mais caro e mantivemos os dois que traziam mensalidade de volta, sem tocar na reserva."
+      resultado: "O projeto adiado voltou no semestre seguinte com patrocínio, e a inadimplência caiu."
+  - id: viv_ex2
+    tipo: situacao
+    tema: engajamento
+    perfil: {papel: Associado, segmento: Varejo, porte: Microempresa ou MEI, regiao: "Interior de SP", tempo: "6 a 15 anos"}
+    respostas:
+      situacao: "Eu pagava a mensalidade e nunca era chamado para nada; pensei em sair."
+      envolvidos: "Lojistas de bairro, a gerência da associação e a diretoria."
+      em_jogo: "A permanência de quem está longe do centro e paga a mesma mensalidade."
+  - id: viv_ex3
+    tipo: feedback
+    tema: engajamento
+    perfil: {papel: Associado, segmento: Serviços, porte: Pequeno porte, regiao: "Interior de SP", tempo: "2 a 5 anos"}
+    respostas:
+      aspecto: "O atendimento ao associado."
+      funciona: "Quando alguém liga de volta, o problema se resolve rápido."
+      mudar: "Deveria haver um retorno sempre que a diretoria corta um projeto, explicando o porquê."
+  - id: viv_ex4
+    tipo: stakeholder
+    tema: poder_publico
+    perfil: {papel: "Stakeholder: poder público", segmento: Setor público, porte: Entidade média ou grande, regiao: "Interior de SP", tempo: "6 a 15 anos"}
+    respostas:
+      visao: "A associação é a porta de entrada para falar com o comércio, mas às vezes chega só com pedidos."
+      espera: "Projetos com meta pública e prestação de contas clara."
+      apoio: "Apoio quando a proposta inclui os bairros; me afasto quando vira disputa política."
+  - id: viv_ex5
+    tipo: decisao
+    tema: parcerias
+    perfil: {papel: Gestor, segmento: Entidade associativa, porte: Entidade pequena, regiao: "Interior de SP", tempo: "2 a 5 anos"}
+    respostas:
+      contexto: "Um banco ofereceu patrocínio em troca de acesso à lista de associados."
+      opcoes: "Aceitar como estava, recusar ou negociar outro formato."
+      escolha: "Negociamos um patrocínio sem repassar dados, com adesão voluntária."
+      resultado: "Entrou menos dinheiro, mas ninguém reclamou e o conselho aprovou rápido."
+  - id: viv_ex6
+    tipo: situacao
+    tema: crise
+    perfil: {papel: Voluntário, segmento: Alimentação, porte: Pequeno porte, regiao: "Interior de SP", tempo: "Menos de 2 anos"}
+    respostas:
+      situacao: "Uma enchente fechou o centro por uma semana e a diretoria demorou a se manifestar."
+      envolvidos: "Lojistas atingidos, Defesa Civil, imprensa local e a diretoria."
+      em_jogo: "A recuperação dos negócios e a confiança na associação."

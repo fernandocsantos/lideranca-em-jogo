@@ -181,7 +181,8 @@
         "engajamento": -2.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "lojas vendendo pela internet"
+      "meta_sugerida": "lojas vendendo pela internet",
+      "ano_anterior": 12000
     },
     {
       "id": "formacao_vendas",
@@ -199,7 +200,8 @@
         "coesao": -1.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "vendedores formados"
+      "meta_sugerida": "vendedores formados",
+      "ano_anterior": 10000
     },
     {
       "id": "atendimento",
@@ -217,7 +219,8 @@
         "coesao": -2.0
       },
       "minimo_util": 0.5,
-      "meta_sugerida": "associados atrasados recontatados"
+      "meta_sugerida": "associados atrasados recontatados",
+      "ano_anterior": 8000
     }
   ],
   "regras": [

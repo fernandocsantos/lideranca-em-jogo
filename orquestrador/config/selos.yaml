@@ -1,8 +1,8 @@
-# Selos por comportamento (nunca por "resposta certa").
+# Certificações de competência (por comportamento, nunca por "resposta certa").
 selos:
-  decisao_clara:      {nome: "Decisão clara",              icone: "🧭", descricao: "Resumo completo: prioridade, motivo, comunicação e meta."}
-  ouviu_experiencia:  {nome: "Ouviu a experiência",        icone: "🦉", descricao: "Consultou o Conselheiro sênior."}
-  meta_mensuravel:    {nome: "Meta mensurável",            icone: "🎯", descricao: "Definiu quantidade, o quê e prazo."}
-  revisou_resultados: {nome: "Revisou com base em resultados", icone: "🔁", descricao: "Ajustou ou reviu a decisão depois de ver os resultados."}
-  ouviu_discordante:  {nome: "Ouviu quem discordava",      icone: "👂", descricao: "Conversou com alguém insatisfeito ou desconfiado."}
-  conselheiro_rede:   {nome: "Conselheiro da rede",        icone: "🏅", descricao: "Contribuiu com sua experiência na Sala do Conselho."}
+  decisao_clara:         {nome: "Decisão clara",                  descricao: "Ata completa: critério, envolvidos, comunicação e meta."}
+  considerou_vivencia:   {nome: "Considerou a vivência da rede",  descricao: "Abriu os relatos 'O que a rede relata' antes de decidir."}
+  meta_mensuravel:       {nome: "Meta mensurável",                descricao: "Definiu quantidade, o quê e prazo."}
+  revisou_resultados:    {nome: "Revisou com base em resultados", descricao: "Ajustou ou reviu a decisão depois de ver os resultados."}
+  ouviu_discordante:     {nome: "Ouviu quem discordava",          descricao: "Conversou com alguém insatisfeito ou desconfiado."}
+  contribuiu_rede:       {nome: "Contribuiu com a rede",          descricao: "Registrou uma vivência no Banco de Vivências."}

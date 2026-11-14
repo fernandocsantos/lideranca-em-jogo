@@ -28,7 +28,22 @@ def listar() -> list[dict[str, Any]]:
 
 
 def padrao() -> str:
+    """Perfil dos novos mandatos: o escolhido pelo facilitador (banco) ou o de jogo.yaml."""
+    try:
+        from . import db
+        r = db.um("SELECT valor FROM configuracao WHERE chave='perfil_padrao'")
+        if r and r["valor"] in _todos():
+            return r["valor"]
+    except Exception:  # noqa: BLE001
+        pass
     return config.jogo()["campanha"].get("perfil_padrao", "media")
+
+
+def definir_padrao(perfil_id: str) -> None:
+    from . import db
+    if perfil_id not in _todos():
+        raise KeyError(perfil_id)
+    db.executar("INSERT OR REPLACE INTO configuracao (chave, valor) VALUES ('perfil_padrao', ?)", (perfil_id,))
 
 
 def obter(perfil_id: str | None) -> dict[str, Any]:
@@ -56,6 +71,8 @@ def aplicar(c: Cenario, perfil_id: str | None) -> Cenario:
     novo.orcamento = p["orcamento_trimestral"]
     for d in novo.demandas:
         d.custo = max(500, _arredondar(d.custo * fator))
+        if d.ano_anterior is not None:
+            d.ano_anterior = min(d.custo, _arredondar(d.ano_anterior * fator))
     if novo.evento and novo.evento.delta_orcamento:
         novo.evento.delta_orcamento = _arredondar(novo.evento.delta_orcamento * fator)
     # O texto completo cita os valores de referência; acrescenta a versão do perfil para o MiroFish.

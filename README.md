@@ -1,8 +1,10 @@
 # Liderança em Jogo
 
-**Formar lideranças para decidir e acompanhar resultados.** Jogo sério em português do Brasil, feito para o desafio CACB do Hackathon Connect 7.0 ("Varejo e soluções do futuro"). Ele prepara novas lideranças, voluntários e diretores de associações comerciais para decidir **prioridades, orçamento e resultados**.
+**Treinamento gamificado que simula cenários de lideranças de associações comerciais usando uma coleção de agentes de IA para compor uma ferramenta preditiva que reduz os riscos de atuações reais.**
 
-O jogador preside uma associação fictícia por dois trimestres. Em cada um, lê uma pauta curta, **divide o orçamento** entre pedidos que não cabem juntos, registra a decisão com botões, voz ou texto, e vê o resultado na hora. Em segundo plano, agentes de IA no [MiroFish](https://github.com/666ghj/MiroFish) simulam como associados, diretoria, prefeitura e imprensa reagem. Depois o jogador conversa com essas pessoas, consulta um **conselheiro sênior** que cita experiências reais de dirigentes da rede e acompanha a meta que ele mesmo definiu.
+Jogo sério em português do Brasil, feito para o desafio CACB do Hackathon Connect 7.0 ("Varejo e soluções do futuro"). Prepara novas lideranças, voluntários e diretores de associações comerciais para decidir **prioridades, orçamento e resultados**.
+
+O jogador cumpre um **mandato** numa associação fictícia. Em cada trimestre, lê a **pauta**, fecha a **Mesa do Orçamento** (o ano anterior não cabe no teto), registra a **Ata da decisão** em 5 passos numerados, com botões, voz ou texto, e vê o resultado na hora. Em segundo plano, agentes de IA no [MiroFish](https://github.com/666ghj/MiroFish) simulam como associados, diretoria, prefeitura e imprensa reagem. O jogo devolve reações previstas, mapa de riscos e sinais de alerta. Relatos mascarados do **Banco de Vivências** entram na pauta e na simulação. No **Modo Ensaio**, a liderança testa uma decisão real antes de tomá-la.
 
 > Protótipo de uso local. Licença **AGPL-3.0**, a mesma do MiroFish (veja [LICENSE](LICENSE)). Se você oferecer o jogo como serviço em rede, precisa disponibilizar o código-fonte com as suas modificações. Usa só informações públicas ou fictícias.
 
@@ -10,12 +12,13 @@ O jogador preside uma associação fictícia por dois trimestres. Em cada um, l�
 
 | Pedido do guia | No jogo |
 |---|---|
-| Decidir prioridades, orçamento e resultados | Orçamento como mecânica central: controles deslizantes, botões "Financiar tudo", "Metade" e "Adiar", saldo em tempo real e prévia instantânea |
-| Diretorias voluntárias, com pouco tempo | Cronômetro de reunião (10 min), pauta com até 80 palavras, um passo por tela |
-| Clareza | "Resumo da decisão" de 5 linhas: prioridade, motivo, **limites que pesaram**, comunicação e meta |
-| Aprendizado com os seniores | Sala do Conselho (relatos por voz), cartão "Experiência da rede" e Conselheiro sênior |
-| Replicação | Perfis de AC em configuração: pequena (sem funcionários, R$ 9 mil), média (caso do guia, R$ 30 mil) e grande (R$ 120 mil) |
-| Pouca familiaridade digital | Botões grandes, voz, letra ajustável, alto contraste, onboarding de 4 telas, sem jargão |
+| Decidir prioridades, orçamento e resultados | **Mesa do Orçamento**: −/+ R$ 500 por linha, "ano anterior", status de cada linha ("sem mudança", "corte de R$ X"), total × teto, "Falta cortar R$ X" e prévia instantânea dos indicadores |
+| Diretorias voluntárias, com pouco tempo | Cronômetro de reunião, pauta curta com "Ler contexto completo" em painel inferior, um passo por tela |
+| Clareza | **Ata Padronizada de Decisão** com 7 seções fixas, em tela, PDF e CSV |
+| Aprendizado com a rede | **Banco de Vivências** mascarado (LGPD), relatos na pauta ("O que a rede relata") e personas sintéticas de stakeholders |
+| Reduzir o risco da atuação real | Previsão do MiroFish: reações por stakeholder, mapa de riscos 3×3, sinais de alerta e **Modo Ensaio** para decisões reais |
+| Replicação | Perfis de AC em configuração (pequena R$ 9 mil, média R$ 30 mil, grande R$ 120 mil) e "Adaptar para outra associação" no painel do facilitador |
+| Pouca familiaridade digital | Barra de abas fixa, botões grandes, voz, letra ajustável, alto contraste, sons discretos com botão de mudo, app instalável (PWA) |
 
 ## Conteúdo
 
@@ -23,13 +26,17 @@ O jogador preside uma associação fictícia por dois trimestres. Em cada um, l�
 |---|---|
 | [docs/arquitetura.md](docs/arquitetura.md) | Arquitetura, integração com o MiroFish e regras de cálculo |
 | [docs/pitch-testes.md](docs/pitch-testes.md) | Quadro "O que observamos nos testes x o que ainda precisa ser validado" |
+| [docs/banco-de-vivencias.md](docs/banco-de-vivencias.md) | **Fluxo de dados do Banco de Vivências e LGPD** (coleta, mascaramento, armazenamento, envio ao MiroFish) |
+| [docs/continuar.md](docs/continuar.md) | **Passagem de contexto**: estado, pendências, regras do projeto, outra máquina e Windows (WSL 2) |
+| `mirofish/patches/` | Correção local do MiroFish (AGPL): nomes de entidade em PascalCase, exigido pelo Zep |
+| [docs/identidade-visual.md](docs/identidade-visual.md) | Paleta CACB (códigos e fontes), contraste, tipografia, ícones e licenças |
 | [docker-compose.yml](docker-compose.yml) | Orquestrador + MiroFish + proxy LLM (LiteLLM) |
 | `orquestrador/app/` | Backend em Python/FastAPI |
-| `orquestrador/frontend/` | SPA sem etapa de build (HTML/CSS/JS), com avatares SVG próprios |
+| `orquestrador/frontend/` | PWA sem etapa de build (HTML/CSS/JS): avatares SVG próprios, ícones Lucide, fonte Inter, jsPDF, sons em Web Audio, tudo servido localmente |
 | `orquestrador/config/` | **Arquivos editáveis** (veja "Configuração") |
 | `orquestrador/cenarios/curados/` | Caso do guia (2 trimestres) e 10 casos fictícios revisados |
 | `orquestrador/cenarios/fatos/` | Fatos de trimestre gerados de notícias (aguardam aprovação) |
-| `orquestrador/tests/` | 53 testes automatizados, incluindo ponta a ponta |
+| `orquestrador/tests/` | 62 testes automatizados, incluindo ponta a ponta e mascaramento |
 
 ## Instalação (Docker)
 
@@ -50,9 +57,13 @@ docker compose up -d --build
 ```
 
 Abra http://localhost:8000. Endereços:
-- `/conselho`: Sala do Conselho, para os seniores registrarem experiências.
-- `/facilitador`: painel do facilitador, com o código do `.env`.
-- `/certificado`: certificado da campanha atual.
+- `/vivencias`: Banco de Vivências (contribuir, ver relatos aprovados, excluir pelo código).
+- `/ensaio`: Modo Ensaio.
+- `/relatorio`: Relatório de gestão do mandato (PDF, CSV, texto).
+- `/facilitador`: painel do facilitador (curadoria, personas, cenários de vivências, bloqueios, turma), com o código do `.env`.
+- `/certificado`: certificações de competência da campanha atual.
+
+O app é instalável (PWA): no Chrome do celular, "Adicionar à tela inicial". A casca, as fontes, os ícones e a última versão das telas ficam em cache e abrem sem internet.
 
 * O MiroFish não fica exposto fora da rede do Compose e a interface própria dele não é usada. As chaves ficam só no servidor.
 * O proxy LiteLLM é necessário: o endpoint compatível da Anthropic recusa o pedido de JSON do MiroFish. O proxy também desliga o raciocínio adaptativo do Haiku, porque o MiroFish limita as respostas a 4.096 tokens. O MiroFish só conhece a chave interna do proxy.
@@ -84,17 +95,19 @@ Para tirar do ar (o jogo continua local):
 
 Para voltar a usar sem senha em casa, apague as linhas `ACESSO_` do `.env` e rode `docker compose up -d orquestrador`.
 
-## Roteiro da demonstração (cerca de 5 minutos)
+## Roteiro da demonstração (cerca de 6 minutos)
 
-1. Abra http://localhost:8000 e toque em **"▶ Roteiro da demonstração (2 trimestres)"**. Uma faixa verde indica, em cada tela, o próximo toque.
-2. **Trimestre 1** (caso do guia: R$ 30 mil; digitalização R$ 18 mil, formação R$ 14 mil, atendimento R$ 8 mil; a receita cai R$ 6 mil):
-   - Na pauta, toque em **🦉 Consultar o conselheiro** e depois em **Perguntar**. Ele cita a experiência da rede e não dá a resposta pronta. Feche.
-   - Em **Ir para o orçamento**, toque em **Aplicar a divisão do roteiro**: atendimento R$ 8 mil e digitalização R$ 16 mil. Mostre a Dona Cida ficando insatisfeita e as setas nos indicadores.
-   - Em **Registrar a decisão**, toque em **Próximo** três vezes: os botões já vêm marcados. Mostre o **Resumo da decisão** e toque em **Confirmar**.
-   - Mostre o resultado imediato, a meta prevista, os momentos-chave e a devolutiva. Na conversa, toque em **Perguntar**: a Dona Cida explica por que discordou.
-3. Toque em **Ir para o próximo trimestre**. **Trimestre 2**: mostre "Como foi o trimestre passado" (meta prevista x alvo) e toque em **Ajustar** → **Aplicar a divisão do roteiro** → **Registrar** → **Próximo** ×3 → **Confirmar** → **Perguntar** (Seu Jorge) → **Concluir**.
-4. Toque em **🏅 Ver meu certificado**: 5 selos e os resumos de decisão. **Imprimir / salvar em PDF**.
-5. Opcional: mostre a **Sala do Conselho** (`/conselho`), com uma pergunta por tela e o botão de microfone, e o **painel do facilitador**, com a moderação.
+1. Abra http://localhost:8000, pule as boas-vindas e toque em **"Roteiro da demonstração (2 trimestres)"**. Uma faixa azul indica, em cada tela, o próximo toque. No **Painel**, mostre os 6 indicadores e a lista do mandato; toque em **Jogar**.
+2. **Trimestre 1** (caso do guia: digitalização, formação e atendimento somavam R$ 30 mil no ano anterior; a receita cai R$ 6 mil e o teto fica em R$ 24 mil):
+   - Na pauta, abra **Ler contexto completo** e **Ver relatos da rede** ("O que a rede relata", vindos do Banco de Vivências). Toque em **Abrir a Mesa do Orçamento**.
+   - Na Mesa, mostre "R$ 30.000 de R$ 24.000 · Falta cortar R$ 6.000" e o som de alerta. Toque em **Aplicar**: o total fecha em R$ 24 mil, com o acorde de "orçamento fechado".
+   - Toque em **Orçamento fechado: registrar a decisão**. Os 5 passos já vêm marcados: critérios, **quem você envolve antes de decidir** (avatares), justificativa dos cortes, comunicação e meta com responsável e indicador. Toque em **Ver a Ata da decisão** e **Confirmar a decisão**.
+   - No resultado: indicadores antes × depois, reações previstas por stakeholder, **mapa de riscos**, sinais de alerta e o aviso fixo "Simulação para apoio à decisão; não é garantia de resultado". Na conversa, pergunte à Dona Cida por que discordou.
+3. **Próximo trimestre** → **Trimestre 2**: mostre "Como foi o trimestre passado" e toque em **Ajustar** → **Aplicar** → **Orçamento fechado** → **Ver a Ata** → **Confirmar** → **Concluir o mandato**.
+4. **Relatório de gestão:** certificações de competência e consolidado do mandato. Toque em **Baixar relatório (PDF)**: as 7 seções por trimestre, o consolidado, cabeçalho institucional e números de página. Mostre também **Baixar dados (CSV)**.
+5. **Vivências:** registre um relato com um nome e um telefone e mostre o texto mascarado antes de confirmar, as 3 confirmações de consentimento e o código de exclusão.
+6. **Ensaio:** **Ver ensaio de exemplo** (funciona sem internet) ou **Novo ensaio** com uma decisão real. O resultado fica só no aparelho.
+7. Opcional: **Facilitador** (código do `.env`): curadoria com risco de reidentificação, "Gerar personas", "Gerar cenário a partir de vivências", bloqueios de envio e "Adaptar para outra associação".
 
 **Cache e contingência:** a primeira execução do roteiro grava as simulações e as respostas. Nas seguintes, o jogo reaproveita o cache e roda **mesmo com o MiroFish desligado**, sinalizando o modo simplificado na tela. Testado: roteiro completo em 23 s de cliques automatizados com o MiroFish parado. Sem internet, as respostas vêm do modo demonstração e o texto avisa isso.
 
@@ -130,8 +143,8 @@ cd orquestrador && LLM_FALSO=true MIROFISH_DESATIVADO=true FACILITADOR_CODIGO=de
 | `perfis/*.yaml` | **Replicação**: associação, equipe, orçamento por trimestre e personagens de cada perfil de AC. Para outra AC, copie um arquivo e mude os valores; custos e textos se ajustam sozinhos |
 | `indicadores.yaml` | Regras de cálculo: efeito de cada pedido financiado ou adiado, saldo guardado, pontos da decisão guiada, faixa de ajuste da simulação (±10), limites |
 | `rubrica.yaml` | Rubrica de 7 competências × 4 níveis |
-| `conselho.yaml` | Temas e perguntas da Sala do Conselho, mapa tema do cenário → temas da rede, 2 exemplos fictícios |
-| `selos.yaml` | Os 6 selos por comportamento |
+| `vivencias.yaml` | Banco de Vivências: faixas do perfil, temas, tipos e perguntas, textos de consentimento, retenção (24 meses), curadoria (personas com ≥ 3 vivências) e 6 exemplos fictícios aprovados |
+| `selos.yaml` | As 6 certificações de competência por comportamento |
 | `llm.yaml` | Modelo e esforço por tarefa, preços, câmbio, cache de respostas, modo sem internet |
 | `fontes.yaml` | Feeds RSS e palavras-chave por tema (notícias → fato do trimestre) |
 | `moderacao.yaml` | Termos bloqueados e padrões de manipulação |
@@ -152,7 +165,7 @@ No painel do facilitador, toque em **"Gerar fatos a partir de notícias recentes
 cd orquestrador && .venv/bin/python -m pytest -q
 ```
 
-São 53 testes: alocação e prévia, perfis, limite de 80 palavras por pauta, decisão guiada, meta, selos, Sala do Conselho e conselheiro, notícias (injeção e nomes reais), cliente do MiroFish, pipeline de simulação (cache de grafo, cache de simulação, MiroFish fora do ar, falha no meio, excesso de agentes, sem internet) e **dois trimestres ponta a ponta** pela API, com o MiroFish simulado.
+São 62 testes: alocação e prévia (incluindo "Falta cortar"), perfis, decisão guiada, meta, certificações, **mascaramento** (nome, CPF, telefone, e-mail, empresa e cidade removidos; payload do MiroFish sem nenhum deles; bloqueio registrado sem o dado), Banco de Vivências (consentimento, risco, exclusão por código), Modo Ensaio (mascara e não grava), Ata com 7 seções, notícias (injeção e nomes reais), cliente do MiroFish, pipeline de simulação (caches, MiroFish fora do ar, falha no meio, sem internet) e **dois trimestres ponta a ponta** pela API.
 
 ## Custo e tempo (medidos com chaves reais em 14/11/2026)
 
@@ -168,10 +181,11 @@ Com R$ 100 por mês, cabem cerca de **45 campanhas de 2 trimestres** (~R$ 2,20 c
 
 ## Privacidade (LGPD)
 
-- **Jogadores:** só apelido, sem e-mail ou IP. O botão "Apagar meus dados" remove a sessão e as contribuições ligadas a ela.
-- **Seniores:** escolhem entre nome e anonimato, avatar em vez de foto, e dão consentimento explícito. A contribuição fica em revisão até um facilitador aprovar.
-- **Voz:** usa o reconhecimento do próprio navegador (no Chrome, passa por servidores do Google), e a tela avisa isso.
-- **Moderação:** barra conteúdo ofensivo, dados pessoais e tentativas de manipular os agentes.
+- **Jogadores:** só apelido, sem e-mail ou IP. O apelido entra no relatório apenas se a pessoa marcar. "Apagar meus dados" remove a sessão e as vivências ainda não aprovadas dela.
+- **Banco de Vivências:** perfil em faixas, mascaramento antes de gravar e antes de qualquer envio, consentimento em 3 partes, retenção de 24 meses, código de exclusão, curadoria e bloqueio automático de envios com dado pessoal. Detalhes em [docs/banco-de-vivencias.md](docs/banco-de-vivencias.md).
+- **Modo Ensaio:** o texto é mascarado e simulado sem ser gravado no servidor; o resultado fica só no aparelho.
+- **Voz:** usa o reconhecimento do próprio navegador (no Chrome, passa por servidores do Google), e a tela avisa isso. O áudio nunca é gravado.
+- **Moderação:** barra conteúdo ofensivo e tentativas de manipular os agentes, sempre depois do mascaramento.
 
 ## Fora do escopo
 

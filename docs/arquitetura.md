@@ -32,8 +32,8 @@
 | Uso | Modelo | Motivo |
 |---|---|---|
 | Agentes do MiroFish (OASIS, perfis, relatório) | `claude-haiku-5-5` | Alto volume de chamadas; cabe no orçamento de R$ 100/mês |
-| Extração de sinais, devolutiva pedagógica, ficcionalização de notícias, simulação de contingência | `claude-opus-5-5` | Poucas chamadas, exigem julgamento |
-| Moderação, conversa com agentes (persona), Conselheiro sênior | `claude-haiku-5-5` | Respostas curtas, alto volume |
+| Extração de sinais e riscos, devolutiva pedagógica, ficcionalização de notícias, personas e cenários do Banco de Vivências, simulação de contingência e Modo Ensaio | `claude-opus-5-5` | Poucas chamadas, exigem julgamento |
+| Moderação, conversa com agentes (persona) | `claude-haiku-5-5` | Respostas curtas, alto volume |
 
 Tudo em `orquestrador/config/llm.yaml`.
 
@@ -42,15 +42,18 @@ Tudo em `orquestrador/config/llm.yaml`.
 | Etapa | O que acontece | Módulo |
 |---|---|---|
 | Onboarding | 4 telas puláveis, só na primeira vez | `frontend/app.js` |
-| 1. Pauta | Narrativa de até 80 palavras, evento do período, tags, regras com ícone, fileira de avatares, "Notícia do trimestre" e "Experiência da rede" (recolhidas). No 2º trimestre: meta do trimestre anterior + Manter/Ajustar/Rever | `cenarios.py`, `perfis.py`, `fatos.py`, `conselho.py` |
-| 2. Orçamento | Controles, botões rápidos, saldo, cronômetro; prévia instantânea em código (`POST /previa`) com expressão de quem pediu e tendência dos indicadores | `alocacao.py` |
-| 3. Decisão | Construtor em 3 passos (motivo, comunicação, meta), com botões, voz e texto, e resumo de 5 linhas; moderação local | `frontend/app.js`, `moderacao.py` |
+| 1. Pauta | Narrativa de até 80 palavras, evento do período, tags, regras com ícone, fileira de avatares, "Notícia do trimestre", "Ler contexto completo" e "O que a rede relata" (painéis inferiores). No 2º trimestre: meta do trimestre anterior + Manter/Ajustar/Rever | `cenarios.py`, `perfis.py`, `fatos.py`, `vivencias.py` |
+| 2. Mesa do Orçamento | −/+ R$ 500 por linha a partir do ano anterior, status da linha, total × teto, "Falta cortar"; prévia instantânea em código (`POST /previa`) com postura de quem pediu e tendência dos indicadores | `alocacao.py` |
+| 3. Ata da decisão | 5 passos numerados (critérios, envolvidos, justificativa dos cortes, comunicação, meta com responsável e indicador), com botões, voz e texto; mascaramento e depois moderação local | `frontend/app.js`, `mascaramento.py`, `moderacao.py` |
 | 4. Resultado | **Resultado base imediato** (alocação → indicadores, meta prevista); devolutiva em ~20 s (Opus, sem esperar a simulação); a simulação do MiroFish roda na fila e, ao terminar, ajusta os indicadores (±10) e gera os momentos-chave | `simulacao.py`, `indicadores.py`, `devolutiva.py`, `fila.py` |
 | Conversa | Entrevista no MiroFish (com a decisão como contexto) ou persona com memória da simulação; 3 perguntas sugeridas por interlocutor | `conversa.py` |
-| Conselheiro | Agente do orquestrador (Haiku) com as experiências aprovadas; até 3 perguntas por trimestre; não dá a resposta pronta | `conselho.py` |
-| Selos e certificado | 6 selos por comportamento, calculados no servidor; certificado imprimível | `selos.py` |
+| Previsão e riscos | Reações por stakeholder, riscos com probabilidade × impacto (mapa 3×3), sinais de alerta e o que mudaria a previsão, extraídos da simulação | `sinais.py` |
+| Relatório de gestão | Ata Padronizada (7 seções) por trimestre + consolidado do mandato; PDF (jsPDF) e CSV gerados no navegador, offline | `relatorio.py`, `frontend/relatorio.js` |
+| Certificações | 6 certificações de competência por comportamento, calculadas no servidor | `selos.py` |
+| Banco de Vivências | Coleta guiada, mascaramento, consentimento, curadoria, personas sintéticas e cenários | `vivencias.py`, `mascaramento.py`, `frontend/vivencias.js` |
+| Modo Ensaio | Decisão real mascarada → simulação com personas do Banco → Ata com mapa de riscos, sem gravar no servidor | `ensaio.py`, `frontend/ensaio.js` |
 
-**Por que o conselheiro não é um agente do MiroFish:** cada experiência nova exigiria reconstruir o grafo e as personas (minutos e custo). As experiências entram no **material-semente de cada tentativa**, então a simulação também as considera.
+**Como o Banco chega ao MiroFish:** cada vivência nova exigiria reconstruir o grafo e as personas (minutos e custo). Por isso, os trechos mascarados entram no **material-semente de cada tentativa**, e a guarda de envio verifica o texto antes de cada chamada. Fluxo completo em [banco-de-vivencias.md](banco-de-vivencias.md).
 
 ## 3. Integração com o MiroFish — endpoints usados
 
@@ -122,10 +125,10 @@ Documento `.md` (`cenarios.material_semente`): contexto da AC (do perfil), situa
 
 `app/news/pipeline.py`: coletar (RSS, 90 dias) → filtrar por tema → **fato de até 2 frases** (Opus, saída estruturada: título curto, texto, recorte temático, efeito típico no caixa) → validar em código (nenhum nome próprio da notícia nem da lista de bloqueados; no máximo 2 frases) → `cenarios/fatos/` em revisão. Aprovado, aparece como "Notícia do trimestre" (o mais recente no 1º trimestre, o seguinte no 2º) e entra no material-semente. O orçamento e as demandas vêm do perfil da AC. O texto da notícia vai delimitado como dado não confiável, e o jogador vê veículo, data, link e recorte, nunca o título original.
 
-## 5a. Sala do Conselho e selos
+## 5a. Banco de Vivências e certificações
 
-* Contribuições (tabela `contribuicoes`): identificação (nome ou anônimo), entidade, anos, avatar, tema, 3 respostas e consentimento. Passam por moderação e ficam **em revisão** até o facilitador aprovar. Há 2 exemplos fictícios aprovados em `config/conselho.yaml`.
-* Selos (`config/selos.yaml`): calculados a partir do que ficou gravado (escolhas da decisão, consultas ao conselheiro, conversas com atores de postura ≤ −1, contribuições da sessão). Cada selo é avisado uma única vez.
+* Vivências (tabela `vivencias`): perfil em faixas, tipo, tema, respostas **mascaradas**, risco de reidentificação, status e hash do código de exclusão. Há 6 exemplos fictícios aprovados em `config/vivencias.yaml`. Detalhes e LGPD em [banco-de-vivencias.md](banco-de-vivencias.md).
+* Certificações (`config/selos.yaml`): calculadas a partir do que ficou gravado (escolhas da Ata, relatos da rede abertos, conversas com atores de postura ≤ −1, vivências da sessão). Cada uma é avisada uma única vez.
 
 ## 6. Robustez, cache e demonstração
 
@@ -150,4 +153,4 @@ Documento `.md` (`cenarios.material_semente`): contexto da AC (do perfil), situa
 
 ## 9. Fora de escopo
 
-Login e turmas (decisão do projeto), multijogador em tempo real, app nativo, integração com sistemas das ACs. O **painel do facilitador** da v1 é simples e sem login (protegido por um código no `.env`): lista partidas, compara decisões para o mesmo cenário e exporta CSV; o relatório para PDF usa a impressão do navegador.
+Login e turmas (decisão do projeto), multijogador em tempo real, app nativo, integração com sistemas das ACs. O **painel do facilitador** da v1 é simples e sem login (protegido por um código no `.env`): lista partidas, compara decisões para o mesmo cenário e exporta CSV; o relatório sai em PDF e CSV gerados no navegador.

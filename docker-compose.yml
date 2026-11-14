@@ -40,6 +40,8 @@ services:
       - llm-proxy
     volumes:
       - mirofish-uploads:/app/backend/uploads
+      # correção local (AGPL): nomes de entidade em PascalCase, exigido pelo Zep desde 13/11/2026
+      - ./mirofish/patches/ontology_generator.py:/app/backend/app/services/ontology_generator.py:ro
     restart: unless-stopped
 
   llm-proxy:

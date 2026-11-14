@@ -309,8 +309,8 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
     escolhas = t.get("escolhas") or {}
     experiencias = escolhas.get("experiencias_citadas") or None
     if not experiencias:
-        from . import conselho
-        experiencias = [conselho.frase_citacao(e) for e in conselho.aprovadas(conselho.temas_do_cenario(c))[:2]] or None
+        from . import vivencias
+        experiencias = vivencias.para_semente(c) or None
     rodadas = int(t["rodadas"] or config.jogo()["simulacao"]["rodadas_padrao"])
     db.atualizar("tentativas", tid, {"status": "executando"})
     mf = mf or novo()
@@ -377,6 +377,9 @@ async def processar(tid: str, mf: MiroFish | None = None) -> None:
                          "reacao": r.reacao, "citacao": r.citacao} for r in ext.reacoes],
             "sinais": [s.model_dump() for s in ext.sinais],
             "flags": ext.flags,
+            "riscos": [x.model_dump() for x in ext.riscos],
+            "sinais_alerta": ext.sinais_alerta,
+            "o_que_mudaria": ext.o_que_mudaria,
             "indicadores": final,
             "relatorio": relatorio[:20000],
             "acoes": acoes[:200],

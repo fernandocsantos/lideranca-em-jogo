@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS uso_tokens (
 CREATE TABLE IF NOT EXISTS grafos_cache (
   chave TEXT PRIMARY KEY, graph_id TEXT NOT NULL, project_id TEXT NOT NULL, criado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS configuracao (
+  chave TEXT PRIMARY KEY, valor TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS llm_cache (
   chave TEXT PRIMARY KEY, tarefa TEXT NOT NULL, resposta TEXT NOT NULL, criado_em TEXT NOT NULL
 );
@@ -152,7 +155,8 @@ def apagar_sessao(sessao_id: str) -> None:
         c.execute("UPDATE uso_tokens SET sessao_id=NULL WHERE sessao_id=?", (sessao_id,))
         c.execute("DELETE FROM sessoes WHERE id=?", (sessao_id,))
         try:
-            c.execute("DELETE FROM contribuicoes WHERE sessao_id=?", (sessao_id,))
+            c.execute("DELETE FROM vivencias WHERE sessao_id=? AND status!='aprovada'", (sessao_id,))
+            c.execute("UPDATE vivencias SET sessao_id=NULL WHERE sessao_id=?", (sessao_id,))
         except sqlite3.OperationalError:
             pass
         c.commit()

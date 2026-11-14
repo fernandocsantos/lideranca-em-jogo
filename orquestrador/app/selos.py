@@ -26,6 +26,8 @@ def avaliar(campanha: dict) -> set[str]:
             ganhos.add("decisao_clara")
         if e.get("meta_mensuravel"):
             ganhos.add("meta_mensuravel")
+        if e.get("considerou_vivencias"):
+            ganhos.add("considerou_vivencia")
         if e.get("continuidade") in ("ajustar", "rever"):
             ganhos.add("revisou_resultados")
         res = t.get("resultado") or {}
@@ -33,11 +35,9 @@ def avaliar(campanha: dict) -> set[str]:
             if m["interlocutor"] != "relatorio" and _postura(res, m["interlocutor"]) <= -1:
                 ganhos.add("ouviu_discordante")
     try:
-        if db.um("SELECT COUNT(*) n FROM consultas_conselheiro WHERE campanha_id=?", (campanha["id"],))["n"]:
-            ganhos.add("ouviu_experiencia")
-        if db.um("SELECT COUNT(*) n FROM contribuicoes WHERE sessao_id=?", (campanha["sessao_id"],))["n"]:
-            ganhos.add("conselheiro_rede")
-    except Exception:  # noqa: BLE001 — tabelas da Sala do Conselho ainda não criadas
+        if db.um("SELECT COUNT(*) n FROM vivencias WHERE sessao_id=?", (campanha["sessao_id"],))["n"]:
+            ganhos.add("contribuiu_rede")
+    except Exception:  # noqa: BLE001 — tabela do Banco de Vivências ainda não criada
         pass
     return ganhos
 

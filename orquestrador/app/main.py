@@ -19,7 +19,8 @@ import asyncio
 
 from . import alocacao as aloc_mod
 from . import campanha as camp
-from . import cenarios, config, conselho, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao
+from . import mascaramento
+from . import cenarios, config, conversa, custos, db, esclarecimento, fatos, fila, moderacao, perfis, selos, settings, simulacao, vivencias
 from .llm import Ctx, ErroLLM
 from .mirofish_client import novo as novo_mirofish
 
@@ -29,13 +30,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 @asynccontextmanager
 async def ciclo(app: FastAPI):
     db.conectar()
-    conselho.preparar()
+    vivencias.preparar()
+    vivencias.expirar()
     fila.iniciar()
     yield
     await fila.parar()
 
 
 app = FastAPI(title="Liderança em Jogo — orquestrador", lifespan=ciclo)
+
+
+@app.middleware("http")
+async def revalidar_estaticos(request: Request, chamar):
+    """Arquivos da interface sempre revalidados (ETag): atualizações aparecem sem limpar cache."""
+    resp = await chamar(request)
+    if request.url.path.startswith("/static/") or request.url.path == "/":
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 
 @app.middleware("http")
@@ -113,27 +124,23 @@ class NovaCampanha(BaseModel):
     modo: Optional[str] = None
 
 
-class AvatarEscolhido(BaseModel):
-    genero: Optional[str] = None
-    idade: Optional[int] = None
-
-
-class Contribuicao(BaseModel):
-    nome: str = Field(default="", max_length=80)
-    anonimo: bool = False
-    entidade: str = Field(default="", max_length=120)
-    anos: Optional[int] = Field(default=None, ge=0, le=80)
-    avatar: AvatarEscolhido = AvatarEscolhido()
+class NovaVivencia(BaseModel):
+    perfil: dict[str, str]
+    tipo: str
     tema: str
     respostas: dict[str, str]
-    consentimento: str  # com_nome | anonimo
+    consentimento: dict[str, bool]
 
 
-class Pergunta(BaseModel):
-    pergunta: str = Field(min_length=2, max_length=600)
+class TextoMascarar(BaseModel):
+    respostas: dict[str, str]
 
 
-class StatusContribuicao(BaseModel):
+class Codigo(BaseModel):
+    codigo: str = Field(min_length=4, max_length=40)
+
+
+class StatusVivencia(BaseModel):
     status: str
 
 
@@ -207,16 +214,21 @@ async def apagar_sessao(s: dict = Depends(sessao_atual)):
 def _estado(c: dict) -> dict:
     atual = None
     tentativas = []
-    experiencias = []
     if c["status"] == "em_andamento":
         cid = c["cenarios"][c["indice_atual"]]
         cen_obj = cenarios.obter(cid, c.get("perfil"))
         atual = cenarios.publico(cen_obj)
+        anterior = (c["historico"][-1].get("alocacao") if c["historico"] and cen_obj.continua_de else None)
+        base = aloc_mod.anos_anteriores(cen_obj, anterior)
+        nomes_ind = {k: v["nome"] for k, v in config.indicadores()["indicadores"].items()}
+        efeitos = {d.id: [nomes_ind.get(i, i) for i, p in d.efeitos.items() if p > 0] for d in cen_obj.demandas}
+        for d in atual["demandas"]:
+            d["ano_anterior"] = base[d["id"]]
+            d["afeta"] = efeitos.get(d["id"], [])
         fato = fatos.para_trimestre(c["indice_atual"])
         atual["fato_noticia"] = fatos.publico(fato) if fato else None
-        # Na pauta, 1 experiência com citação curta (limite de 80 palavras por tela); as demais no conselheiro.
-        experiencias = [{**e, "citacao": conselho.frase_citacao(e, max_palavras=12)}
-                        for e in conselho.aprovadas(conselho.temas_do_cenario(cen_obj))[:1]]
+        atual["relatos_rede"] = vivencias.relatos(cen_obj)
+        atual["vivencias_base"] = cen_obj.vivencias_base
         tentativas = [_resumo_tentativa(t) for t in db.varios(
             "SELECT * FROM tentativas WHERE campanha_id=? AND indice=? ORDER BY criado_em",
             (c["id"], c["indice_atual"]))]
@@ -224,8 +236,20 @@ def _estado(c: dict) -> dict:
         "id": c["id"], "status": c["status"], "indice_atual": c["indice_atual"], "total": len(c["cenarios"]),
         "indicadores": c["indicadores"], "historico": c["historico"], "cenario": atual, "tentativas": tentativas,
         "custo": custos.resumo("campanha_id", c["id"]), "perfil": c.get("perfil"), "selos": c.get("selos") or [],
-        "experiencias": experiencias,
+        "mandato": _lista_mandato(c),
     }
+
+
+def _lista_mandato(c: dict) -> list[dict]:
+    """Cenários do mandato com progresso, para o Painel."""
+    temas = {"orcamento_prioridades": "Orçamento e prioridades"}
+    out = []
+    for i, cid in enumerate(c["cenarios"]):
+        cen = cenarios.obter(cid, c.get("perfil"))
+        status = "concluido" if i < c["indice_atual"] else ("atual" if i == c["indice_atual"] and c["status"] == "em_andamento" else "bloqueado")
+        out.append({"indice": i, "id": cid, "titulo": cen.titulo, "tema": temas.get(cen.tema, cen.tema.replace("_", " ").capitalize()),
+                    "status": status, "duracao_min": 10, "demandas": len(cen.demandas)})
+    return out
 
 
 def _resumo_tentativa(t: dict) -> dict:
@@ -239,6 +263,12 @@ def _resumo_tentativa(t: dict) -> dict:
 async def nova_campanha(dados: Optional[NovaCampanha] = None, s: dict = Depends(sessao_atual)):
     dados = dados or NovaCampanha()
     return _estado(camp.criar(s["id"], perfil=dados.perfil, modo=dados.modo))
+
+
+def _nomes_ficticios(cen) -> list[str]:
+    nomes = [a.nome for a in cen.atores] + [cen.associacao.nome, cen.associacao.cidade.split(" (")[0]]
+    nomes += [p for a in cen.atores for p in a.nome.split() if len(p) > 3 and p[0].isupper()]
+    return nomes
 
 
 def _cenario_atual(c: dict):
@@ -303,7 +333,8 @@ async def nova_tentativa(cid: str, dados: Decisao, s: dict = Depends(sessao_atua
     if c["status"] != "em_andamento":
         raise HTTPException(400, "Campanha encerrada.")
     texto = _validar_texto(dados.decisao)
-    todo = texto + "\n" + "\n".join(e.resposta for e in dados.esclarecimentos)
+    # dados pessoais são mascarados (abaixo), não recusados; a moderação local barra ofensa e manipulação
+    todo = mascaramento.mascarar(texto + "\n" + "\n".join(e.resposta for e in dados.esclarecimentos), generalizar_valores=False)["texto"]
     local = moderacao.regras_locais(todo)
     if local:
         raise HTTPException(400, local.motivo)
@@ -320,6 +351,13 @@ async def nova_tentativa(cid: str, dados: Decisao, s: dict = Depends(sessao_atua
     except aloc_mod.AlocacaoInvalida as e:
         raise HTTPException(400, str(e)) from e
     escolhas = dict(dados.escolhas or {})
+    # LGPD: o texto livre do jogador é mascarado antes de salvar e de seguir para o LLM e o MiroFish.
+    ficticios = _nomes_ficticios(cen)
+    texto = mascaramento.mascarar(texto, permitidos=ficticios, generalizar_valores=False)["texto"]
+    k = escolhas.get("construtor") or {}
+    for campo in ("motivoLivre", "canalLivre", "oqueLivre", "ataEditada"):
+        if isinstance(k.get(campo), str) and k[campo]:
+            k[campo] = mascaramento.mascarar(k[campo], permitidos=ficticios, generalizar_valores=False)["texto"]
     base = simulacao.resultado_base(cen, aloc, escolhas, c["indicadores"]) if cen.demandas else None
     t = {
         "id": db.novo_id("tent"), "campanha_id": cid, "sessao_id": s["id"],
@@ -366,6 +404,7 @@ async def conversar(tid: str, dados: Mensagem, s: dict = Depends(sessao_atual)):
         raise HTTPException(400, "Interlocutor desconhecido.")
     if conversa.total_mensagens(tid) >= int(config.jogo()["limites"]["mensagens_conversa_por_tentativa"]):
         raise HTTPException(429, "Limite de mensagens desta tentativa atingido.")
+    dados.mensagem = mascaramento.mascarar(dados.mensagem, permitidos=_nomes_ficticios(cen), generalizar_valores=False)["texto"]
     mod = await moderacao.moderar(dados.mensagem, Ctx(s["id"], t["campanha_id"], tid))
     if not mod.permitido:
         raise HTTPException(400, mod.motivo)
@@ -385,41 +424,7 @@ async def comparar(cid: str, indice: int, s: dict = Depends(sessao_atual)):
 
 
 # ------------------------------------------------------------------ facilitador
-# ------------------------------------------------------------- Sala do Conselho
-@app.get("/api/conselho")
-async def conselho_config():
-    k = conselho.cfg()
-    return {"temas": [{"id": t, **v} for t, v in k["temas"].items()], "perguntas": k["perguntas"],
-            "sugestoes": k["conselheiro"]["sugestoes"],
-            "perguntas_por_trimestre": k["conselheiro"]["perguntas_por_trimestre"]}
-
-
-@app.post("/api/conselho/contribuicoes")
-async def nova_contribuicao(dados: Contribuicao, x_sessao: str = Header(default="")):
-    k = conselho.cfg()
-    if dados.tema not in k["temas"]:
-        raise HTTPException(400, "Tema inválido.")
-    if dados.consentimento not in ("com_nome", "anonimo"):
-        raise HTTPException(400, "Escolha como a experiência pode ser usada.")
-    ids = [p["id"] for p in k["perguntas"]]
-    respostas = {i: (dados.respostas.get(i) or "").strip()[:2000] for i in ids}
-    if not any(respostas.values()):
-        raise HTTPException(400, "Responda pelo menos uma pergunta.")
-    s = db.um("SELECT * FROM sessoes WHERE token=?", (x_sessao,)) if x_sessao else None
-    ctx = Ctx(s["id"] if s else None, None, None)
-    mod = await moderacao.moderar("\n".join(respostas.values()), ctx)
-    if not mod.permitido and mod.categoria != "fora_de_contexto":
-        raise HTTPException(400, mod.motivo or "O texto não pôde ser aceito.")
-    anonimo = dados.anonimo or dados.consentimento == "anonimo" or not dados.nome.strip()
-    cid = db.novo_id("contrib")
-    db.inserir("contribuicoes", {
-        "id": cid, "nome": "" if anonimo else dados.nome.strip(), "anonimo": int(anonimo),
-        "entidade": dados.entidade.strip(), "anos": dados.anos, "avatar": dados.avatar.model_dump(),
-        "tema": dados.tema, "respostas": respostas, "consentimento": "anonimo" if anonimo else "com_nome",
-        "status": "em_revisao", "ficticia": 0, "sessao_id": s["id"] if s else None, "criado_em": db.agora()})
-    return {"id": cid, "status": "em_revisao"}
-
-
+# ------------------------------------------------------------- certificações e relatório
 @app.get("/api/campanhas/{cid}/selos")
 async def ver_selos(cid: str, s: dict = Depends(sessao_atual)):
     return selos.atualizar(_campanha_da_sessao(cid, s))
@@ -428,6 +433,12 @@ async def ver_selos(cid: str, s: dict = Depends(sessao_atual)):
 @app.get("/api/selos")
 async def lista_selos():
     return {"selos": [{"id": k, **v} for k, v in selos.definicoes().items()]}
+
+
+@app.get("/api/campanhas/{cid}/relatorio")
+async def relatorio_mandato(cid: str, apelido: int = 0, s: dict = Depends(sessao_atual)):
+    from . import relatorio
+    return relatorio.montar(_campanha_da_sessao(cid, s), s["apelido"] if apelido else None)
 
 
 @app.get("/api/campanhas/{cid}/certificado")
@@ -443,45 +454,148 @@ async def certificado(cid: str, s: dict = Depends(sessao_atual)):
             "indicadores": c["indicadores"], "status": c["status"]}
 
 
-@app.get("/api/campanhas/{cid}/conselheiro")
-async def historico_conselheiro(cid: str, s: dict = Depends(sessao_atual)):
-    c = _campanha_da_sessao(cid, s)
-    hist = conselho.consultas(cid, c["indice_atual"])
-    limite = int(conselho.cfg()["conselheiro"]["perguntas_por_trimestre"])
-    return {"mensagens": hist, "restantes": max(0, limite - len(hist))}
+class PerfilPadrao(BaseModel):
+    perfil: str
 
 
-@app.post("/api/campanhas/{cid}/conselheiro")
-async def perguntar_conselheiro(cid: str, dados: Pergunta, s: dict = Depends(sessao_atual)):
-    c = _campanha_da_sessao(cid, s)
-    limite = int(conselho.cfg()["conselheiro"]["perguntas_por_trimestre"])
-    if len(conselho.consultas(cid, c["indice_atual"])) >= limite:
-        raise HTTPException(429, f"O conselheiro já respondeu {limite} perguntas neste trimestre.")
-    ctx = Ctx(s["id"], cid, None)
-    mod = await moderacao.moderar(dados.pergunta, ctx)
-    if not mod.permitido:
-        raise HTTPException(400, mod.motivo)
+@app.get("/api/facilitador/perfil-padrao", dependencies=[Depends(facilitador)])
+async def ver_perfil_padrao():
+    return {"perfis": perfis.listar(), "padrao": perfis.padrao()}
+
+
+@app.post("/api/facilitador/perfil-padrao", dependencies=[Depends(facilitador)])
+async def mudar_perfil_padrao(dados: PerfilPadrao):
     try:
-        return await conselho.responder(c, _cenario_atual(c), dados.pergunta, ctx)
-    except ErroLLM as e:
+        perfis.definir_padrao(dados.perfil)
+    except KeyError as e:
+        raise HTTPException(404, "Perfil não encontrado.") from e
+    return {"padrao": perfis.padrao()}
+
+
+# ------------------------------------------------------------- Banco de Vivências
+@app.get("/api/vivencias/config")
+async def vivencias_config():
+    k = vivencias.cfg()
+    return {"perfil": k["perfil"], "temas": k["temas"],
+            "tipos": {t: {"nome": v["nome"], "perguntas": v["perguntas"]} for t, v in k["tipos"].items()},
+            "consentimento": k["consentimento"]}
+
+
+@app.post("/api/vivencias/mascarar")
+async def vivencias_mascarar(dados: TextoMascarar):
+    """Devolve a versão mascarada para o contribuidor conferir. Nada é gravado nem registrado em log."""
+    return vivencias.mascarar_respostas(dados.respostas)
+
+
+@app.post("/api/vivencias")
+async def vivencias_registrar(dados: NovaVivencia, x_sessao: str = Header(default="")):
+    k = vivencias.cfg()
+    if dados.tipo not in k["tipos"] or dados.tema not in k["temas"]:
+        raise HTTPException(400, "Tipo ou tema inválido.")
+    for campo, opcoes in k["perfil"].items():
+        if dados.perfil.get(campo) not in opcoes:
+            raise HTTPException(400, f"Escolha uma opção de {campo}.")
+    obrig = ("finalidade", "retencao", "compartilhamento")
+    if not all(dados.consentimento.get(x) for x in obrig):
+        raise HTTPException(400, "Para enviar, é preciso concordar com a finalidade, a retenção e o compartilhamento.")
+    ids = [q["id"] for q in k["tipos"][dados.tipo]["perguntas"]]
+    respostas = {i: (dados.respostas.get(i) or "").strip()[:2000] for i in ids}
+    if not any(respostas.values()):
+        raise HTTPException(400, "Responda pelo menos uma pergunta.")
+    if any(moderacao.regras_locais(v) and moderacao.regras_locais(v).categoria in ("ofensivo", "manipulacao") for v in respostas.values() if v):
+        raise HTTPException(400, "O texto não pôde ser aceito: reformule sem ofensas nem instruções ao sistema.")
+    s = db.um("SELECT id FROM sessoes WHERE token=?", (x_sessao,)) if x_sessao else None
+    perfil = {c: dados.perfil[c] for c in k["perfil"]}
+    return vivencias.registrar(perfil, dados.tipo, dados.tema, respostas, s["id"] if s else None)
+
+
+@app.post("/api/vivencias/excluir")
+async def vivencias_excluir(dados: Codigo):
+    if not vivencias.excluir_por_codigo(dados.codigo):
+        raise HTTPException(404, "Código não encontrado (a vivência pode já ter sido excluída).")
+    return {"ok": True}
+
+
+@app.get("/api/vivencias/publicas")
+async def vivencias_publicas():
+    return {"vivencias": [{"id": v["id"], "tema": vivencias.cfg()["temas"].get(v["tema"], v["tema"]), "tipo": v["tipo"],
+                           "perfil": vivencias.perfil_texto(v["perfil"]), "trecho": vivencias.trecho(v), "ficticia": bool(v["ficticia"])}
+                          for v in vivencias.listar("aprovada")]}
+
+
+@app.get("/api/facilitador/vivencias", dependencies=[Depends(facilitador)])
+async def facilitador_vivencias():
+    return {"vivencias": [{**v, "perfil_texto": vivencias.perfil_texto(v["perfil"]), "codigo_hash": None}
+                          for v in vivencias.listar()],
+            "personas": vivencias.personas(),
+            "bloqueios": db.varios("SELECT destino, tipos, criado_em FROM bloqueios_envio ORDER BY id DESC LIMIT 20")}
+
+
+@app.post("/api/facilitador/vivencias/{vid}/status", dependencies=[Depends(facilitador)])
+async def facilitador_status_vivencia(vid: str, dados: StatusVivencia):
+    v = db.um("SELECT risco FROM vivencias WHERE id=?", (vid,))
+    if not v:
+        raise HTTPException(404, "Vivência não encontrada.")
+    if dados.status not in ("aprovada", "rejeitada", "em_revisao"):
+        raise HTTPException(400, "Status inválido.")
+    risco = v["risco"] if isinstance(v["risco"], dict) else __import__("json").loads(v["risco"])
+    if dados.status == "aprovada" and risco.get("nivel") == "alto":
+        raise HTTPException(400, "Bloqueada: risco alto de reidentificação (" + "; ".join(risco.get("motivos", [])) + ").")
+    db.atualizar("vivencias", vid, {"status": dados.status})
+    return {"ok": True}
+
+
+@app.post("/api/facilitador/personas/gerar", dependencies=[Depends(facilitador)])
+async def facilitador_gerar_personas():
+    try:
+        return await vivencias.gerar_personas(Ctx())
+    except (ErroLLM, vivencias.mascaramento.EnvioBloqueado) as e:
         raise HTTPException(503, str(e)) from e
 
 
-@app.get("/api/facilitador/contribuicoes", dependencies=[Depends(facilitador)])
-async def listar_contribuicoes():
-    linhas = db.varios("SELECT * FROM contribuicoes ORDER BY CASE status WHEN 'em_revisao' THEN 0 ELSE 1 END, criado_em DESC")
-    return {"contribuicoes": [{**conselho.publica(x), "status": x["status"], "entidade": x["entidade"],
-                               "nome_real": x["nome"], "consentimento": x["consentimento"]} for x in linhas]}
+@app.post("/api/facilitador/cenarios/gerar-de-vivencias", dependencies=[Depends(facilitador)])
+async def facilitador_cenario_de_vivencias():
+    try:
+        return await vivencias.gerar_cenario(Ctx())
+    except (ErroLLM, vivencias.mascaramento.EnvioBloqueado) as e:
+        raise HTTPException(503, str(e)) from e
 
 
-@app.post("/api/facilitador/contribuicoes/{cid}/status", dependencies=[Depends(facilitador)])
-async def moderar_contribuicao(cid: str, dados: StatusContribuicao):
-    if dados.status not in ("aprovada", "rejeitada", "em_revisao"):
-        raise HTTPException(400, "Status inválido.")
-    if not db.um("SELECT id FROM contribuicoes WHERE id=?", (cid,)):
-        raise HTTPException(404, "Contribuição não encontrada.")
-    db.atualizar("contribuicoes", cid, {"status": dados.status})
-    return {"ok": True}
+class Ensaio(BaseModel):
+    titulo: str = Field(default="", max_length=200)
+    contexto: str = Field(default="", max_length=2000)
+    teto: int = 0
+    linhas: list[dict] = []
+    opcoes: list[str] = []
+    criterios: list[str] = []
+    stakeholders: list[str] = []
+    meta: str = ""
+    responsavel: str = ""
+    comunicacao: list[str] = []
+
+
+@app.post("/api/ensaio/simular")
+async def ensaio_simular(dados: Ensaio):
+    """Não grava nada do ensaio no servidor (só o custo agregado da chamada)."""
+    from . import ensaio
+    if not dados.linhas and not dados.contexto.strip():
+        raise HTTPException(400, "Descreva a decisão e o orçamento.")
+    todo = " ".join([dados.titulo, dados.contexto, *dados.opcoes])
+    local = moderacao.regras_locais(mascaramento.mascarar(todo, generalizar_valores=False)["texto"])
+    if local and local.categoria in ("ofensivo", "manipulacao"):
+        raise HTTPException(400, local.motivo)
+    try:
+        return await ensaio.simular(dados.model_dump(), Ctx())
+    except (ErroLLM, mascaramento.EnvioBloqueado) as e:
+        raise HTTPException(503, str(e)) from e
+
+
+@app.get("/api/ensaio/stakeholders")
+async def ensaio_stakeholders():
+    from . import vivencias as v
+    base = ["Associados do varejo", "Associados de serviços", "Diretoria", "Conselho", "Equipe da associação", "Prefeitura", "Câmara municipal",
+            "Imprensa local", "Parceiro (Sebrae, banco, cooperativa)", "Fornecedores", "Outra entidade"]
+    return {"stakeholders": base, "personas": [{"nome": p.get("nome"), "papel": p.get("papel"), "grupo": p.get("papel_grupo"), "fontes": p.get("fontes")} for p in v.personas()]}
 
 
 @app.get("/api/perfis")
@@ -571,9 +685,23 @@ async def gerar_de_noticias(max_cenarios: int = 3):
 app.mount("/static", StaticFiles(directory=settings.FRONTEND_DIR), name="static")
 
 
+@app.get("/manifest.webmanifest")
+async def manifesto():
+    return FileResponse(settings.FRONTEND_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/sw.js")
+async def service_worker():
+    # servido na raiz para controlar todo o site; sem cache HTTP para atualizar logo
+    return FileResponse(settings.FRONTEND_DIR / "sw.js", media_type="text/javascript",
+                        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+
+
 @app.get("/")
 @app.get("/facilitador")
-@app.get("/conselho")
+@app.get("/vivencias")
+@app.get("/ensaio")
+@app.get("/relatorio")
 @app.get("/certificado")
 async def spa():
     return FileResponse(settings.FRONTEND_DIR / "index.html")

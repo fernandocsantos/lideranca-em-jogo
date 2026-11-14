@@ -63,6 +63,7 @@ class Demanda(Estrito):
     efeitos_adiar: dict[str, float] = {}  # pontos por indicador se não financiada
     minimo_util: float = 0.5        # abaixo desta fração o benefício cai pela metade
     meta_sugerida: str = ""         # unidade da meta, ex.: "lojas vendendo pela internet"
+    ano_anterior: Optional[int] = None  # valor executado no período anterior (ponto de partida da Mesa)
 
 
 class Regra(Estrito):
@@ -102,6 +103,7 @@ class Cenario(BaseModel):
     usa_perfil: bool = False        # associação, atores e escala do orçamento vêm do perfil da AC
     trimestre: int = 1
     continua_de: Optional[str] = None  # cenário anterior encadeado (manter/ajustar/rever)
+    vivencias_base: int = 0         # "Construído a partir de N vivências da rede"
 
     @property
     def disponivel(self) -> int:
@@ -139,9 +141,18 @@ class Momento(Estrito):
     fala: str  # até 2 frases, em 1ª pessoa
 
 
+class Risco(Estrito):
+    descricao: str
+    probabilidade: Literal["alto", "medio", "baixo"]
+    impacto: Literal["alto", "medio", "baixo"]
+
+
 class ExtracaoSinais(Estrito):
     resumo_narrativo: str
     momentos: list[Momento]
+    riscos: list[Risco]
+    sinais_alerta: list[str]
+    o_que_mudaria: list[str]
     sinais: list[Sinal]
     reacoes: list[ReacaoAtor]
     flags: list[Flag]
@@ -160,6 +171,7 @@ class Devolutiva(Estrito):
     atores_nao_considerados: list[str]
     trade_offs: list[str]
     perguntas_reflexivas: list[str]
+    aprendizados: list[str]
 
 
 class AcaoSimulada(Estrito):
@@ -183,6 +195,57 @@ class FatoGerado(Estrito):
     tema: str
     efeito_orcamento: int       # R$ para uma AC média (30 mil/trimestre); 0 se não mexe no caixa
     nomes_reais_removidos: list[str]
+
+
+class PersonaSintetica(Estrito):
+    nome: str          # fictício
+    papel: str
+    persona: str
+    interesses: list[str]
+    postura_tipica: str
+
+
+class PersonasGeradas(Estrito):
+    personas: list[PersonaSintetica]
+
+
+class DemandaGerada(Estrito):
+    id: str
+    titulo: str
+    custo: int
+    solicitante: str
+    beneficio: str
+    efeitos: dict[str, float]
+    efeitos_adiar: dict[str, float]
+
+
+class CenarioDeVivencias(Estrito):
+    titulo: str
+    tema: str
+    associacao: Associacao
+    narrativa: str
+    texto: str
+    em_jogo: str
+    tags: list[str]
+    orcamento: int
+    demandas: list[DemandaGerada]
+    regras: list[Regra]
+    atores: list[AtorGerado]
+
+
+class ReacaoEnsaio(Estrito):
+    stakeholder: str
+    postura: int  # -2..2
+    reacao: str
+
+
+class EnsaioResultado(Estrito):
+    resumo: str
+    reacoes: list[ReacaoEnsaio]
+    riscos: list[Risco]
+    sinais_alerta: list[str]
+    o_que_mudaria: list[str]
+    recomendacoes: list[str]
 
 
 class CenarioFiccional(Estrito):

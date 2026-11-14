@@ -133,5 +133,5 @@ async def test_sem_internet_usa_respostas_de_demonstracao(monkeypatch):
     r = await Quebrado().estruturado("esclarecimento", "s", "<decisao>\ncurta\n</decisao>\n<esclarecimentos_ja_dados>\n(nenhum)\n</esclarecimentos_ja_dados>",
                                      AvaliacaoClareza, llm_mod.Ctx())
     assert isinstance(r, AvaliacaoClareza)
-    t = await Quebrado().texto("conversa", "Conselheiro sênior caso: escolher pouco |", [{"role": "user", "content": "oi"}], llm_mod.Ctx())
+    t = await Quebrado().texto("conversa", "Persona caso: escolher pouco |", [{"role": "user", "content": "oi"}], llm_mod.Ctx())
     assert "modo demonstração" in t

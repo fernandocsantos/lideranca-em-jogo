@@ -64,7 +64,12 @@ def _sinais(usuario: str) -> dict:
     return {"resumo_narrativo": "Simulação de demonstração: a decisão circulou entre associados, imprensa e "
                                 "poder público. Houve apoio de parte da base e cobranças por detalhes de "
                                 "execução, custo e prazo. (Texto gerado pelo modo demonstração.)",
-            "momentos": momentos, "sinais": sinais, "reacoes": reacoes, "flags": flags}
+            "momentos": momentos, "sinais": sinais, "reacoes": reacoes, "flags": flags,
+            "riscos": [{"descricao": "Quem teve o pedido cortado deixar de apoiar a diretoria", "probabilidade": "medio", "impacto": "alto"},
+                       {"descricao": "Meta não ser medida por falta de responsável", "probabilidade": "baixo", "impacto": "medio"},
+                       {"descricao": "Inadimplência continuar subindo", "probabilidade": "alto", "impacto": "medio"}],
+            "sinais_alerta": ["Queda na presença em reuniões setoriais", "Mensalidades atrasadas acima de 15%"],
+            "o_que_mudaria": ["Um patrocínio para o projeto adiado", "Nova queda de receita"]}
 
 
 def _devolutiva(usuario: str) -> dict:
@@ -84,7 +89,9 @@ def _devolutiva(usuario: str) -> dict:
             "atores_nao_considerados": [],
             "trade_offs": ["Rapidez na resposta × legitimidade de ouvir a base antes."],
             "perguntas_reflexivas": ["Quem perde com essa decisão e como você vai conversar com essas pessoas?",
-                                     "Que sinal mostraria, em 30 dias, que você precisa mudar de rota?"]}
+                                     "Que sinal mostraria, em 30 dias, que você precisa mudar de rota?"],
+            "aprendizados": ["Explicar os cortes a quem ficou de fora na mesma semana", "Definir o responsável pela meta na reunião",
+                             "Rever a decisão com dados em 30 dias"]}
 
 
 def _contingencia(usuario: str) -> dict:
@@ -106,13 +113,21 @@ def _esclarecimento(usuario: str) -> dict:
 
 
 def _conversa(msgs, system=""):
-    if "Conselheiro sênior" in system:
-        m = re.search(r"caso: (.*?) \|", system)
-        caso = m.group(1) if m else "escolher pouco e fazer bem feito"
-        return (f"Um dirigente da rede conta: \"{caso}\" Antes de decidir, pergunte-se: quem fica de fora e "
-                "como você vai explicar a essa pessoa quando chega a vez dela? (resposta do modo demonstração)")
     return ("Olha, do meu ponto de vista, a decisão tem méritos, mas ainda quero ver "
             "como vai funcionar na prática. (resposta do modo demonstração)")
+
+
+def _ensaio(usuario: str) -> dict:
+    import json as _j
+    p = _j.loads(_tag(usuario, "decisao_real_mascarada") or "{}")
+    sts = p.get("stakeholders") or ["Associados", "Diretoria"]
+    return {"resumo": "Ensaio de demonstração: a proposta tem apoio da diretoria, mas quem perde verba cobra explicação e prazo.",
+            "reacoes": [{"stakeholder": s, "postura": (1 if i % 2 == 0 else -1), "reacao": "Quer entender o critério e o prazo de revisão."} for i, s in enumerate(sts)],
+            "riscos": [{"descricao": "Perda de apoio de quem teve corte", "probabilidade": "medio", "impacto": "alto"},
+                       {"descricao": "Meta sem responsável claro", "probabilidade": "baixo", "impacto": "medio"},
+                       {"descricao": "Receita abaixo do previsto", "probabilidade": "alto", "impacto": "medio"}],
+            "sinais_alerta": ["Queda de presença nas reuniões", "Atrasos de mensalidade"], "o_que_mudaria": ["Novo patrocinador"],
+            "recomendacoes": ["Ouvir quem terá corte antes de anunciar", "Definir data de revisão pública"]}
 
 
 def llm_demo() -> LLMFalso:
@@ -121,6 +136,6 @@ def llm_demo() -> LLMFalso:
         "esclarecimento": _esclarecimento,
         "sinais": _sinais,
         "devolutiva": _devolutiva,
-        "contingencia": _contingencia,
+        "contingencia": lambda u: _ensaio(u) if "<decisao_real_mascarada>" in u else _contingencia(u),
         "conversa": _conversa,
     })

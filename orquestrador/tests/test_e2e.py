@@ -56,8 +56,10 @@ def test_dois_trimestres_do_guia_com_mirofish():
         _instalar_mirofish(falso)
 
         # prévia instantânea (sem IA): soma acima do disponível é recusada
-        assert cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
-                        json={"alocacao": {"digitalizacao": 18000, "formacao_vendas": 14000}}).status_code == 400
+        acima = cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
+                         json={"alocacao": {"digitalizacao": 18000, "formacao_vendas": 14000}}).json()
+        assert acima["excedente"] == 8000 and not acima["fechado"]  # Mesa mostra "Falta cortar R$ 8.000"
+        assert [d["ano_anterior"] for d in cen["demandas"]] == [12000, 10000, 8000]  # soma 30 mil > teto 24 mil
         t0 = time.time()
         pv = cli.post(f"/api/campanhas/{camp['id']}/previa", headers=h,
                       json={"alocacao": {"formacao_vendas": 14000, "atendimento": 8000}}).json()
@@ -156,3 +158,32 @@ def test_spa_e_estaticos_servidos():
         assert "Liderança em Jogo" in cli.get("/").text
         assert cli.get("/static/app.js").status_code == 200
         assert cli.get("/facilitador").status_code == 200
+
+
+def test_relatorio_tem_ata_padronizada_com_7_secoes():
+    with TestClient(app) as cli:
+        _instalar_mirofish(MiroFishFalso(saudavel=False))
+        s = cli.post("/api/sessoes", json={"apelido": "Rui"}).json()
+        h = {"X-Sessao": s["token"]}
+        camp = cli.post("/api/campanhas", headers=h, json={"perfil": "media"}).json()
+        esc = {"motivos": ["Menor risco financeiro"], "envolvidos": ["tesoureiro"], "cortes_justificativa": ["Pode esperar o próximo trimestre"],
+               "meta": "60 vendedores formados até 90 dias", "responsavel": "Diretoria executiva", "indicador_acompanhamento": "Engajamento dos associados",
+               "revisao_dias": 30, "ano_anterior": {"digitalizacao": 12000, "formacao_vendas": 10000, "atendimento": 8000}}
+        r1 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Prioridade: formação e atendimento; digitalização reduzida.",
+                      "alocacao": {"digitalizacao": 6000, "formacao_vendas": 10000, "atendimento": 8000}, "escolhas": esc}).json()
+        _esperar_completo(cli, r1["tentativa_id"], h)
+        r2 = cli.post(f"/api/campanhas/{camp['id']}/tentativas", headers=h, json={"decisao": "Refeito: atendimento e digitalização.",
+                      "alocacao": {"digitalizacao": 16000, "atendimento": 8000}, "escolhas": esc}).json()
+        _esperar_completo(cli, r2["tentativa_id"], h)
+        cli.post(f"/api/campanhas/{camp['id']}/avancar", headers=h, json={"tentativa_id": r1["tentativa_id"]})
+        rel = cli.get(f"/api/campanhas/{camp['id']}/relatorio", headers=h).json()
+        a = rel["atas"][0]
+        for secao in ("contexto", "prioridades", "orcamento", "resultados", "previsao", "indicadores", "competencias"):
+            assert a[secao], secao
+        assert a["consolidada"] and a["orcamento"]["linhas"][0]["variacao"] == -6000 and a["orcamento"]["linhas"][0]["variacao_pct"] == -50.0
+        assert a["orcamento"]["total"] == 24000 == a["orcamento"]["teto"]
+        assert a["resultados"]["revisao"] and a["resultados"]["responsavel"] == "Diretoria executiva"
+        assert a["previsao"]["riscos"] and a["previsao"]["aviso"].startswith("Simulação para apoio")
+        assert rel["consolidado"]["refeitas"][0]["tentativas"] == 2 and rel["consolidado"]["padroes"]
+        assert rel["apelido"] is None
+        assert cli.get(f"/api/campanhas/{camp['id']}/relatorio?apelido=1", headers=h).json()["apelido"] == "Rui"
