@@ -27,6 +27,8 @@ O jogador cumpre um **mandato** numa associação fictícia. Em cada trimestre, 
 | [docs/arquitetura.md](docs/arquitetura.md) | Arquitetura, integração com o MiroFish e regras de cálculo |
 | [docs/pitch-testes.md](docs/pitch-testes.md) | Quadro "O que observamos nos testes x o que ainda precisa ser validado" |
 | [docs/banco-de-vivencias.md](docs/banco-de-vivencias.md) | **Fluxo de dados do Banco de Vivências e LGPD** (coleta, mascaramento, armazenamento, envio ao MiroFish) |
+| [docs/continuar.md](docs/continuar.md) | **Passagem de contexto**: estado, pendências, regras do projeto, outra máquina e Windows (WSL 2) |
+| `mirofish/patches/` | Correção local do MiroFish (AGPL): nomes de entidade em PascalCase, exigido pelo Zep |
 | [docs/identidade-visual.md](docs/identidade-visual.md) | Paleta CACB (códigos e fontes), contraste, tipografia, ícones e licenças |
 | [docker-compose.yml](docker-compose.yml) | Orquestrador + MiroFish + proxy LLM (LiteLLM) |
 | `orquestrador/app/` | Backend em Python/FastAPI |

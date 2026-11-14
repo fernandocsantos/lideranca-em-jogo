@@ -1,0 +1,10 @@
+# Fim de linha LF sempre (scripts bash e Docker quebram com CRLF no Windows)
+* text=auto eol=lf
+*.sh text eol=lf
+# binários
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.sqlite3 binary
+*.whl binary
