@@ -121,6 +121,7 @@ function telaInicio() {
       estado.token = r.token; estado.apelido = r.apelido;
       localStorage.setItem("lej_token", r.token); localStorage.setItem("lej_apelido", r.apelido);
       const perfil = form.querySelector("input[name=perfil]:checked")?.value;
+      if (!localStorage.getItem("lej_onboarding_ok")) return telaOnboarding(1, () => novaCampanha(perfil));
       await novaCampanha(perfil);
     } catch (e) { mostrarErro(form, e); }
   } },
@@ -578,6 +579,7 @@ async function telaResultado(tid) {
         camp.indice_atual + 1 >= camp.total ? "Concluir" : "Ir para o próximo trimestre →"),
       el("p", { class: "suave pequeno" }, `Custo desta tentativa até agora: R$ ${t.custo.total_brl.toFixed(2)}.`)));
   marcarEtapa(3);
+  registrarSelo();
 
   const atualizar = (tt) => {
     const rr = tt.resultado;
@@ -661,6 +663,7 @@ async function painelConversa(t) {
       $("#digitando")?.remove();
       log.append(el("div", { class: "msg agente" }, r.resposta));
       dica.textContent = `Mensagens restantes: ${r.restantes}`;
+      registrarSelo();
     } catch (e) { $("#digitando")?.remove(); mostrarErro(form, e); }
     enviar.disabled = false; log.scrollTop = log.scrollHeight;
   };
@@ -698,6 +701,97 @@ function perguntasSugeridas(t, atorId) {
   if (d && d.valor < d.custo) return ["Com metade do valor, o que dá para entregar?", "O que você precisa para não desistir do projeto?", "Como vamos medir o resultado?"];
   if (d) return ["O que você vai entregar com esse dinheiro?", "Como vamos medir o resultado?", "O que pode dar errado?"];
   return ["O que você achou da decisão?", "Quem ficou de fora, na sua opinião?", "O que você faria diferente?"];
+}
+
+// ------------------------------------------------------------------ onboarding (até 4 telas, pulável)
+function telaOnboarding(n, depois) {
+  renderIndicadores(null);
+  const fim = () => { localStorage.setItem("lej_onboarding_ok", "1"); depois(); };
+  const pular = el("button", { class: "link", onclick: fim }, "Pular introdução");
+  const nav = el("p", {}, n > 1 ? el("button", { class: "secundario grande", onclick: () => telaOnboarding(n - 1, depois) }, "← Voltar") : "",
+    el("button", { class: "grande", onclick: () => (n < 4 ? telaOnboarding(n + 1, depois) : fim()) }, n < 4 ? "Próximo →" : "Começar o trimestre"));
+  const pontos = el("p", { class: "pontos", "aria-label": `Tela ${n} de 4` }, [1, 2, 3, 4].map((i) => el("span", { class: i === n ? "ativo" : "" }, "●")));
+  let corpo;
+  if (n === 1) {
+    corpo = [el("div", { class: "centro" }, AVATAR.criar({ id: "conselheiro", tipo: "conselheiro", genero: "m", idade: 70, expressao: "favoravel", tamanho: 110 })),
+      el("p", { class: "destaque centro" }, "Você acaba de assumir a diretoria da associação. Eu sou o conselheiro da rede: vou estar por perto quando você quiser ouvir quem já passou por isso.")];
+  } else if (n === 2) {
+    corpo = [el("h2", { class: "centro" }, "Cada trimestre tem 4 passos"),
+      el("ol", { class: "quatro-passos" }, [["📋", "Pauta", "o que está acontecendo"], ["💰", "Orçamento", "dividir o dinheiro"], ["✅", "Decisão", "por quê, como comunicar, meta"], ["📊", "Resultado", "e conversa com os envolvidos"]]
+        .map(([i, t, d]) => el("li", {}, el("span", { class: "icone-grande", "aria-hidden": "true" }, i), el("strong", {}, t), el("span", { class: "pequeno" }, d))))];
+  } else if (n === 3) {
+    const lista = el("ul", { class: "selos-grade", role: "list" });
+    api("/api/selos").then((r) => lista.replaceChildren(...r.selos.map((x) => el("li", {}, el("span", { class: "icone-grande", "aria-hidden": "true" }, x.icone), el("strong", {}, x.nome), el("span", { class: "pequeno" }, x.descricao)))));
+    corpo = [el("h2", { class: "centro" }, "Selos que você pode ganhar"), el("p", { class: "centro suave" }, "Eles premiam o jeito de decidir, não uma resposta certa."), lista];
+  } else {
+    const modo = localStorage.getItem("lej_modo") || "botoes";
+    const teste = el("input", { type: "text", id: "teste-mic", placeholder: "Toque em Falar e diga uma frase" });
+    corpo = [el("h2", { class: "centro" }, "Como prefere responder?"),
+      el("div", { class: "temas" }, [["botoes", "👆", "Tocando em botões"], ["voz", "🎤", "Falando"], ["texto", "⌨️", "Escrevendo"]].map(([id, ic, nome]) =>
+        el("button", { type: "button", class: `tema ${modo === id ? "ativo" : ""}`, "aria-pressed": String(modo === id),
+          onclick: () => { localStorage.setItem("lej_modo", id); aplicarModo(); telaOnboarding(4, depois); } },
+          el("span", { class: "icone-grande", "aria-hidden": "true" }, ic), nome))),
+      el("p", { class: "suave" }, "Você pode usar os três a qualquer momento."),
+      el("label", { for: "teste-mic" }, "Teste do microfone"), el("div", { class: "linha" }, teste, botaoVoz(teste)), avisoVoz()];
+  }
+  tela(n === 1 ? "Boas-vindas" : "Como funciona", el("div", { class: "cartao passo" }, pontos, corpo, nav, el("p", {}, pular)));
+}
+
+function aplicarModo() {
+  const m = localStorage.getItem("lej_modo") || "botoes";
+  document.body.classList.remove("modo-botoes", "modo-voz", "modo-texto");
+  document.body.classList.add(`modo-${m}`);
+}
+
+// ------------------------------------------------------------------ selos
+async function verificarSelos() {
+  if (!estado.campanhaId) return;
+  try {
+    const r = await api(`/api/campanhas/${estado.campanhaId}/selos`);
+    for (const novo of r.novos) mostrarSeloGanho(novo);
+  } catch (_) { /* silencioso */ }
+}
+function registrarSelo() { setTimeout(verificarSelos, 300); }
+
+function seloAnimado(id, def) {
+  const d = def || { conselheiro_rede: { nome: "Conselheiro da rede", icone: "🏅" } }[id] || { nome: id, icone: "🏅" };
+  return el("div", { class: "selo-ganho", role: "status" }, el("span", { class: "selo-icone", "aria-hidden": "true" }, d.icone),
+    el("span", {}, el("strong", {}, "Selo conquistado: "), d.nome));
+}
+
+function mostrarSeloGanho(selo) {
+  // dentro de um <dialog> aberto o aviso precisa estar na mesma "camada" para aparecer por cima
+  const host = document.querySelector("dialog[open]") || document.body;
+  let caixa = host.querySelector(":scope > #selos-toast");
+  if (!caixa) { $("#selos-toast")?.remove(); caixa = el("div", { id: "selos-toast", "aria-live": "polite" }); host.append(caixa); }
+  const item = seloAnimado(selo.id, selo);
+  caixa.append(item);
+  setTimeout(() => item.classList.add("saindo"), 4500);
+  setTimeout(() => item.remove(), 5200);
+}
+
+// ------------------------------------------------------------------ certificado
+async function telaCertificado() {
+  renderIndicadores(null);
+  if (!estado.campanhaId) return telaInicio();
+  const c = await api(`/api/campanhas/${estado.campanhaId}/certificado`);
+  const nomeInd = Object.fromEntries(estado.cfg.indicadores.map((i) => [i.id, i.nome]));
+  tela("Certificado de participação",
+    el("article", { class: "certificado" },
+      el("p", { class: "centro selo-topo", "aria-hidden": "true" }, "◆"),
+      el("h2", { class: "centro" }, "Formar lideranças para decidir e acompanhar resultados"),
+      el("p", { class: "centro destaque" }, `Certificamos que ${c.apelido} presidiu a ${c.associacao} (perfil ${c.perfil.toLowerCase()}) em ${c.trimestres.length} trimestre(s) no jogo Liderança em Jogo.`),
+      el("p", { class: "centro pequeno" }, `Emitido em ${c.data.split("-").reverse().join("/")} · associação fictícia; exercício de formação.`),
+      el("h3", {}, "Selos conquistados"),
+      c.selos.length ? el("ul", { class: "selos-grade", role: "list" }, c.selos.map((x) => el("li", {}, el("span", { class: "icone-grande", "aria-hidden": "true" }, x.icone), el("strong", {}, x.nome), el("span", { class: "pequeno" }, x.descricao))))
+        : el("p", {}, "Nenhum selo ainda."),
+      el("h3", {}, "Decisões"),
+      c.trimestres.map((t) => el("section", { class: "cartao" }, el("h4", {}, `Trimestre ${t.indice + 1}: ${t.cenario}`),
+        el("pre", { class: "resumo-cert" }, t.resumo || ""),
+        t.meta ? el("p", { class: "pequeno" }, `Meta: ${t.meta.texto} — previsto ${t.meta.previsto} de ${t.meta.alvo} (${t.meta.pct}%).`) : "",
+        el("p", { class: "pequeno" }, Object.keys(t.depois).map((k) => `${nomeInd[k]}: ${Number(t.antes[k]).toFixed(0)} → ${Number(t.depois[k]).toFixed(0)}`).join(" · "))))),
+    el("p", {}, el("button", { class: "grande", onclick: () => window.print() }, "Imprimir / salvar em PDF"),
+      el("button", { class: "secundario", onclick: () => (location.href = "/") }, "Voltar")));
 }
 
 // ------------------------------------------------------------------ Sala do Conselho (experiência dos seniores)
@@ -852,7 +946,8 @@ async function telaFinal() {
       estado.cfg.indicadores.map((i) => el("th", { scope: "col" }, i.nome)))),
       el("tbody", {}, camp.historico.map((h) => el("tr", {}, el("th", { scope: "row" }, `${h.indice + 1}`),
         estado.cfg.indicadores.map((i) => el("td", {}, Number(h.depois[i.id]).toFixed(0), " ", delta(h.depois[i.id] - h.antes[i.id]))))))),
-    el("p", {}, el("button", { onclick: () => novaCampanha(camp.perfil) }, "Jogar de novo"),
+    el("p", {}, el("button", { class: "grande", onclick: telaCertificado }, "🏅 Ver meu certificado"),
+      el("button", { onclick: () => novaCampanha(camp.perfil) }, "Jogar de novo"),
       el("button", { class: "secundario", onclick: () => window.print() }, "Imprimir / salvar em PDF"),
       el("button", { class: "secundario", onclick: async () => {
         if (!confirm("Apagar todos os seus dados deste navegador e do servidor? Não dá para desfazer.")) return;
@@ -935,8 +1030,10 @@ async function telaFacilitador() {
 (async function iniciar() {
   try { estado.cfg = await api("/api/config"); } catch (e) { tela("Serviço indisponível", el("p", {}, e.message)); return; }
   verificarStatus();
+  aplicarModo();
   if (location.pathname.startsWith("/facilitador")) return telaFacilitador();
   if (location.pathname.startsWith("/conselho")) return telaConselho(1);
+  if (location.pathname.startsWith("/certificado")) return telaCertificado();
   if (estado.token && estado.campanhaId) return abrirCampanha(estado.campanhaId);
   telaInicio();
 })();

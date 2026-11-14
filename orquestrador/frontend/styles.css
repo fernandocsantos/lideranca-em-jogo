@@ -175,3 +175,21 @@ button.link { background: none; border: 0; color: var(--primaria); text-decorati
 .meta-longe-da-meta .barra span { background: var(--negativo); }
 .continuidade .meta { box-shadow: none; }
 .etiqueta-continuidade { background: #eef4fb; border-radius: 8px; padding: .4rem .7rem; display: inline-block; }
+/* onboarding e selos */
+.pontos { text-align: center; letter-spacing: .4rem; color: #c9ced6; }
+.pontos .ativo { color: var(--primaria); }
+.quatro-passos { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; counter-reset: p; }
+.quatro-passos li, .selos-grade li { background: #fff; border: 1px solid var(--borda); border-radius: var(--raio); padding: .8rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: .2rem; }
+.selos-grade { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .6rem; }
+#selos-toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: .5rem; }
+.selo-ganho { display: flex; gap: .7rem; align-items: center; background: #fffbeb; border: 2px solid #b45309; border-radius: 999px; padding: .6rem 1.2rem;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18); animation: selo-entra .6s cubic-bezier(.2,1.6,.4,1); font-size: 1.05rem; }
+.selo-ganho .selo-icone { font-size: 2rem; animation: selo-gira 1s ease-out; }
+.selo-ganho.saindo { opacity: 0; transition: opacity .6s; }
+@keyframes selo-entra { from { transform: scale(.3) translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes selo-gira { from { transform: rotate(-180deg) scale(.4); } to { transform: none; } }
+.certificado { background: #fff; border: 3px double #b45309; border-radius: 12px; padding: 1.5rem 2rem; }
+.selo-topo { font-size: 2rem; color: #b45309; margin: 0; }
+.resumo-cert { white-space: pre-wrap; font-family: inherit; background: #f8fafc; padding: .6rem; border-radius: 6px; }
+body.modo-botoes .livre { opacity: .85; }
+@media print { #indicadores, .faixa, #selos-toast { display: none !important; } .certificado { border-width: 4px; } }

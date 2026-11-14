@@ -17,7 +17,7 @@ import asyncio
 
 from . import alocacao as aloc_mod
 from . import campanha as camp
-from . import cenarios, config, conselho, conversa, custos, db, esclarecimento, fila, moderacao, perfis, settings, simulacao
+from . import cenarios, config, conselho, conversa, custos, db, esclarecimento, fila, moderacao, perfis, selos, settings, simulacao
 from .llm import Ctx, ErroLLM
 from .mirofish_client import novo as novo_mirofish
 
@@ -390,6 +390,29 @@ async def nova_contribuicao(dados: Contribuicao, x_sessao: str = Header(default=
     return {"id": cid, "status": "em_revisao"}
 
 
+@app.get("/api/campanhas/{cid}/selos")
+async def ver_selos(cid: str, s: dict = Depends(sessao_atual)):
+    return selos.atualizar(_campanha_da_sessao(cid, s))
+
+
+@app.get("/api/selos")
+async def lista_selos():
+    return {"selos": [{"id": k, **v} for k, v in selos.definicoes().items()]}
+
+
+@app.get("/api/campanhas/{cid}/certificado")
+async def certificado(cid: str, s: dict = Depends(sessao_atual)):
+    c = _campanha_da_sessao(cid, s)
+    sel = selos.atualizar(c)
+    p = perfis.obter(c.get("perfil"))
+    return {"apelido": s["apelido"], "associacao": p["associacao"]["nome"], "perfil": p["nome"],
+            "data": db.agora()[:10], "selos": [x for x in sel["selos"] if x["ganho"]],
+            "trimestres": [{"indice": h["indice"], "cenario": cenarios.obter(h["cenario_id"], c.get("perfil")).titulo,
+                            "resumo": h.get("resumo"), "meta": h.get("meta"), "antes": h["antes"], "depois": h["depois"]}
+                           for h in c["historico"]],
+            "indicadores": c["indicadores"], "status": c["status"]}
+
+
 @app.get("/api/campanhas/{cid}/conselheiro")
 async def historico_conselheiro(cid: str, s: dict = Depends(sessao_atual)):
     c = _campanha_da_sessao(cid, s)
@@ -506,5 +529,6 @@ app.mount("/static", StaticFiles(directory=settings.FRONTEND_DIR), name="static"
 @app.get("/")
 @app.get("/facilitador")
 @app.get("/conselho")
+@app.get("/certificado")
 async def spa():
     return FileResponse(settings.FRONTEND_DIR / "index.html")
