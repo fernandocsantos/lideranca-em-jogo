@@ -406,6 +406,7 @@ function telaMesa() {
     if (estourado === true && !agora) SOM.tocar("fechado");
     estourado = agora;
     btnSeguir.disabled = agora;
+    btnSeguir.replaceChildren(agora ? `Corte ${brl(dif)} para continuar` : "Orçamento fechado: registrar a decisão", icone("chevron-right", 18));
   };
   const aplicarPrevia = (p) => {
     inds.replaceChildren(blocosIndicadores(camp.indicadores, null, p.tendencia));
