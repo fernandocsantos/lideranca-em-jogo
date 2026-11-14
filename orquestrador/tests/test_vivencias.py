@@ -97,3 +97,17 @@ def test_fluxo_completo_e_payload_do_mirofish_sem_dados_pessoais():
         assert cli.post("/api/vivencias/excluir", json={"codigo": r["codigo_exclusao"]}).json()["ok"]
         assert not db.um("SELECT id FROM vivencias WHERE id=?", (r["id"],))
         assert t["tentativa_id"]
+
+
+def test_ensaio_mascara_nao_grava_e_devolve_riscos():
+    with TestClient(app) as cli:
+        n0 = db.um("SELECT COUNT(*) n FROM tentativas")["n"]
+        r = cli.post("/api/ensaio/simular", json={
+            "titulo": "Corte no evento de fim de ano", "contexto": "O tesoureiro Carlos Mendes (carlos@empresa.com) sugeriu cortar o evento em Campinas.",
+            "teto": 40000, "linhas": [{"nome": "Evento", "ano_anterior": 30000, "proposto": 15000}, {"nome": "Atendimento", "ano_anterior": 10000, "proposto": 20000}],
+            "criterios": ["Menor risco financeiro"], "stakeholders": ["Diretoria", "Associados do varejo"], "meta": "100 associados no evento"}).json()
+        txt = str(r["entrada_mascarada"])
+        for o in ["Carlos Mendes", "carlos@empresa.com", "Campinas"]:
+            assert o not in txt
+        assert r["riscos"] and r["orcamento"]["saldo"] == 5000 and r["aviso"].startswith("Simulação")
+        assert db.um("SELECT COUNT(*) n FROM tentativas")["n"] == n0  # nada do ensaio vira registro no servidor

@@ -117,12 +117,25 @@ def _conversa(msgs, system=""):
             "como vai funcionar na prática. (resposta do modo demonstração)")
 
 
+def _ensaio(usuario: str) -> dict:
+    import json as _j
+    p = _j.loads(_tag(usuario, "decisao_real_mascarada") or "{}")
+    sts = p.get("stakeholders") or ["Associados", "Diretoria"]
+    return {"resumo": "Ensaio de demonstração: a proposta tem apoio da diretoria, mas quem perde verba cobra explicação e prazo.",
+            "reacoes": [{"stakeholder": s, "postura": (1 if i % 2 == 0 else -1), "reacao": "Quer entender o critério e o prazo de revisão."} for i, s in enumerate(sts)],
+            "riscos": [{"descricao": "Perda de apoio de quem teve corte", "probabilidade": "medio", "impacto": "alto"},
+                       {"descricao": "Meta sem responsável claro", "probabilidade": "baixo", "impacto": "medio"},
+                       {"descricao": "Receita abaixo do previsto", "probabilidade": "alto", "impacto": "medio"}],
+            "sinais_alerta": ["Queda de presença nas reuniões", "Atrasos de mensalidade"], "o_que_mudaria": ["Novo patrocinador"],
+            "recomendacoes": ["Ouvir quem terá corte antes de anunciar", "Definir data de revisão pública"]}
+
+
 def llm_demo() -> LLMFalso:
     return LLMFalso({
         "moderacao": lambda u: {"permitido": True, "categoria": "ok", "motivo": ""},
         "esclarecimento": _esclarecimento,
         "sinais": _sinais,
         "devolutiva": _devolutiva,
-        "contingencia": _contingencia,
+        "contingencia": lambda u: _ensaio(u) if "<decisao_real_mascarada>" in u else _contingencia(u),
         "conversa": _conversa,
     })

@@ -233,6 +233,21 @@ class CenarioDeVivencias(Estrito):
     atores: list[AtorGerado]
 
 
+class ReacaoEnsaio(Estrito):
+    stakeholder: str
+    postura: int  # -2..2
+    reacao: str
+
+
+class EnsaioResultado(Estrito):
+    resumo: str
+    reacoes: list[ReacaoEnsaio]
+    riscos: list[Risco]
+    sinais_alerta: list[str]
+    o_que_mudaria: list[str]
+    recomendacoes: list[str]
+
+
 class CenarioFiccional(Estrito):
     relevante: bool
     motivo_relevancia: str

@@ -561,6 +561,43 @@ async def facilitador_cenario_de_vivencias():
         raise HTTPException(503, str(e)) from e
 
 
+class Ensaio(BaseModel):
+    titulo: str = Field(default="", max_length=200)
+    contexto: str = Field(default="", max_length=2000)
+    teto: int = 0
+    linhas: list[dict] = []
+    opcoes: list[str] = []
+    criterios: list[str] = []
+    stakeholders: list[str] = []
+    meta: str = ""
+    responsavel: str = ""
+    comunicacao: list[str] = []
+
+
+@app.post("/api/ensaio/simular")
+async def ensaio_simular(dados: Ensaio):
+    """Não grava nada do ensaio no servidor (só o custo agregado da chamada)."""
+    from . import ensaio
+    if not dados.linhas and not dados.contexto.strip():
+        raise HTTPException(400, "Descreva a decisão e o orçamento.")
+    todo = " ".join([dados.titulo, dados.contexto, *dados.opcoes])
+    local = moderacao.regras_locais(mascaramento.mascarar(todo, generalizar_valores=False)["texto"])
+    if local and local.categoria in ("ofensivo", "manipulacao"):
+        raise HTTPException(400, local.motivo)
+    try:
+        return await ensaio.simular(dados.model_dump(), Ctx())
+    except (ErroLLM, mascaramento.EnvioBloqueado) as e:
+        raise HTTPException(503, str(e)) from e
+
+
+@app.get("/api/ensaio/stakeholders")
+async def ensaio_stakeholders():
+    from . import vivencias as v
+    base = ["Associados do varejo", "Associados de serviços", "Diretoria", "Conselho", "Equipe da associação", "Prefeitura", "Câmara municipal",
+            "Imprensa local", "Parceiro (Sebrae, banco, cooperativa)", "Fornecedores", "Outra entidade"]
+    return {"stakeholders": base, "personas": [{"nome": p.get("nome"), "papel": p.get("papel"), "grupo": p.get("papel_grupo"), "fontes": p.get("fontes")} for p in v.personas()]}
+
+
 @app.get("/api/perfis")
 async def listar_perfis():
     return {"perfis": perfis.listar(), "padrao": perfis.padrao()}

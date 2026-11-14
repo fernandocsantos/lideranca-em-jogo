@@ -156,6 +156,7 @@ const RELATORIO = (() => {
       par("Aprendizados para a próxima reunião:"); a.competencias.aprendizados.forEach((x) => par(`• ${x}`));
     });
 
+    if (d.consolidado.quadro.length) {
     novaPagina();
     titulo("Consolidado do mandato");
     tabela(["Trim.", "Prioridade", "Total / teto", "Meta", "Riscos"], d.consolidado.quadro.map((q) => [String(q.trimestre), q.prioridade, `${reais(q.total)} / ${reais(q.teto)}`, q.meta || "-", String(q.riscos)]));
@@ -166,6 +167,7 @@ const RELATORIO = (() => {
     secao("B", "Tentativas refeitas e o que mudou");
     if (d.consolidado.refeitas.length) d.consolidado.refeitas.forEach((r) => par(`• Trimestre ${r.trimestre}: ${r.tentativas} tentativas — ${r.mudancas.join(" | ")}`));
     else par("Nenhuma tentativa refeita.");
+    }
     y += 3; par(d.aviso, { suave: true });
 
     const n = doc.getNumberOfPages();
